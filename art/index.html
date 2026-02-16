@@ -1,235 +1,330 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';">
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GameArt.top — 精选真正有创造力的游戏</title>
+<title>陈诚书画室</title>
 
 <style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
-}
-
 body{
-background:#0a0f1c;
-color:white;
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:#f8f8f8;
+    color:#333;
 }
 
-/* 顶部 */
-
-.header{
-padding:20px 40px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-border-bottom:1px solid rgba(255,255,255,0.1);
+.container{
+    max-width:600px;
+    margin:auto;
+    background:white;
 }
-
-.logo{
-font-size:24px;
-font-weight:bold;
-letter-spacing:2px;
-}
-
-.nav a{
-color:#aaa;
-margin-left:20px;
-text-decoration:none;
-}
-
-.nav a:hover{
-color:white;
-}
-
-/* Hero */
 
 .hero{
-text-align:center;
-padding:120px 20px;
+    padding:20px;
+    text-align:center;
 }
 
 .hero h1{
-font-size:48px;
-margin-bottom:20px;
+    font-size:26px;
+    margin-bottom:10px;
 }
 
-.hero p{
-font-size:20px;
-color:#aaa;
-margin-bottom:40px;
+.highlight{
+    color:#c0392b;
+    font-weight:bold;
 }
 
-.button{
-display:inline-block;
-padding:15px 30px;
-background:white;
-color:black;
-text-decoration:none;
-border-radius:8px;
-font-weight:bold;
-transition:0.2s;
+.hero img{
+    width:100%;
+    aspect-ratio:16/10;
+    object-fit:cover;
+    display:block;
+    border-radius:12px;
 }
 
-.button:hover{
-transform:scale(1.05);
+.btn{
+    display:block;
+    margin:20px;
+    padding:16px;
+    background:#c0392b;
+    color:white;
+    text-align:center;
+    border-radius:10px;
+    font-size:18px;
+    text-decoration:none;
 }
-
-/* Section */
 
 .section{
-padding:80px 20px;
-max-width:1000px;
-margin:auto;
+    padding:20px;
 }
 
 .section h2{
-font-size:32px;
-margin-bottom:30px;
-text-align:center;
+    font-size:22px;
+    margin-bottom:15px;
 }
 
-/* 游戏卡片 */
-
-.game-card{
-background:#11182a;
-border-radius:12px;
-padding:30px;
-margin-bottom:20px;
-transition:0.2s;
-cursor:pointer;
+.gallery{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
 }
 
-.game-card:hover{
-background:#16213a;
-transform:translateY(-5px);
+.gallery img{
+    width:100%;
+    aspect-ratio:4/3;
+    object-fit:cover;
+    display:block;
+    border-radius:8px;
 }
 
-.game-title{
-font-size:24px;
-margin-bottom:10px;
+.teacher{
+    display:flex;
+    gap:15px;
+    align-items:flex-start;
 }
 
-.game-desc{
-color:#aaa;
+.teacher img{
+    width:100px;
+    height:100px;
+    object-fit:cover;
+    display:block;
+    border-radius:50%;
 }
 
-/* Coming soon */
-
-.coming{
-text-align:center;
-color:#666;
-font-size:18px;
+.teacher .intro{
+    line-height:1.7;
 }
 
-/* Footer */
+.teacher .intro p{
+    margin:0 0 10px;
+}
+
+.strengths{
+    margin:8px 0 12px;
+}
+
+.strengths .title{
+    margin:0 0 8px;
+    font-weight:600;
+}
+
+.strength-grid{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+}
+
+.strength-item{
+    background:#f8f8f8;
+    border-radius:8px;
+    padding:10px;
+    font-size:14px;
+    line-height:1.7;
+}
+
+.landmark{
+    margin-top:16px;
+    text-align:center;
+}
+
+.landmark img{
+    width:100%;
+    aspect-ratio:4/3;
+    object-fit:cover;
+    display:block;
+    border-radius:10px;
+}
+
+.landmark-gallery{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+}
+
+.landmark p{
+    margin:8px 0 0;
+    font-size:14px;
+    color:#666;
+}
+
+.qrcode{
+    text-align:center;
+}
+
+.qrcode img{
+    width:200px;
+    aspect-ratio:1/1;
+    object-fit:contain;
+    display:block;
+    margin:0 auto;
+}
 
 .footer{
-text-align:center;
-padding:40px;
-color:#666;
+    text-align:center;
+    padding:20px;
+    font-size:14px;
+    color:#666;
 }
-
 </style>
+
 </head>
+
 <body>
 
+<div class="container">
 
-<div class="header">
-
-<div class="logo">GAMEART</div>
-
-<div class="nav">
-<a href="/">首页</a>
-<a href="#games">游戏</a>
-<a href="#about">关于</a>
-</div>
-
-</div>
-
-
+<!-- 第一屏 -->
 <div class="hero">
 
-<h1>精选真正有创造力的游戏</h1>
+<h1>陈诚书画室</h1>
 
-<p>
-不是流水线作品。不是垃圾堆。<br>
-每个游戏，都是一个独立世界。
+<p class="highlight">
+7名学生获得全国书画比赛一等奖
 </p>
 
-<a href="/solar" class="button">
-进入太阳系探索 →
+<p>
+小班教学｜零基础可学｜6岁以上
+</p>
+
+<img src="images/hero.jpg">
+
+<a class="btn" href="#contact">
+预约免费体验课
 </a>
 
 </div>
 
+<!-- 获奖展示 -->
+<div class="section">
 
+<h2>学生获奖成果</h2>
 
-<div class="section" id="games">
+<div class="gallery">
 
-<h2>精选游戏</h2>
-
-
-<div class="game-card" onclick="location.href='/solar'">
-
-<div class="game-title">
-太阳系探索
-</div>
-
-<div class="game-desc">
-从太阳开始，建立你的宇宙文明。<br>
-放置 + 策略 + 长期演化
-</div>
-
-</div>
-
-
-<div class="game-card">
-
-<div class="game-title">
-更多游戏即将出现
-</div>
-
-<div class="game-desc">
-我们正在寻找真正有创造力的作品。
-</div>
-
-</div>
-
-
-</div>
-
-
-
-<div class="section" id="about">
-
-<h2>关于 GameArt</h2>
-
-<div class="coming">
-
-GameArt 是一个新型游戏平台。<br><br>
-
-我们相信未来将出现数百万个游戏。<br>
-但只有极少数，真正值得被体验。<br><br>
-
-我们只展示真正有创造力的游戏。
+<img src="images/award1.jpg">
+<img src="images/award2.jpg">
+<img src="images/award3.jpg">
+<img src="images/award4.jpg">
 
 </div>
 
 </div>
 
+<!-- 学生作品 -->
+<div class="section">
 
+<h2>学生作品展示</h2>
+
+<div class="gallery">
+
+<img src="images/work1.jpg">
+<img src="images/work2.jpg">
+<img src="images/work3.jpg">
+<img src="images/work4.jpg">
+<img src="images/work5.jpg">
+<img src="images/work6.jpg">
+<img src="images/work7.jpg">
+<img src="images/work8.jpg">
+<img src="images/work9.jpg">
+<img src="images/work10.jpg">
+<img src="images/work11.jpg">
+<img src="images/work12.jpg">
+<img src="images/work13.jpg">
+<img src="images/work14.jpg">
+<img src="images/work15.jpg">
+<img src="images/work16.jpg">
+<img src="images/work17.jpg">
+<img src="images/work18.jpg">
+<img src="images/work19.jpg">
+<img src="images/work20.jpg">
+<img src="images/work21.jpg">
+<img src="images/work22.jpg">
+<img src="images/work23.jpg">
+<img src="images/work24.jpg">
+</div>
+
+</div>
+
+<!-- 老师介绍 -->
+<div class="section">
+
+<h2>老师介绍</h2>
+
+<div class="teacher">
+
+<img src="images/teacher.jpg">
+
+<div class="intro">
+
+<p>
+<b>金牌导师：陈诚 (Chen Cheng)</b><br>
+—— 湖北省资深书画家 · 青少年艺术教育专家
+</p>
+
+<p>
+深耕书画艺术数十年，现任中山书画家协会主席、湖北省书画专委会副秘书长。
+</p>
+
+<div class="strengths">
+<p class="title">🌟 核心实力</p>
+<div class="strength-grid">
+<div class="strength-item">名家资历：武汉市书法家协会会员，两届海峡两岸书画名家巡回展铜奖。</div>
+<div class="strength-item">代表作品：唐·杜甫《登高》书法作品永久立碑于汉口江滩。</div>
+<div class="strength-item">教学成果：2022年指导7名学生获“中央美院繁星杯”全国一等奖；2023年辅导多名学生在教育部“白名单”赛事中获一等奖。</div>
+<div class="strength-item">综合素养：湖北省楹联学会会员，2025年“银龄书香”诵读大赛三等奖。</div>
+</div>
+</div>
+
+<p>
+🎓 教学理念：书画兼修，艺文合一。<br>
+用孩子听得懂、学得快的方式教学，帮助每位热爱艺术的孩子稳步提升，在更高舞台展示自信与实力。
+</p>
+
+</div>
+
+</div>
+
+<div class="landmark">
+<div class="landmark-gallery">
+<img src="images/jiangtan.jpg" >
+<img src="images/jiangtan2.jpg">
+<img src="images/jiangtan3.jpg" >
+<img src="images/jiangtan4.jpg" >
+<img src="images/jiangtan5.jpg" >
+<img src="images/jiangtan6.jpg" >
+</div>
+</div>
+
+</div>
+
+<!-- 联系 -->
+<div class="section qrcode" id="contact">
+
+<h2>预约体验课</h2>
+
+<p class="highlight">
+目前仅剩 5 个名额
+</p>
+
+<img src="images/qrcode.jpg">
+
+<p>
+长按二维码添加微信咨询
+</p>
+
+</div>
 
 <div class="footer">
 
-GameArt.top © 2026
+陈诚书画室<br>
+小班教学 · 专注教学质量
 
 </div>
 
-
+</div>
 
 </body>
 </html>
