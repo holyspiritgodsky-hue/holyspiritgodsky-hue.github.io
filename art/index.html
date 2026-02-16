@@ -2,7 +2,7 @@
 <html lang="zh">
 <head>
 <meta http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline';">
+    content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;">
 
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,6 +59,8 @@ body{
 
 .section{
     padding:20px;
+    content-visibility:auto;
+    contain-intrinsic-size:800px;
 }
 
 .section h2{
@@ -128,6 +130,8 @@ body{
 .landmark{
     margin-top:16px;
     text-align:center;
+    content-visibility:auto;
+    contain-intrinsic-size:800px;
 }
 
 .landmark img{
@@ -189,7 +193,7 @@ body{
 小班教学｜零基础可学｜6岁以上
 </p>
 
-<img src="images/hero.jpg">
+<img src="images/hero.jpg" loading="eager" fetchpriority="high" decoding="async" alt="书画课堂与作品展示">
 
 <a class="btn" href="#contact">
 预约免费体验课
@@ -204,10 +208,10 @@ body{
 
 <div class="gallery">
 
-<img src="images/award1.jpg">
-<img src="images/award2.jpg">
-<img src="images/award3.jpg">
-<img src="images/award4.jpg">
+<img src="images/award1.jpg" loading="lazy" decoding="async" alt="学生获奖作品1">
+<img src="images/award2.jpg" loading="lazy" decoding="async" alt="学生获奖作品2">
+<img src="images/award3.jpg" loading="lazy" decoding="async" alt="学生获奖作品3">
+<img src="images/award4.jpg" loading="lazy" decoding="async" alt="学生获奖作品4">
 
 </div>
 
@@ -220,30 +224,30 @@ body{
 
 <div class="gallery">
 
-<img src="images/work1.jpg">
-<img src="images/work2.jpg">
-<img src="images/work3.jpg">
-<img src="images/work4.jpg">
-<img src="images/work5.jpg">
-<img src="images/work6.jpg">
-<img src="images/work7.jpg">
-<img src="images/work8.jpg">
-<img src="images/work9.jpg">
-<img src="images/work10.jpg">
-<img src="images/work11.jpg">
-<img src="images/work12.jpg">
-<img src="images/work13.jpg">
-<img src="images/work14.jpg">
-<img src="images/work15.jpg">
-<img src="images/work16.jpg">
-<img src="images/work17.jpg">
-<img src="images/work18.jpg">
-<img src="images/work19.jpg">
-<img src="images/work20.jpg">
-<img src="images/work21.jpg">
-<img src="images/work22.jpg">
-<img src="images/work23.jpg">
-<img src="images/work24.jpg">
+<img src="images/work1.jpg" loading="lazy" decoding="async" alt="学生作品1">
+<img src="images/work2.jpg" loading="lazy" decoding="async" alt="学生作品2">
+<img src="images/work3.jpg" loading="lazy" decoding="async" alt="学生作品3">
+<img src="images/work4.jpg" loading="lazy" decoding="async" alt="学生作品4">
+<img src="images/work5.jpg" loading="lazy" decoding="async" alt="学生作品5">
+<img src="images/work6.jpg" loading="lazy" decoding="async" alt="学生作品6">
+<img src="images/work7.jpg" loading="lazy" decoding="async" alt="学生作品7">
+<img src="images/work8.jpg" loading="lazy" decoding="async" alt="学生作品8">
+<img src="images/work9.jpg" loading="lazy" decoding="async" alt="学生作品9">
+<img src="images/work10.jpg" loading="lazy" decoding="async" alt="学生作品10">
+<img src="images/work11.jpg" loading="lazy" decoding="async" alt="学生作品11">
+<img src="images/work12.jpg" loading="lazy" decoding="async" alt="学生作品12">
+<img src="images/work13.jpg" loading="lazy" decoding="async" alt="学生作品13">
+<img src="images/work14.jpg" loading="lazy" decoding="async" alt="学生作品14">
+<img src="images/work15.jpg" loading="lazy" decoding="async" alt="学生作品15">
+<img src="images/work16.jpg" loading="lazy" decoding="async" alt="学生作品16">
+<img src="images/work17.jpg" loading="lazy" decoding="async" alt="学生作品17">
+<img src="images/work18.jpg" loading="lazy" decoding="async" alt="学生作品18">
+<img src="images/work19.jpg" loading="lazy" decoding="async" alt="学生作品19">
+<img src="images/work20.jpg" loading="lazy" decoding="async" alt="学生作品20">
+<img src="images/work21.jpg" loading="lazy" decoding="async" alt="学生作品21">
+<img src="images/work22.jpg" loading="lazy" decoding="async" alt="学生作品22">
+<img src="images/work23.jpg" loading="lazy" decoding="async" alt="学生作品23">
+<img src="images/work24.jpg" loading="lazy" decoding="async" alt="学生作品24">
 </div>
 
 </div>
@@ -255,7 +259,7 @@ body{
 
 <div class="teacher">
 
-<img src="images/teacher.jpg">
+<img src="images/teacher.jpg" loading="lazy" decoding="async" alt="陈诚老师照片">
 
 <div class="intro">
 
@@ -289,12 +293,12 @@ body{
 
 <div class="landmark">
 <div class="landmark-gallery">
-<img src="images/jiangtan.jpg" >
-<img src="images/jiangtan2.jpg">
-<img src="images/jiangtan3.jpg" >
-<img src="images/jiangtan4.jpg" >
-<img src="images/jiangtan5.jpg" >
-<img src="images/jiangtan6.jpg" >
+<img src="images/jiangtan.jpg" loading="lazy" decoding="async" alt="汉口江滩立碑1" >
+<img src="images/jiangtan2.jpg" loading="lazy" decoding="async" alt="汉口江滩立碑2">
+<img src="images/jiangtan3.jpg" loading="lazy" decoding="async" alt="汉口江滩立碑3" >
+<img src="images/jiangtan4.jpg" loading="lazy" decoding="async" alt="汉口江滩立碑4" >
+<img src="images/jiangtan5.jpg" loading="lazy" decoding="async" alt="汉口江滩立碑5" >
+<img src="images/jiangtan6.jpg" loading="lazy" decoding="async" alt="汉口江滩立碑6" >
 </div>
 </div>
 
@@ -309,7 +313,7 @@ body{
 目前仅剩 5 个名额
 </p>
 
-<img src="images/qrcode.jpg">
+<img src="images/qrcode.jpg" loading="lazy" decoding="async" alt="微信咨询二维码">
 
 <p>
 长按二维码添加微信咨询
