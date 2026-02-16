@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GameArt.top — 精选真正有创造力的游戏</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto;
+}
+
+body{
+background:#0a0f1c;
+color:white;
+}
+
+/* 顶部 */
+
+.header{
+padding:20px 40px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+.logo{
+font-size:24px;
+font-weight:bold;
+letter-spacing:2px;
+}
+
+.nav a{
+color:#aaa;
+margin-left:20px;
+text-decoration:none;
+}
+
+.nav a:hover{
+color:white;
+}
+
+/* Hero */
+
+.hero{
+text-align:center;
+padding:120px 20px;
+}
+
+.hero h1{
+font-size:48px;
+margin-bottom:20px;
+}
+
+.hero p{
+font-size:20px;
+color:#aaa;
+margin-bottom:40px;
+}
+
+.button{
+display:inline-block;
+padding:15px 30px;
+background:white;
+color:black;
+text-decoration:none;
+border-radius:8px;
+font-weight:bold;
+transition:0.2s;
+}
+
+.button:hover{
+transform:scale(1.05);
+}
+
+/* Section */
+
+.section{
+padding:80px 20px;
+max-width:1000px;
+margin:auto;
+}
+
+.section h2{
+font-size:32px;
+margin-bottom:30px;
+text-align:center;
+}
+
+/* 游戏卡片 */
+
+.game-card{
+background:#11182a;
+border-radius:12px;
+padding:30px;
+margin-bottom:20px;
+transition:0.2s;
+cursor:pointer;
+}
+
+.game-card:hover{
+background:#16213a;
+transform:translateY(-5px);
+}
+
+.game-title{
+font-size:24px;
+margin-bottom:10px;
+}
+
+.game-desc{
+color:#aaa;
+}
+
+/* Coming soon */
+
+.coming{
+text-align:center;
+color:#666;
+font-size:18px;
+}
+
+/* Footer */
+
+.footer{
+text-align:center;
+padding:40px;
+color:#666;
+}
+
+</style>
+</head>
+<body>
+
+
+<div class="header">
+
+<div class="logo">GAMEART</div>
+
+<div class="nav">
+<a href="/">首页</a>
+<a href="#games">游戏</a>
+<a href="#about">关于</a>
+</div>
+
+</div>
+
+
+<div class="hero">
+
+<h1>精选真正有创造力的游戏</h1>
+
+<p>
+不是流水线作品。不是垃圾堆。<br>
+每个游戏，都是一个独立世界。
+</p>
+
+<a href="/solar" class="button">
+进入太阳系探索 →
+</a>
+
+</div>
+
+
+
+<div class="section" id="games">
+
+<h2>精选游戏</h2>
+
+
+<div class="game-card" onclick="location.href='/solar'">
+
+<div class="game-title">
+太阳系探索
+</div>
+
+<div class="game-desc">
+从太阳开始，建立你的宇宙文明。<br>
+放置 + 策略 + 长期演化
+</div>
+
+</div>
+
+
+<div class="game-card">
+
+<div class="game-title">
+更多游戏即将出现
+</div>
+
+<div class="game-desc">
+我们正在寻找真正有创造力的作品。
+</div>
+
+</div>
+
+
+</div>
+
+
+
+<div class="section" id="about">
+
+<h2>关于 GameArt</h2>
+
+<div class="coming">
+
+GameArt 是一个新型游戏平台。<br><br>
+
+我们相信未来将出现数百万个游戏。<br>
+但只有极少数，真正值得被体验。<br><br>
+
+我们只展示真正有创造力的游戏。
+
+</div>
+
+</div>
+
+
+
+<div class="footer">
+
+GameArt.top © 2026
+
+</div>
+
+
+
+</body>
+</html>
