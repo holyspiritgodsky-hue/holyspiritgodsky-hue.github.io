@@ -713,18 +713,18 @@
 
     <!-- 选国家开场界面 -->
     <div class="country-screen" id="countryScreen">
-        <div class="country-screen-title">🌌 太空帝国</div>
+        
         <div class="country-screen-subtitle">
-            "我们第一次从太空俯视自己的家园，城市的灯光像一层薄薄的霜，<br>文明在黑暗的背景上显得格外脆弱。"
+            "我们采矿，我们搜集能源，我们发展科技，我们迈向银河"
         </div>
         <div class="country-grid">
             <div class="country-card vip" onclick="selectCountry('usa')">
                 <span class="country-flag">🇺🇸</span>
                 <div class="country-name">美国</div>
                 <div class="country-stats">
-                    <span>⚡ 初始能量 <b class="highlight">1000</b></span>
-                    <span>🤖 机器人 <b class="highlight">100万</b></span>
-                    <span>💰 星币加成 <b class="highlight">×2</b></span>
+                    <span>💎 初始矿石 <b class="highlight">500</b></span>
+                    <span>⚡ 能源 <b class="highlight">50</b></span>
+                    <span>👊 点击力 <b class="highlight">100</b></span>
                     <span class="country-tag tag-vip">★ VIP 优势</span>
                 </div>
             </div>
@@ -732,9 +732,9 @@
                 <span class="country-flag">🇨🇳</span>
                 <div class="country-name">中国</div>
                 <div class="country-stats">
-                    <span>⚡ 初始能量 <b class="highlight">300</b></span>
-                    <span>🤖 机器人 <b class="highlight">15万</b></span>
-                    <span>🔬 科研加成 <b class="highlight">×1.5</b></span>
+                    <span>💎 初始矿石 <b class="highlight">300</b></span>
+                    <span>⚡ 能源 <b class="highlight">80</b></span>
+                    <span>👊 点击力 <b class="highlight">100</b></span>
                     <span class="country-tag tag-event">独有事件链</span>
                 </div>
             </div>
@@ -742,9 +742,9 @@
                 <span class="country-flag">🇷🇺</span>
                 <div class="country-name">俄罗斯</div>
                 <div class="country-stats">
-                    <span>⚡ 初始能量 <b class="highlight">400</b></span>
-                    <span>🤖 机器人 <b class="highlight">20万</b></span>
-                    <span>🚀 火箭成本 <b class="highlight">-20%</b></span>
+                    <span>💎 初始矿石 <b class="highlight">400</b></span>
+                    <span>⚡ 能源 <b class="highlight">60</b></span>
+                    <span>👊 点击力 <b class="highlight">100</b></span>
                     <span class="country-tag tag-balanced">均衡发展</span>
                 </div>
             </div>
@@ -752,19 +752,19 @@
                 <span class="country-flag">🇩🇪</span>
                 <div class="country-name">德国</div>
                 <div class="country-stats">
-                    <span>⚡ 初始能量 <b class="highlight">200</b></span>
-                    <span>🤖 机器人 <b class="highlight">8万</b></span>
-                    <span>⚙️ 升级成本 <b class="highlight">-15%</b></span>
+                    <span>💎 初始矿石 <b class="highlight">250</b></span>
+                    <span>⚡ 能源 <b class="highlight">70</b></span>
+                    <span>👊 点击力 <b class="highlight">100</b></span>
                     <span class="country-tag tag-balanced">工业强国</span>
                 </div>
             </div>
-            <div class="country-card" onclick="selectCountry('india')">
-                <span class="country-flag">🇮🇳</span>
-                <div class="country-name">印度</div>
+            <div class="country-card" onclick="selectCountry('japan')">
+                <span class="country-flag">🇯🇵</span>
+                <div class="country-name">日本</div>
                 <div class="country-stats">
-                    <span>⚡ 初始能量 <b class="highlight">150</b></span>
-                    <span>🤖 机器人 <b class="highlight">6万</b></span>
-                    <span>📈 点击倍率 <b class="highlight">×2</b></span>
+                    <span>💎 初始矿石 <b class="highlight">200</b></span>
+                    <span>⚡ 能源 <b class="highlight">50</b></span>
+                    <span>👊 点击力 <b class="highlight">150</b></span>
                     <span class="country-tag tag-event">独有事件链</span>
                 </div>
             </div>
@@ -779,6 +779,13 @@
             <div class="civilization-level" id="civLevel">🌍 行星文明</div>
             <div class="resources-compact">
                 <div class="resource-compact">
+                    <span class="resource-icon-small">💎</span>
+                    <div>
+                        <div class="resource-value-small" id="oreVal">0</div>
+                        <div class="resource-rate-small" id="oreRate">+0/秒</div>
+                    </div>
+                </div>
+                <div class="resource-compact">
                     <span class="resource-icon-small">⚡</span>
                     <div>
                         <div class="resource-value-small" id="energyVal">0</div>
@@ -786,17 +793,10 @@
                     </div>
                 </div>
                 <div class="resource-compact">
-                    <span class="resource-icon-small">🪙</span>
-                    <div>
-                        <div class="resource-value-small" id="creditsVal">0</div>
-                        <div class="resource-rate-small" id="creditsRate">+0/秒</div>
-                    </div>
-                </div>
-                <div class="resource-compact">
                     <span class="resource-icon-small">🔬</span>
                     <div>
-                        <div class="resource-value-small" id="scienceVal">0</div>
-                        <div class="resource-rate-small" id="scienceRate">+0/秒</div>
+                        <div class="resource-value-small" id="techVal">0</div>
+                        <div class="resource-rate-small" id="techRate">+0/秒</div>
                     </div>
                 </div>
             </div>
@@ -818,20 +818,20 @@
         <!-- 底部面板 -->
         <div class="bottom-panel">
             <div class="panel-tabs">
-                <button class="tab-button active" data-tab="mining">⛏️ 采矿</button>
-                <button class="tab-button" data-tab="factory">🏭 工厂</button>
-                <button class="tab-button" data-tab="science">🔬 科研</button>
+                <button class="tab-button active" data-tab="mining">💎 采矿工厂</button>
+                <button class="tab-button" data-tab="energy">⚡ 能源设施</button>
+                <button class="tab-button" data-tab="tech">🔬 科技系统</button>
                 <button class="tab-button" data-tab="special">✨ 特殊</button>
             </div>
 
             <div class="tab-content active" id="tab-mining">
                 <div class="upgrades-grid" id="miningGrid"></div>
             </div>
-            <div class="tab-content" id="tab-factory">
-                <div class="upgrades-grid" id="factoryGrid"></div>
+            <div class="tab-content" id="tab-energy">
+                <div class="upgrades-grid" id="energyGrid"></div>
             </div>
-            <div class="tab-content" id="tab-science">
-                <div class="upgrades-grid" id="scienceGrid"></div>
+            <div class="tab-content" id="tab-tech">
+                <div class="upgrades-grid" id="techGrid"></div>
             </div>
             <div class="tab-content" id="tab-special">
                 <div class="upgrades-grid" id="specialGrid"></div>
@@ -842,19 +842,20 @@
     <script>
         // 游戏状态
         const game = {
-            energy: 0,
-            credits: 0,
-            science: 0,
-            clickPower: 3,
-            energyPerSec: 0,
-            creditsPerSec: 0,
-            sciencePerSec: 0,
+            ore: 0,           // 矿石（基础资源，点击和工厂产出）
+            energy: 0,        // 能源（用矿石生产）
+            tech: 0,          // 科技点（用能源驱动）
+            techLevel: 0,     // 科技等级 0-4
+            clickPower: 100,  // 点击获得矿石
+            orePerSec: 0,     // 矿石产量
+            energyPerSec: 0,  // 能源产量
+            techPerSec: 0,    // 科技产量
             totalEarned: 0,
             totalClicks: 0,
             currentStage: 0,
             lastSaveTime: Date.now(),
             unlockedPlanets: ['earth'],
-            upgrades: { mining: [], factory: [], science: [], special: [] }
+            upgrades: { mining: [], energy: [], tech: [], special: [] }
         };
 
         // 文明阶段
@@ -881,31 +882,33 @@
             { id: 'neptune', name: '海王星', distance: 468, angle: 320, radius: 17, color: '#4166F5', unlockStage: 3, cssClass: 'p-neptune', clickMulti: 15 }
         ];
 
-        // 升级配置
+        // 升级配置 - 新的资源链条：矿石→能源→科技
         const upgradesConfig = {
+            // 采矿设施：产出矿石（免费，自动产出）
             mining: [
-                { id: 'm1', name: '太阳能板', icon: '☀️', baseProduction: 2, baseCost: 10, costMult: 1.12 },
-                { id: 'm2', name: '风力发电', icon: '💨', baseProduction: 10, baseCost: 50, costMult: 1.12 },
-                { id: 'm3', name: '核电站', icon: '⚛️', baseProduction: 50, baseCost: 300, costMult: 1.12 },
-                { id: 'm4', name: '聚变反应堆', icon: '⚡', baseProduction: 200, baseCost: 1500, costMult: 1.12 },
-                { id: 'm5', name: '反物质发电', icon: '💎', baseProduction: 1000, baseCost: 8000, costMult: 1.12 }
+                { id: 'm1', name: '基础工厂', icon: '🏭', baseProduction: 2, baseCost: 50, costMult: 1.12, costType: 'ore', outputType: 'ore' },
+                { id: 'm2', name: '自动产线', icon: '🤖', baseProduction: 10, baseCost: 300, costMult: 1.12, costType: 'ore', outputType: 'ore' },
+                { id: 'm3', name: '纳米工厂', icon: '⚙️', baseProduction: 50, baseCost: 1500, costMult: 1.12, costType: 'ore', outputType: 'ore' },
+                { id: 'm4', name: '量子工厂', icon: '⚛️', baseProduction: 250, baseCost: 8000, costMult: 1.12, costType: 'ore', outputType: 'ore' }
             ],
-            factory: [
-                { id: 'f1', name: '基础工厂', icon: '🏭', baseProduction: 1, baseCost: 50, costMult: 1.12, outputType: 'credits' },
-                { id: 'f2', name: '自动化产线', icon: '🤖', baseProduction: 5, baseCost: 250, costMult: 1.12, outputType: 'credits' },
-                { id: 'f3', name: '纳米工厂', icon: '🔬', baseProduction: 25, baseCost: 1200, costMult: 1.12, outputType: 'credits' },
-                { id: 'f4', name: '量子制造', icon: '⚛️', baseProduction: 125, baseCost: 6000, costMult: 1.12, outputType: 'credits' }
+            // 能源设施：消耗矿石，产出能源
+            energy: [
+                { id: 'e1', name: '核电站', icon: '☢️', baseProduction: 3, baseCost: 100, costMult: 1.14, costType: 'ore', outputType: 'energy' },
+                { id: 'e2', name: '核聚变堆', icon: '⚡', baseProduction: 18, baseCost: 800, costMult: 1.14, costType: 'ore', outputType: 'energy' },
+                { id: 'e3', name: '卫星太阳能', icon: '🛰️', baseProduction: 120, baseCost: 5000, costMult: 1.14, costType: 'ore', outputType: 'energy' },
+                { id: 'e4', name: '反物质引擎', icon: '✨', baseProduction: 800, baseCost: 30000, costMult: 1.14, costType: 'ore', outputType: 'energy' }
             ],
-            science: [
-                { id: 's1', name: '研究实验室', icon: '🔬', baseProduction: 0.5, baseCost: 100, costMult: 1.12, outputType: 'science' },
-                { id: 's2', name: 'AI计算中心', icon: '🧠', baseProduction: 2, baseCost: 500, costMult: 1.12, outputType: 'science' },
-                { id: 's3', name: '量子计算机', icon: '💻', baseProduction: 10, baseCost: 2500, costMult: 1.12, outputType: 'science' },
-                { id: 's4', name: '超维研究站', icon: '🌀', baseProduction: 50, baseCost: 12000, costMult: 1.12, outputType: 'science' }
+            // 科技系统：消耗能源，解锁科技等级（每个只能购买一次）
+            tech: [
+                { id: 't1', name: '地月引力桥', icon: '🌙', techLevel: 1, baseCost: 500, desc: '连接地球与月球，开启文明新纪元', costType: 'energy', unlocked: false },
+                { id: 't2', name: '太阳系引力桥', icon: '☀️', techLevel: 2, baseCost: 3000, desc: '掌控太阳系内行星，文明跨越式发展', costType: 'energy', unlocked: false },
+                { id: 't3', name: '黑洞引力桥', icon: '⚫', techLevel: 3, baseCost: 20000, desc: '利用黑洞能量，突破时空限制', costType: 'energy', unlocked: false },
+                { id: 't4', name: '银河系引力桥', icon: '🌌', techLevel: 4, baseCost: 150000, desc: '银河文明巅峰，征服星辰大海', costType: 'energy', unlocked: false }
             ],
             special: [
-                { id: 'sp1', name: '太空电梯', icon: '🚡', baseProduction: 5, baseCost: 500, costMult: 1.15, bonus: 'click' },
-                { id: 'sp2', name: '戴森球原型', icon: '🌟', baseProduction: 100, baseCost: 5000, costMult: 1.15, bonus: 'all' },
-                { id: 'sp3', name: '时空加速器', icon: '⏰', baseProduction: 0, baseCost: 25000, costMult: 1.2, bonus: 'speed' }
+                { id: 'sp1', name: '太空电梯', icon: '🚡', baseProduction: 50, baseCost: 500, costMult: 1.15, costType: 'ore', bonus: 'click' },
+                { id: 'sp2', name: '戴森球', icon: '🌟', baseProduction: 0, baseCost: 10000, costMult: 1.18, costType: 'ore', bonus: 'energyBoost', boostValue: 2.0 },
+                { id: 'sp3', name: '时空加速器', icon: '⏰', baseProduction: 0, baseCost: 50000, costMult: 1.2, costType: 'energy', bonus: 'speed', speedMult: 1.5 }
             ]
         };
 
@@ -934,13 +937,19 @@
         let starTick = 0;
         function drawStarfield() {
             starTick += 0.016;
+            // 根据科技等级调整星空效果
+            const techLevel = game.techLevel || 0;
+            const speedMultiplier = 1 + techLevel * 0.15;  // 科技越高，星空流动越快
+            const brightnessBonus = techLevel * 0.08;      // 科技越高，星空越亮
+            
             starfield.forEach(s => {
                 // 向右移动
-                s.x += s.speed;
+                s.x += s.speed * speedMultiplier;
                 if (s.x > 1) s.x -= 1;   // 超出右边从左侧重新出现
 
                 const twinkle = 0.7 + 0.3 * Math.sin(starTick * 2 + s.offset);
-                ctx.fillStyle = `rgba(255,255,255,${s.alpha * twinkle})`;
+                const finalAlpha = Math.min(1, (s.alpha + brightnessBonus) * twinkle);
+                ctx.fillStyle = `rgba(255,255,255,${finalAlpha})`;
                 ctx.beginPath();
                 ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
                 ctx.fill();
@@ -1011,6 +1020,18 @@
 
         // ── CSS行星div：每帧同步位置和解锁状态 ────────────────
         function updatePlanetDivs() {
+            // 根据科技等级定义星球光晕颜色
+            const techLevel = game.techLevel || 0;
+            const glowColors = [
+                'rgba(251, 191, 36, 0.5)',  // Lv0: 金色
+                'rgba(0, 217, 255, 0.6)',   // Lv1: 青色
+                'rgba(168, 85, 247, 0.7)',  // Lv2: 紫色
+                'rgba(255, 0, 255, 0.7)',   // Lv3: 品红
+                'rgba(255, 255, 255, 0.8)'  // Lv4: 白色
+            ];
+            const glowColor = glowColors[Math.min(techLevel, 4)];
+            const glowIntensity = 20 + techLevel * 10;
+            
             planets.forEach(planet => {
                 const div = document.getElementById(`pdiv-${planet.id}`);
                 if (!div) return;
@@ -1032,6 +1053,11 @@
                 div.style.left   = x + 'px';
                 div.style.top    = y + 'px';
 
+                // 根据科技等级调整星球光晕（太阳除外）
+                if (!planet.isSun && unlocked) {
+                    div.style.boxShadow = `0 0 ${glowIntensity}px ${glowColor}, 0 0 ${glowIntensity * 2}px ${glowColor}`;
+                }
+
                 if (unlocked && div.classList.contains('locked')) {
                     div.classList.remove('locked');
                     div.classList.add('appearing');
@@ -1046,9 +1072,22 @@
             });
         }
 
-        // 光路系统
+        // 光路系统 - 根据科技等级改变颜色和强度
         function drawEnergyLinks() {
             const earth = planets.find(p => p.id === 'earth');
+            
+            // 根据科技等级选择颜色
+            const techLevel = game.techLevel || 0;
+            const linkColors = [
+                ['rgba(251, 191, 36, 0.3)', 'rgba(251, 191, 36, 0.6)', 'rgba(251, 191, 36, 0.3)'],  // Lv0: 金色
+                ['rgba(0, 217, 255, 0.4)', 'rgba(0, 217, 255, 0.7)', 'rgba(0, 217, 255, 0.4)'],      // Lv1: 青色
+                ['rgba(168, 85, 247, 0.5)', 'rgba(168, 85, 247, 0.8)', 'rgba(168, 85, 247, 0.5)'],   // Lv2: 紫色
+                ['rgba(255, 0, 255, 0.5)', 'rgba(255, 0, 255, 0.9)', 'rgba(255, 0, 255, 0.5)'],      // Lv3: 品红
+                ['rgba(255, 255, 255, 0.6)', 'rgba(255, 255, 255, 1.0)', 'rgba(255, 255, 255, 0.6)'] // Lv4: 白色
+            ];
+            const colors = linkColors[Math.min(techLevel, 4)];
+            const lineWidth = 2 + techLevel * 0.8;
+            const shadowBlur = 10 + techLevel * 8;
             
             game.unlockedPlanets.forEach(planetId => {
                 if (planetId === 'earth' || planetId === 'sun') return;
@@ -1061,14 +1100,14 @@
                     earth.screenX, earth.screenY,
                     planet.screenX, planet.screenY
                 );
-                gradient.addColorStop(0, 'rgba(251, 191, 36, 0.6)');
-                gradient.addColorStop(0.5, 'rgba(251, 191, 36, 0.8)');
-                gradient.addColorStop(1, 'rgba(251, 191, 36, 0.6)');
+                gradient.addColorStop(0, colors[0]);
+                gradient.addColorStop(0.5, colors[1]);
+                gradient.addColorStop(1, colors[2]);
 
                 ctx.strokeStyle = gradient;
-                ctx.lineWidth = 2;
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = '#fbbf24';
+                ctx.lineWidth = lineWidth;
+                ctx.shadowBlur = shadowBlur;
+                ctx.shadowColor = colors[1];
                 ctx.setLineDash([10, 5]);
                 ctx.beginPath();
                 ctx.moveTo(earth.screenX, earth.screenY);
@@ -1079,15 +1118,21 @@
             });
         }
 
-        // 粒子系统
+        // 粒子系统 - 根据科技等级改变颜色和数量
         function createParticle(x, y, targetX, targetY) {
-            particles.push({
-                x, y, targetX, targetY,
-                vx: (targetX - x) / 50,
-                vy: (targetY - y) / 50,
-                life: 50,
-                maxLife: 50
-            });
+            const techLevel = game.techLevel || 0;
+            const particleCount = 1 + Math.floor(techLevel * 0.5);  // 科技越高，粒子越多
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x, y, targetX, targetY,
+                    vx: (targetX - x) / 50,
+                    vy: (targetY - y) / 50,
+                    life: 50,
+                    maxLife: 50,
+                    techLevel: techLevel
+                });
+            }
         }
 
         function updateParticles() {
@@ -1098,11 +1143,23 @@
                 p.life--;
 
                 const alpha = p.life / p.maxLife;
-                ctx.fillStyle = `rgba(251, 191, 36, ${alpha})`;
-                ctx.shadowBlur = 5;
-                ctx.shadowColor = '#fbbf24';
+                // 根据科技等级改变粒子颜色
+                const colorValues = [
+                    [251, 191, 36],   // 金色
+                    [0, 217, 255],    // 青色
+                    [168, 85, 247],   // 紫色
+                    [255, 0, 255],    // 品红
+                    [255, 255, 255]   // 白色
+                ];
+                const rgb = colorValues[Math.min(p.techLevel || 0, 4)];
+                const color = `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
+                const shadowColor = `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+                
+                ctx.fillStyle = color;
+                ctx.shadowBlur = 5 + (p.techLevel || 0) * 2;
+                ctx.shadowColor = shadowColor;
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.arc(p.x, p.y, 3 + (p.techLevel || 0) * 0.5, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.shadowBlur = 0;
 
@@ -1140,14 +1197,14 @@
 
         function handlePlanetClick(planet, clientX, clientY) {
             const earned = game.clickPower * (planet.clickMulti || 1);
-            game.energy += earned;
+            game.ore += earned;  // 点击获得矿石
             game.totalEarned += earned;
             game.totalClicks++;
 
             // 浮动数字
             const floatingNum = document.createElement('div');
             floatingNum.className = 'floating-number';
-            floatingNum.textContent = '+' + formatNumber(earned);
+            floatingNum.textContent = '+' + formatNumber(earned) + ' 💎';
             floatingNum.style.left = clientX + 'px';
             floatingNum.style.top = clientY + 'px';
             document.body.appendChild(floatingNum);
@@ -1156,7 +1213,8 @@
             // 粒子效果
             if (planet.id !== 'earth') {
                 const earth = planets.find(p => p.id === 'earth');
-                for (let i = 0; i < 3; i++) {
+                const particleCount = 3 + Math.floor(game.techLevel * 0.5);
+                for (let i = 0; i < particleCount; i++) {
                     setTimeout(() => {
                         createParticle(planet.screenX, planet.screenY, earth.screenX, earth.screenY);
                     }, i * 100);
@@ -1179,7 +1237,11 @@
         function initUpgrades() {
             for (let category in upgradesConfig) {
                 upgradesConfig[category].forEach(config => {
-                    game.upgrades[category].push({ ...config, level: 0 });
+                    const item = { ...config, level: 0 };
+                    if (category === 'tech') {
+                        item.unlocked = false;  // 科技需要解锁
+                    }
+                    game.upgrades[category].push(item);
                 });
             }
         }
@@ -1188,37 +1250,92 @@
         function renderUpgrades() {
             for (let category in game.upgrades) {
                 const container = document.getElementById(category + 'Grid');
+                if (!container) continue;
                 container.innerHTML = '';
 
-                game.upgrades[category].forEach(upgrade => {
-                    const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, upgrade.level));
-                    const canAfford = game.energy >= cost;
-                    const production = upgrade.baseProduction * upgrade.level;
+                game.upgrades[category].forEach((upgrade, index) => {
+                    // 科技系统特殊处理
+                    if (category === 'tech') {
+                        const canAfford = game.energy >= upgrade.baseCost;
+                        const isLocked = index > 0 && !game.upgrades.tech[index - 1].unlocked;
+                        const alreadyUnlocked = upgrade.unlocked;
 
-                    const card = document.createElement('div');
-                    card.className = `upgrade-card ${canAfford ? '' : 'disabled'}`;
-                    card.innerHTML = `
-                        <div class="upgrade-card-header">
-                            <span class="upgrade-name">${upgrade.icon} ${upgrade.name}</span>
-                            <span class="upgrade-level-badge">Lv.${upgrade.level}</span>
-                        </div>
-                        <div class="upgrade-stats">
-                            <span class="upgrade-cost-label">💰 ${formatNumber(cost)}</span>
-                            <span class="upgrade-prod-label">${production > 0 ? '+' + formatNumber(production) + '/秒' : ''}</span>
-                        </div>
-                    `;
+                        const card = document.createElement('div');
+                        card.className = `upgrade-card ${alreadyUnlocked ? 'disabled' : canAfford && !isLocked ? '' : 'disabled'}`;
+                        card.innerHTML = `
+                            <div class="upgrade-card-header">
+                                <span class="upgrade-name">${upgrade.icon} ${upgrade.name}</span>
+                                <span class="upgrade-level-badge">${alreadyUnlocked ? '✓ 已解锁' : isLocked ? '🔒 锁定' : '未解锁'}</span>
+                            </div>
+                            <div style="font-size:0.75rem;color:#94a3b8;margin:0.5rem 0;line-height:1.4;">${upgrade.desc}</div>
+                            <div class="upgrade-stats">
+                                <span class="upgrade-cost-label">⚡ ${formatNumber(upgrade.baseCost)} 能源</span>
+                                <span style="color:#a855f7;font-size:0.75rem;">Lv.${upgrade.techLevel}</span>
+                            </div>
+                            ${isLocked ? '<div style="font-size:0.7rem;color:#f59e0b;margin-top:0.3rem;">需要前置科技</div>' : ''}
+                        `;
 
-                    card.onclick = () => buyUpgrade(upgrade);
-                    container.appendChild(card);
+                        if (!alreadyUnlocked && !isLocked) {
+                            card.onclick = () => buyTech(upgrade);
+                        }
+                        container.appendChild(card);
+                    } else {
+                        // 普通升级
+                        const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult || 1.12, upgrade.level));
+                        const costType = upgrade.costType || 'ore';
+                        const canAfford = costType === 'ore' ? game.ore >= cost : game.energy >= cost;
+                        const production = upgrade.baseProduction * upgrade.level;
+
+                        let costIcon = costType === 'ore' ? '💎' : '⚡';
+                        let costName = costType === 'ore' ? '矿石' : '能源';
+                        
+                        let prodText = '';
+                        if (upgrade.outputType === 'ore') {
+                            prodText = production > 0 ? `💎 +${formatNumber(production)}/秒` : '';
+                        } else if (upgrade.outputType === 'energy') {
+                            prodText = production > 0 ? `⚡ +${formatNumber(production)}/秒` : '';
+                        } else if (upgrade.bonus === 'click') {
+                            prodText = `点击 +${upgrade.baseProduction * upgrade.level}`;
+                        } else if (upgrade.bonus === 'energyBoost') {
+                            prodText = upgrade.level > 0 ? `能源 ×${upgrade.boostValue}` : '';
+                        } else if (upgrade.bonus === 'speed') {
+                            prodText = upgrade.level > 0 ? `速度 ×${upgrade.speedMult}` : '';
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = `upgrade-card ${canAfford ? '' : 'disabled'}`;
+                        card.innerHTML = `
+                            <div class="upgrade-card-header">
+                                <span class="upgrade-name">${upgrade.icon} ${upgrade.name}</span>
+                                <span class="upgrade-level-badge">Lv.${upgrade.level}</span>
+                            </div>
+                            <div class="upgrade-stats">
+                                <span class="upgrade-cost-label">${costIcon} ${formatNumber(cost)} ${costName}</span>
+                                <span class="upgrade-prod-label">${prodText}</span>
+                            </div>
+                        `;
+
+                        card.onclick = () => buyUpgrade(upgrade);
+                        container.appendChild(card);
+                    }
                 });
             }
         }
 
         // 购买升级
         function buyUpgrade(upgrade) {
-            const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, upgrade.level));
-            if (game.energy >= cost) {
-                game.energy -= cost;
+            const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult || 1.12, upgrade.level));
+            const costType = upgrade.costType || 'ore';
+            
+            const canAfford = costType === 'ore' ? game.ore >= cost : game.energy >= cost;
+            
+            if (canAfford) {
+                if (costType === 'ore') {
+                    game.ore -= cost;
+                } else {
+                    game.energy -= cost;
+                }
+                
                 upgrade.level++;
                 
                 if (upgrade.bonus === 'click') {
@@ -1231,43 +1348,114 @@
             }
         }
 
+        // 购买科技
+        function buyTech(tech) {
+            if (game.energy >= tech.baseCost && !tech.unlocked) {
+                game.energy -= tech.baseCost;
+                tech.unlocked = true;
+                game.techLevel = tech.techLevel;
+                
+                // 更新文明等级显示
+                const techNames = ['🌍 行星文明', '🌙 地月文明', '☀️ 太阳系文明', '⚫ 黑洞文明', '🌌 银河文明'];
+                document.getElementById('civLevel').textContent = techNames[game.techLevel];
+                
+                // 显示通知
+                showTechUnlocked(tech);
+                
+                updateProduction();
+                renderUpgrades();
+                updateUI();
+            }
+        }
+
+        // 显示科技解锁通知
+        function showTechUnlocked(tech) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(15, 23, 42, 0.98);
+                padding: 2rem 2.5rem;
+                border-radius: 20px;
+                border: 2px solid var(--accent-cyan);
+                max-width: 500px;
+                z-index: 9999;
+                backdrop-filter: blur(15px);
+                box-shadow: 0 0 60px rgba(0, 217, 255, 0.4);
+                text-align: center;
+            `;
+            modal.innerHTML = `
+                <div style="font-family: var(--font-ui); font-size: 1.8rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 1rem;">
+                    ${tech.icon} ${tech.name}
+                </div>
+                <div style="color: #cbd5e1; margin-bottom: 1.5rem; line-height: 1.6;">
+                    ${tech.desc}
+                </div>
+                <button onclick="this.parentElement.remove()" style="
+                    width: 100%;
+                    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+                    border: none;
+                    padding: 0.8rem;
+                    border-radius: 10px;
+                    color: white;
+                    font-size: 1rem;
+                    font-weight: 700;
+                    cursor: pointer;
+                    font-family: var(--font-ui);
+                ">继续探索 →</button>
+            `;
+            document.body.appendChild(modal);
+        }
+
         // 更新产量
         function updateProduction() {
+            game.orePerSec = 0;
             game.energyPerSec = 0;
-            game.creditsPerSec = 0;
-            game.sciencePerSec = 0;
+            game.techPerSec = 0;
 
-            for (let category in game.upgrades) {
-                game.upgrades[category].forEach(upgrade => {
-                    const production = upgrade.baseProduction * upgrade.level;
-                    
-                    if (upgrade.outputType === 'credits') {
-                        game.creditsPerSec += production;
-                    } else if (upgrade.outputType === 'science') {
-                        game.sciencePerSec += production;
-                    } else if (!upgrade.bonus) {
-                        game.energyPerSec += production;
-                    }
-                });
-            }
+            // 1. 计算矿石产量（采矿工厂）
+            game.upgrades.mining.forEach(upgrade => {
+                if (upgrade.outputType === 'ore') {
+                    game.orePerSec += upgrade.baseProduction * upgrade.level;
+                }
+            });
 
+            // 2. 计算能源产量（能源设施）
+            game.upgrades.energy.forEach(upgrade => {
+                if (upgrade.outputType === 'energy') {
+                    game.energyPerSec += upgrade.baseProduction * upgrade.level;
+                }
+            });
+
+            // 3. 科技产量（基于能源和科技等级）
+            game.techPerSec = game.energyPerSec * 0.01 * (1 + game.techLevel * 0.5);
+
+            // 4. 特殊建筑加成
             const dysonLevel = game.upgrades.special.find(u => u.id === 'sp2')?.level || 0;
             if (dysonLevel > 0) {
-                const bonus = 1 + (dysonLevel * 0.1);
-                game.energyPerSec *= bonus;
-                game.creditsPerSec *= bonus;
-                game.sciencePerSec *= bonus;
+                const boost = game.upgrades.special.find(u => u.id === 'sp2')?.boostValue || 1;
+                game.energyPerSec *= boost;
+            }
+
+            const acceleratorLevel = game.upgrades.special.find(u => u.id === 'sp3')?.level || 0;
+            if (acceleratorLevel > 0) {
+                const speedMult = game.upgrades.special.find(u => u.id === 'sp3')?.speedMult || 1;
+                game.orePerSec *= speedMult;
+                game.energyPerSec *= speedMult;
+                game.techPerSec *= speedMult;
             }
         }
 
         // 更新UI
         function updateUI() {
+            document.getElementById('oreVal').textContent = formatNumber(game.ore);
             document.getElementById('energyVal').textContent = formatNumber(game.energy);
-            document.getElementById('creditsVal').textContent = formatNumber(game.credits);
-            document.getElementById('scienceVal').textContent = formatNumber(game.science);
+            document.getElementById('techVal').textContent = formatNumber(game.tech);
+            document.getElementById('oreRate').textContent = '+' + formatNumber(game.orePerSec) + '/秒';
             document.getElementById('energyRate').textContent = '+' + formatNumber(game.energyPerSec) + '/秒';
-            document.getElementById('creditsRate').textContent = '+' + formatNumber(game.creditsPerSec) + '/秒';
-            document.getElementById('scienceRate').textContent = '+' + formatNumber(game.sciencePerSec) + '/秒';
+            document.getElementById('techRate').textContent = '+' + formatNumber(game.techPerSec) + '/秒';
         }
 
         // 检查阶段进度
@@ -1339,10 +1527,10 @@
 
         // 游戏循环
         setInterval(() => {
+            game.ore += game.orePerSec / 10;
             game.energy += game.energyPerSec / 10;
-            game.credits += game.creditsPerSec / 10;
-            game.science += game.sciencePerSec / 10;
-            game.totalEarned += game.energyPerSec / 10;
+            game.tech += game.techPerSec / 10;
+            game.totalEarned += game.orePerSec / 10;
             
             updateUI();
             checkStageProgress();
@@ -1357,12 +1545,12 @@
         // 自动保存
         setInterval(() => {
             game.lastSaveTime = Date.now();
-            localStorage.setItem('spaceEmpireV4', JSON.stringify(game));
+            localStorage.setItem('spaceEmpireV5', JSON.stringify(game));
         }, 5000);
 
         // 加载游戏
         function loadGame() {
-            const saved = localStorage.getItem('spaceEmpireV4');
+            const saved = localStorage.getItem('spaceEmpireV5');
             if (!saved) return false;
 
             const savedGame = JSON.parse(saved);
@@ -1370,17 +1558,23 @@
 
             const offlineTime = (Date.now() - game.lastSaveTime) / 1000;
             if (offlineTime > 60) {
+                const offlineOre = game.orePerSec * Math.min(offlineTime, 3600 * 4);
                 const offlineEnergy = game.energyPerSec * Math.min(offlineTime, 3600 * 4);
-                showOfflineEarnings(offlineEnergy, offlineTime);
+                const offlineTech = game.techPerSec * Math.min(offlineTime, 3600 * 4);
+                
+                showOfflineEarnings(offlineOre, offlineEnergy, offlineTech, offlineTime);
+                game.ore += offlineOre;
                 game.energy += offlineEnergy;
+                game.tech += offlineTech;
             }
 
-            document.getElementById('civLevel').textContent = stages[game.currentStage].name;
+            const techNames = ['🌍 行星文明', '🌙 地月文明', '☀️ 太阳系文明', '⚫ 黑洞文明', '🌌 银河文明'];
+            document.getElementById('civLevel').textContent = techNames[game.techLevel] || techNames[0];
             updateProduction();
             return true;
         }
 
-        function showOfflineEarnings(amount, time) {
+        function showOfflineEarnings(ore, energy, tech, time) {
             const hours = Math.floor(time / 3600);
             const minutes = Math.floor((time % 3600) / 60);
 
@@ -1390,8 +1584,10 @@
                 <div class="offline-box">
                     <div class="offline-title">欢迎回来！</div>
                     <div>离线时间: ${hours}小时 ${minutes}分钟</div>
-                    <div class="offline-amount">+${formatNumber(amount)}</div>
-                    <div style="margin-bottom: 1.5rem;">能量已自动收集</div>
+                    <div class="offline-amount">💎 +${formatNumber(ore)}</div>
+                    <div class="offline-amount" style="font-size:2rem;margin:0.5rem 0;">⚡ +${formatNumber(energy)}</div>
+                    <div class="offline-amount" style="font-size:1.5rem;margin:0.5rem 0;">🔬 +${formatNumber(tech)}</div>
+                    <div style="margin-bottom: 1.5rem;">资源已自动收集</div>
                     <button class="offline-btn">太棒了！</button>
                 </div>
             `;
@@ -1405,23 +1601,21 @@
 
         // ===== 国家配置 =====
         const countryConfigs = {
-            usa:     { name: '美国',   flag: '🇺🇸', energy: 1000, clickPower: 3,  creditsMult: 2.0, scienceMult: 1.0, costDiscount: 1.0 },
-            china:   { name: '中国',   flag: '🇨🇳', energy: 300,  clickPower: 3,  creditsMult: 1.0, scienceMult: 1.5, costDiscount: 1.0 },
-            russia:  { name: '俄罗斯', flag: '🇷🇺', energy: 400,  clickPower: 3,  creditsMult: 1.0, scienceMult: 1.0, costDiscount: 0.8 },
-            germany: { name: '德国',   flag: '🇩🇪', energy: 200,  clickPower: 3,  creditsMult: 1.0, scienceMult: 1.0, costDiscount: 0.85 },
-            india:   { name: '印度',   flag: '🇮🇳', energy: 150,  clickPower: 6,  creditsMult: 1.0, scienceMult: 1.0, costDiscount: 1.0 }
+            usa:     { name: '美国',   flag: '🇺🇸', ore: 500,  energy: 50,  clickPower: 100  },
+            china:   { name: '中国',   flag: '🇨🇳', ore: 300,  energy: 80,  clickPower: 100  },
+            russia:  { name: '俄罗斯', flag: '🇷🇺', ore: 400,  energy: 60,  clickPower: 100  },
+            germany: { name: '德国',   flag: '🇩🇪', ore: 250,  energy: 70,  clickPower: 100  },
+            india:   { name: '印度',   flag: '🇮🇳', ore: 200,  energy: 50,  clickPower: 150  }
         };
 
         function selectCountry(id) {
             const cfg = countryConfigs[id];
+            game.ore = cfg.ore;
             game.energy = cfg.energy;
-            game.totalEarned = cfg.energy;
+            game.totalEarned = cfg.ore;
             game.clickPower = cfg.clickPower;
             game.country = id;
             game.countryName = cfg.name;
-            game.costDiscount = cfg.costDiscount;
-            game.creditsMult = cfg.creditsMult;
-            game.scienceMult = cfg.scienceMult;
 
             // 淡出选国界面，淡入游戏
             const screen = document.getElementById('countryScreen');
@@ -1468,7 +1662,7 @@
         gameLoop();
 
         window.addEventListener('beforeunload', () => {
-            localStorage.setItem('spaceEmpireV4', JSON.stringify(game));
+            localStorage.setItem('spaceEmpireV5', JSON.stringify(game));
         });
     </script>
 </body>
