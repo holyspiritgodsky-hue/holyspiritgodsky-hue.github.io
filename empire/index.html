@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太空帝国 - 征服太阳系</title>
+    <style>
+        :root {
+            --font-ui:    'Courier New', Consolas, 'SF Mono', monospace;
+            --font-body:  -apple-system, 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', sans-serif;
+            --font-mono:  'Courier New', Consolas, monospace;
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0e1a;
+            --bg-panel: rgba(15, 23, 42, 0.92);
+            --accent-cyan: #00d9ff;
+            --accent-purple: #a855f7;
+            --accent-gold: #fbbf24;
+            --accent-green: #10b981;
+            --text-white: #ffffff;
+            --text-gray: #94a3b8;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #000;
+            color: var(--text-white);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* 宇宙画布 */
+        .universe-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, #0a0e1a 0%, #000 100%);
+        }
+
+        #universeCanvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* UI层 */
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        .ui-overlay > * {
+            pointer-events: auto;
+        }
+
+        /* 顶部栏 */
+        .top-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(to bottom, rgba(10, 14, 26, 0.95), transparent);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-title {
+            text-align: center;
+            font-family: var(--font-ui);
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 40px rgba(0, 217, 255, 0.4);
+        }
+
+        .civilization-level {
+            text-align: center;
+            font-family: var(--font-ui);
+            font-size: 1.1rem;
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+        }
+
+        .resources-compact {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .resource-compact {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 217, 255, 0.3);
+        }
+
+        .resource-icon-small {
+            font-size: 1.5rem;
+        }
+
+        .resource-value-small {
+            font-family: var(--font-mono);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .resource-rate-small {
+            font-size: 0.8rem;
+            color: var(--accent-green);
+        }
+
+        /* 底部控制面板 */
+        .bottom-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(10, 14, 26, 0.95), transparent);
+            backdrop-filter: blur(15px);
+            padding: 1.5rem 2rem;
+            max-height: 40vh;
+            overflow-y: auto;
+        }
+
+        .panel-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .tab-button {
+            font-family: var(--font-ui);
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-gray);
+            padding: 0.8rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .tab-button.active {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .tab-button:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upgrades-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+
+        .upgrade-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .upgrade-card:hover:not(.disabled) {
+            background: rgba(0, 217, 255, 0.1);
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .upgrade-card.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .upgrade-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .upgrade-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .upgrade-level-badge {
+            background: var(--accent-purple);
+            padding: 0.2rem 0.5rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .upgrade-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .upgrade-cost-label {
+            color: var(--accent-gold);
+            font-family: var(--font-mono);
+            font-weight: 700;
+        }
+
+        .upgrade-prod-label {
+            color: var(--accent-green);
+        }
+
+        /* 进度指示器 */
+        .progress-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-panel);
+            padding: 1.5rem 2rem;
+            border-radius: 15px;
+            border: 2px solid var(--accent-gold);
+            text-align: center;
+            min-width: 350px;
+            pointer-events: none;
+        }
+
+        .progress-title-main {
+            font-family: var(--font-ui);
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            margin-bottom: 0.8rem;
+        }
+
+        .progress-bar-wrapper {
+            width: 100%;
+            height: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-gold));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.6);
+        }
+
+        .progress-percentage-text {
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: var(--text-gray);
+        }
+
+        /* 提示文本 */
+        .hint-text {
+            position: absolute;
+            bottom: 45%;
+            left: 50%;
+            transform: translateX(-50%);
+            color: var(--text-gray);
+            font-size: 1rem;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0.8;
+            animation: hintPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes hintPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        /* 里程碑弹窗 */
+        .milestone-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .milestone-box {
+            background: var(--bg-panel);
+            border: 3px solid var(--accent-gold);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            max-width: 600px;
+            animation: milestoneZoom 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 0 0 80px rgba(251, 191, 36, 0.6);
+        }
+
+        @keyframes milestoneZoom {
+            0% {
+                transform: scale(0) rotate(-180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .milestone-emoji {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            animation: emojiFloat 0.6s ease infinite;
+        }
+
+        @keyframes emojiFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .milestone-heading {
+            font-family: var(--font-ui);
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .milestone-description {
+            font-size: 1.2rem;
+            color: var(--text-gray);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .milestone-cta {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: var(--font-ui);
+            transition: all 0.3s ease;
+        }
+
+        .milestone-cta:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.6);
+        }
+
+        /* 浮动数字 */
+        .floating-number {
+            position: fixed;
+            font-family: var(--font-mono);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+            pointer-events: none;
+            animation: floatUpAnim 1.5s ease-out forwards;
+            text-shadow: 0 0 10px var(--accent-gold);
+            z-index: 500;
+        }
+
+        @keyframes floatUpAnim {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(1.5);
+            }
+        }
+
+        /* 离线收益 */
+        .offline-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .offline-box {
+            background: var(--bg-panel);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            border: 2px solid var(--accent-cyan);
+            box-shadow: 0 0 60px rgba(0, 217, 255, 0.4);
+            max-width: 500px;
+        }
+
+        .offline-title {
+            font-family: var(--font-ui);
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--accent-cyan);
+        }
+
+        .offline-amount {
+            font-family: var(--font-mono);
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent-gold);
+            margin: 1.5rem 0;
+            text-shadow: 0 0 30px var(--accent-gold);
+        }
+
+        .offline-btn {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            border: none;
+            padding: 1rem 3rem;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: var(--font-ui);
+        }
+
+        .offline-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.4);
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .game-title {
+                font-size: 1.8rem;
+            }
+
+            .bottom-panel {
+                max-height: 50vh;
+            }
+
+            .upgrades-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-indicator {
+                min-width: 280px;
+                padding: 1rem 1.5rem;
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ===== CSS行星层（叠在canvas上方，避开跨域限制）===== */
+        #planetLayer {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;   /* 默认不拦截，行星自己开启 */
+            z-index: 10;
+        }
+
+        .planet-div {
+            position: absolute;
+            border-radius: 50%;
+            background-size: cover;
+            background-position: center;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            pointer-events: auto;
+            transition: filter 0.4s ease, opacity 0.6s ease, box-shadow 0.4s ease;
+            box-shadow: 0 0 20px rgba(255,255,255,0.15);
+        }
+
+        .planet-div:hover { filter: brightness(1.25); transform: translate(-50%,-50%) scale(1.08); }
+        .planet-div:active { transform: translate(-50%,-50%) scale(0.94); }
+
+        .planet-div.locked {
+            filter: grayscale(1) brightness(0.3);
+            pointer-events: none;
+            opacity: 0;             /* 未解锁完全隐藏 */
+        }
+
+        /* 各星球真实图片（公开CDN，同域代理） */
+        .p-sun     { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg/480px-The_Sun_by_the_Atmospheric_Imaging_Assembly_of_NASA%27s_Solar_Dynamics_Observatory_-_20100819.jpg');
+                     box-shadow: 0 0 80px rgba(253,200,50,0.9), 0 0 160px rgba(253,150,30,0.4); pointer-events:none; }
+        .p-mercury { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Mercury_in_true_color.jpg/240px-Mercury_in_true_color.jpg'); }
+        .p-venus   { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Venus-real_color.jpg/240px-Venus-real_color.jpg'); }
+        .p-earth   { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/The_Earth_seen_from_Apollo_17.jpg/240px-The_Earth_seen_from_Apollo_17.jpg');
+                     box-shadow: 0 0 35px rgba(74,144,226,0.7); }
+        .p-moon    { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/240px-FullMoon2010.jpg'); }
+        .p-mars    { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/OSIRIS_Mars_true_color.jpg/240px-OSIRIS_Mars_true_color.jpg');
+                     box-shadow: 0 0 30px rgba(217,74,46,0.6); }
+        .p-jupiter { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Jupiter_and_its_shrunken_Great_Red_Spot.jpg/240px-Jupiter_and_its_shrunken_Great_Red_Spot.jpg');
+                     box-shadow: 0 0 40px rgba(200,139,58,0.5); }
+        .p-saturn  { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Saturn_during_Equinox.jpg/320px-Saturn_during_Equinox.jpg');
+                     box-shadow: 0 0 40px rgba(250,213,165,0.5); }
+        .p-uranus  { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/3/3d/Uranus2.jpg/240px-Uranus2.jpg');
+                     box-shadow: 0 0 30px rgba(79,213,214,0.5); }
+        .p-neptune { background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Neptune_-_Voyager_2_%2829347980845%29_flatten_crop.jpg/240px-Neptune_-_Voyager_2_%2829347980845%29_flatten_crop.jpg');
+                     box-shadow: 0 0 30px rgba(65,102,245,0.5); }
+
+        /* 土星光环（伪元素，纯CSS） */
+        .p-saturn::before {
+            content: '';
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 185%; height: 50%;
+            border: 4px solid rgba(210,180,140,0.55);
+            border-radius: 50%;
+            transform: translate(-50%,-50%) rotateX(65deg);
+            pointer-events: none;
+        }
+
+        /* 行星自转动画 */
+        @keyframes spinSlow  { from{background-position:0% center} to{background-position:200% center} }
+        .p-earth   { animation: spinSlow 60s linear infinite; }
+        .p-venus   { animation: spinSlow 90s linear infinite; }
+        .p-mars    { animation: spinSlow 55s linear infinite; }
+        .p-jupiter { animation: spinSlow 30s linear infinite; }
+
+        /* 解锁时的出现动画 */
+        @keyframes planetAppear {
+            0%   { transform: translate(-50%,-50%) scale(0); opacity:0; }
+            60%  { transform: translate(-50%,-50%) scale(1.15); }
+            100% { transform: translate(-50%,-50%) scale(1);  opacity:1; }
+        }
+        .planet-div.appearing { animation: planetAppear 0.8s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+        /* ===== 选国家开场界面 ===== */
+        .country-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            animation: fadeIn 1s ease;
+        }
+
+        .country-screen-title {
+            font-family: var(--font-ui);
+            font-size: 2.2rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .country-screen-subtitle {
+            color: var(--text-gray);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            font-style: italic;
+            max-width: 500px;
+            line-height: 1.6;
+        }
+
+        .country-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .country-card {
+            background: rgba(15, 23, 42, 0.85);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 1.4rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .country-card::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, rgba(0,217,255,0.05));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .country-card:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0,217,255,0.25);
+        }
+
+        .country-card:hover::before { opacity: 1; }
+
+        .country-card.vip {
+            border-color: rgba(251,191,36,0.4);
+        }
+
+        .country-card.vip:hover {
+            border-color: var(--accent-gold);
+            box-shadow: 0 10px 30px rgba(251,191,36,0.3);
+        }
+
+        .country-flag {
+            font-size: 2.8rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .country-name {
+            font-family: var(--font-ui);
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            color: var(--text-white);
+        }
+
+        .country-stats {
+            font-size: 0.82rem;
+            color: var(--text-gray);
+            line-height: 1.7;
+        }
+
+        .country-stats span {
+            display: block;
+        }
+
+        .country-stats .highlight {
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .country-tag {
+            display: inline-block;
+            margin-top: 0.6rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+        }
+
+        .tag-vip { background: rgba(251,191,36,0.2); color: var(--accent-gold); border: 1px solid rgba(251,191,36,0.4); }
+        .tag-event { background: rgba(168,85,247,0.2); color: var(--accent-purple); border: 1px solid rgba(168,85,247,0.4); }
+        .tag-balanced { background: rgba(16,185,129,0.2); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.4); }
+    </style>
+</head>
+<body>
+    <!-- 宇宙画布（只绘制星空、轨道线、光路、粒子） -->
+    <div class="universe-canvas">
+        <canvas id="universeCanvas"></canvas>
+    </div>
+
+    <!-- CSS行星层（真实图片，避开Canvas跨域限制） -->
+    <div id="planetLayer"></div>
+
+    <!-- 选国家开场界面 -->
+    <div class="country-screen" id="countryScreen">
+        <div class="country-screen-title">🌌 太空帝国</div>
+        <div class="country-screen-subtitle">
+            "我们第一次从太空俯视自己的家园，城市的灯光像一层薄薄的霜，<br>文明在黑暗的背景上显得格外脆弱。"
+        </div>
+        <div class="country-grid">
+            <div class="country-card vip" onclick="selectCountry('usa')">
+                <span class="country-flag">🇺🇸</span>
+                <div class="country-name">美国</div>
+                <div class="country-stats">
+                    <span>⚡ 初始能量 <b class="highlight">1000</b></span>
+                    <span>🤖 机器人 <b class="highlight">100万</b></span>
+                    <span>💰 星币加成 <b class="highlight">×2</b></span>
+                    <span class="country-tag tag-vip">★ VIP 优势</span>
+                </div>
+            </div>
+            <div class="country-card" onclick="selectCountry('china')">
+                <span class="country-flag">🇨🇳</span>
+                <div class="country-name">中国</div>
+                <div class="country-stats">
+                    <span>⚡ 初始能量 <b class="highlight">300</b></span>
+                    <span>🤖 机器人 <b class="highlight">15万</b></span>
+                    <span>🔬 科研加成 <b class="highlight">×1.5</b></span>
+                    <span class="country-tag tag-event">独有事件链</span>
+                </div>
+            </div>
+            <div class="country-card" onclick="selectCountry('russia')">
+                <span class="country-flag">🇷🇺</span>
+                <div class="country-name">俄罗斯</div>
+                <div class="country-stats">
+                    <span>⚡ 初始能量 <b class="highlight">400</b></span>
+                    <span>🤖 机器人 <b class="highlight">20万</b></span>
+                    <span>🚀 火箭成本 <b class="highlight">-20%</b></span>
+                    <span class="country-tag tag-balanced">均衡发展</span>
+                </div>
+            </div>
+            <div class="country-card" onclick="selectCountry('germany')">
+                <span class="country-flag">🇩🇪</span>
+                <div class="country-name">德国</div>
+                <div class="country-stats">
+                    <span>⚡ 初始能量 <b class="highlight">200</b></span>
+                    <span>🤖 机器人 <b class="highlight">8万</b></span>
+                    <span>⚙️ 升级成本 <b class="highlight">-15%</b></span>
+                    <span class="country-tag tag-balanced">工业强国</span>
+                </div>
+            </div>
+            <div class="country-card" onclick="selectCountry('india')">
+                <span class="country-flag">🇮🇳</span>
+                <div class="country-name">印度</div>
+                <div class="country-stats">
+                    <span>⚡ 初始能量 <b class="highlight">150</b></span>
+                    <span>🤖 机器人 <b class="highlight">6万</b></span>
+                    <span>📈 点击倍率 <b class="highlight">×2</b></span>
+                    <span class="country-tag tag-event">独有事件链</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- UI层 -->
+    <div class="ui-overlay">
+        <!-- 顶部栏 -->
+        <div class="top-bar">
+            <div class="game-title">🌌 太空帝国</div>
+            <div class="civilization-level" id="civLevel">🌍 行星文明</div>
+            <div class="resources-compact">
+                <div class="resource-compact">
+                    <span class="resource-icon-small">⚡</span>
+                    <div>
+                        <div class="resource-value-small" id="energyVal">0</div>
+                        <div class="resource-rate-small" id="energyRate">+0/秒</div>
+                    </div>
+                </div>
+                <div class="resource-compact">
+                    <span class="resource-icon-small">🪙</span>
+                    <div>
+                        <div class="resource-value-small" id="creditsVal">0</div>
+                        <div class="resource-rate-small" id="creditsRate">+0/秒</div>
+                    </div>
+                </div>
+                <div class="resource-compact">
+                    <span class="resource-icon-small">🔬</span>
+                    <div>
+                        <div class="resource-value-small" id="scienceVal">0</div>
+                        <div class="resource-rate-small" id="scienceRate">+0/秒</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 进度条：固定在底部面板正上方 -->
+        <div style="position:absolute;bottom:268px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.75);padding:0.5rem 1.2rem;border-radius:20px;border:1px solid rgba(251,191,36,0.35);min-width:300px;max-width:500px;width:50%;backdrop-filter:blur(8px);pointer-events:none;">
+            <div style="display:flex;align-items:center;gap:0.8rem;">
+                <div id="progressTitle" style="font-family:var(--font-ui);font-size:0.75rem;font-weight:700;color:var(--accent-gold);white-space:nowrap;flex-shrink:0;">🎯 距离地月系统</div>
+                <div style="flex:1;height:10px;background:rgba(0,0,0,0.5);border-radius:5px;overflow:hidden;">
+                    <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent-cyan),var(--accent-purple),var(--accent-gold));border-radius:5px;transition:width 0.5s ease;box-shadow:0 0 8px rgba(0,217,255,0.5);"></div>
+                </div>
+                <div id="progressPercent" style="font-family:var(--font-mono);font-size:0.75rem;color:var(--text-gray);white-space:nowrap;flex-shrink:0;">0%</div>
+            </div>
+        </div>
+
+        <!-- 提示文本已移除，由点击反馈代替 -->
+
+        <!-- 底部面板 -->
+        <div class="bottom-panel">
+            <div class="panel-tabs">
+                <button class="tab-button active" data-tab="mining">⛏️ 采矿</button>
+                <button class="tab-button" data-tab="factory">🏭 工厂</button>
+                <button class="tab-button" data-tab="science">🔬 科研</button>
+                <button class="tab-button" data-tab="special">✨ 特殊</button>
+            </div>
+
+            <div class="tab-content active" id="tab-mining">
+                <div class="upgrades-grid" id="miningGrid"></div>
+            </div>
+            <div class="tab-content" id="tab-factory">
+                <div class="upgrades-grid" id="factoryGrid"></div>
+            </div>
+            <div class="tab-content" id="tab-science">
+                <div class="upgrades-grid" id="scienceGrid"></div>
+            </div>
+            <div class="tab-content" id="tab-special">
+                <div class="upgrades-grid" id="specialGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 游戏状态
+        const game = {
+            energy: 0,
+            credits: 0,
+            science: 0,
+            clickPower: 3,
+            energyPerSec: 0,
+            creditsPerSec: 0,
+            sciencePerSec: 0,
+            totalEarned: 0,
+            totalClicks: 0,
+            currentStage: 0,
+            lastSaveTime: Date.now(),
+            unlockedPlanets: ['earth'],
+            upgrades: { mining: [], factory: [], science: [], special: [] }
+        };
+
+        // 文明阶段
+        const stages = [
+            { id: 0, name: '🌍 行星文明', desc: '人类文明的起点', threshold: 0, nextThreshold: 200, view: 'earth' },
+            { id: 1, name: '🌙 地月系统', desc: '月球成为人类第二家园', threshold: 200, nextThreshold: 1000, view: 'inner' },
+            { id: 2, name: '🪐 内行星征服', desc: '水星、金星、火星殖民完成', threshold: 1000, nextThreshold: 5000, view: 'inner' },
+            { id: 3, name: '☀️ 太阳系霸主', desc: '掌控八大行星', threshold: 5000, nextThreshold: 25000, view: 'solar' },
+            { id: 4, name: '🌌 银河探索者', desc: '星际时代来临', threshold: 25000, nextThreshold: Infinity, view: 'galaxy' }
+        ];
+
+        // 行星数据
+        // 行星数据（距离/角度决定布局，cssClass对应真实图片）
+        const planets = [
+            { id: 'sun',     name: '太阳',   radius: 44, color: '#FDB813', unlockStage: 0, isSun: true,  cssClass: 'p-sun',     clickMulti: 0  },
+            { id: 'mercury', name: '水星',   distance: 105, angle: 15,  radius: 9,  color: '#8C7853', unlockStage: 2, cssClass: 'p-mercury', clickMulti: 2  },
+            { id: 'venus',   name: '金星',   distance: 148, angle: 55,  radius: 13, color: '#E8C07D', unlockStage: 2, cssClass: 'p-venus',   clickMulti: 3  },
+            { id: 'earth',   name: '地球',   distance: 192, angle: 100, radius: 16, color: '#4A90E2', unlockStage: 0, cssClass: 'p-earth',   clickMulti: 1  },
+            { id: 'moon',    name: '月球',   distance: 222, angle: 113, radius: 9,  color: '#CCCCCC', unlockStage: 1, cssClass: 'p-moon',    clickMulti: 2  },
+            { id: 'mars',    name: '火星',   distance: 252, angle: 148, radius: 12, color: '#D94A2E', unlockStage: 2, cssClass: 'p-mars',    clickMulti: 4  },
+            { id: 'jupiter', name: '木星',   distance: 328, angle: 195, radius: 30, color: '#C88B3A', unlockStage: 3, cssClass: 'p-jupiter', clickMulti: 8  },
+            { id: 'saturn',  name: '土星',   distance: 385, angle: 238, radius: 25, color: '#FAD5A5', unlockStage: 3, cssClass: 'p-saturn',  clickMulti: 10 },
+            { id: 'uranus',  name: '天王星', distance: 430, angle: 278, radius: 19, color: '#4FD5D6', unlockStage: 3, cssClass: 'p-uranus',  clickMulti: 12 },
+            { id: 'neptune', name: '海王星', distance: 468, angle: 320, radius: 17, color: '#4166F5', unlockStage: 3, cssClass: 'p-neptune', clickMulti: 15 }
+        ];
+
+        // 升级配置
+        const upgradesConfig = {
+            mining: [
+                { id: 'm1', name: '太阳能板', icon: '☀️', baseProduction: 2, baseCost: 10, costMult: 1.12 },
+                { id: 'm2', name: '风力发电', icon: '💨', baseProduction: 10, baseCost: 50, costMult: 1.12 },
+                { id: 'm3', name: '核电站', icon: '⚛️', baseProduction: 50, baseCost: 300, costMult: 1.12 },
+                { id: 'm4', name: '聚变反应堆', icon: '⚡', baseProduction: 200, baseCost: 1500, costMult: 1.12 },
+                { id: 'm5', name: '反物质发电', icon: '💎', baseProduction: 1000, baseCost: 8000, costMult: 1.12 }
+            ],
+            factory: [
+                { id: 'f1', name: '基础工厂', icon: '🏭', baseProduction: 1, baseCost: 50, costMult: 1.12, outputType: 'credits' },
+                { id: 'f2', name: '自动化产线', icon: '🤖', baseProduction: 5, baseCost: 250, costMult: 1.12, outputType: 'credits' },
+                { id: 'f3', name: '纳米工厂', icon: '🔬', baseProduction: 25, baseCost: 1200, costMult: 1.12, outputType: 'credits' },
+                { id: 'f4', name: '量子制造', icon: '⚛️', baseProduction: 125, baseCost: 6000, costMult: 1.12, outputType: 'credits' }
+            ],
+            science: [
+                { id: 's1', name: '研究实验室', icon: '🔬', baseProduction: 0.5, baseCost: 100, costMult: 1.12, outputType: 'science' },
+                { id: 's2', name: 'AI计算中心', icon: '🧠', baseProduction: 2, baseCost: 500, costMult: 1.12, outputType: 'science' },
+                { id: 's3', name: '量子计算机', icon: '💻', baseProduction: 10, baseCost: 2500, costMult: 1.12, outputType: 'science' },
+                { id: 's4', name: '超维研究站', icon: '🌀', baseProduction: 50, baseCost: 12000, costMult: 1.12, outputType: 'science' }
+            ],
+            special: [
+                { id: 'sp1', name: '太空电梯', icon: '🚡', baseProduction: 5, baseCost: 500, costMult: 1.15, bonus: 'click' },
+                { id: 'sp2', name: '戴森球原型', icon: '🌟', baseProduction: 100, baseCost: 5000, costMult: 1.15, bonus: 'all' },
+                { id: 'sp3', name: '时空加速器', icon: '⏰', baseProduction: 0, baseCost: 25000, costMult: 1.2, bonus: 'speed' }
+            ]
+        };
+
+        // Canvas设置
+        const canvas = document.getElementById('universeCanvas');
+        const ctx = canvas.getContext('2d');
+        let centerX, centerY, scale = 1;
+        const particles = [];
+
+        // 静态星空改为向右流动的视差星流（只生成一次）
+        const starfield = [];
+        function initStarfield() {
+            for (let i = 0; i < 220; i++) {
+                starfield.push({
+                    x: Math.random(),          // 0-1 比例坐标
+                    y: Math.random(),
+                    r: Math.random() * 1.4 + 0.2,
+                    alpha: Math.random() * 0.6 + 0.3,
+                    // 三个层次速度：远景慢、近景快，形成视差
+                    speed: Math.random() * 0.00012 + 0.00003,
+                    offset: Math.random() * Math.PI * 2
+                });
+            }
+        }
+
+        let starTick = 0;
+        function drawStarfield() {
+            starTick += 0.016;
+            starfield.forEach(s => {
+                // 向右移动
+                s.x += s.speed;
+                if (s.x > 1) s.x -= 1;   // 超出右边从左侧重新出现
+
+                const twinkle = 0.7 + 0.3 * Math.sin(starTick * 2 + s.offset);
+                ctx.fillStyle = `rgba(255,255,255,${s.alpha * twinkle})`;
+                ctx.beginPath();
+                ctx.arc(s.x * canvas.width, s.y * canvas.height, s.r, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            centerX = canvas.width / 2;
+            // 太阳系中心放在屏幕上半部，避开底部升级面板（约260px高）
+            const uiTopHeight = 160;
+            const bottomPanelHeight = 260;
+            const availableH = canvas.height - uiTopHeight - bottomPanelHeight;
+            centerY = uiTopHeight + availableH / 2;
+            // 自适应缩放：让最远行星（海王星distance=450）完整显示
+            const availableW = canvas.width * 0.9;
+            scale = Math.min(availableW, availableH) / (450 * 2 + 80);
+        }
+
+        // 绘制太阳系
+        // ── Canvas：只画星空、轨道圈、光路、粒子 ─────────────
+        function drawSolarSystem() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawStarfield();
+
+            // 轨道圈（已解锁阶段才画，月球轨道不画避免杂乱）
+            planets.forEach(planet => {
+                if (planet.isSun || planet.id === 'moon') return;
+                if (game.currentStage < planet.unlockStage) return;
+                ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 8]);
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, planet.distance * scale, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            });
+
+            drawEnergyLinks();
+            updateParticles();
+            updatePlanetDivs();   // 同步CSS行星位置
+        }
+
+        // ── CSS行星div：初始化 ──────────────────────────────────
+        function initPlanetDivs() {
+            const layer = document.getElementById('planetLayer');
+            planets.forEach(planet => {
+                const div = document.createElement('div');
+                div.className = `planet-div ${planet.cssClass} locked`;
+                div.id = `pdiv-${planet.id}`;
+                // 初始尺寸（resizeCanvas后会在updatePlanetDivs里更新）
+                const r = Math.max(planet.radius, planet.isSun ? 32 : 8);
+                div.style.width  = r * 2 + 'px';
+                div.style.height = r * 2 + 'px';
+                div.style.left   = '-9999px';
+                div.style.top    = '-9999px';
+
+                if (!planet.isSun) {
+                    div.addEventListener('click', (e) => {
+                        if (div.classList.contains('locked')) return;
+                        handlePlanetClick(planet, e.clientX, e.clientY);
+                    });
+                }
+                layer.appendChild(div);
+            });
+        }
+
+        // ── CSS行星div：每帧同步位置和解锁状态 ────────────────
+        function updatePlanetDivs() {
+            planets.forEach(planet => {
+                const div = document.getElementById(`pdiv-${planet.id}`);
+                if (!div) return;
+
+                const unlocked = game.unlockedPlanets.includes(planet.id)
+                              || game.currentStage >= planet.unlockStage;
+                const drawR = Math.max(planet.radius * scale, planet.isSun ? 32 : 8);
+                let x, y;
+                if (planet.isSun) {
+                    x = centerX; y = centerY;
+                } else {
+                    const rad = planet.angle * Math.PI / 180;
+                    x = centerX + Math.cos(rad) * planet.distance * scale;
+                    y = centerY + Math.sin(rad)  * planet.distance * scale;
+                }
+
+                div.style.width  = drawR * 2 + 'px';
+                div.style.height = drawR * 2 + 'px';
+                div.style.left   = x + 'px';
+                div.style.top    = y + 'px';
+
+                if (unlocked && div.classList.contains('locked')) {
+                    div.classList.remove('locked');
+                    div.classList.add('appearing');
+                    setTimeout(() => div.classList.remove('appearing'), 900);
+                } else if (!unlocked && !div.classList.contains('locked')) {
+                    div.classList.add('locked');
+                }
+
+                planet.screenX = x;
+                planet.screenY = y;
+                planet.drawR   = drawR;
+            });
+        }
+
+        // 光路系统
+        function drawEnergyLinks() {
+            const earth = planets.find(p => p.id === 'earth');
+            
+            game.unlockedPlanets.forEach(planetId => {
+                if (planetId === 'earth' || planetId === 'sun') return;
+                
+                const planet = planets.find(p => p.id === planetId);
+                if (!planet || !planet.screenX) return;
+
+                // 绘制光路
+                const gradient = ctx.createLinearGradient(
+                    earth.screenX, earth.screenY,
+                    planet.screenX, planet.screenY
+                );
+                gradient.addColorStop(0, 'rgba(251, 191, 36, 0.6)');
+                gradient.addColorStop(0.5, 'rgba(251, 191, 36, 0.8)');
+                gradient.addColorStop(1, 'rgba(251, 191, 36, 0.6)');
+
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 2;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#fbbf24';
+                ctx.setLineDash([10, 5]);
+                ctx.beginPath();
+                ctx.moveTo(earth.screenX, earth.screenY);
+                ctx.lineTo(planet.screenX, planet.screenY);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.shadowBlur = 0;
+            });
+        }
+
+        // 粒子系统
+        function createParticle(x, y, targetX, targetY) {
+            particles.push({
+                x, y, targetX, targetY,
+                vx: (targetX - x) / 50,
+                vy: (targetY - y) / 50,
+                life: 50,
+                maxLife: 50
+            });
+        }
+
+        function updateParticles() {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.life--;
+
+                const alpha = p.life / p.maxLife;
+                ctx.fillStyle = `rgba(251, 191, 36, ${alpha})`;
+                ctx.shadowBlur = 5;
+                ctx.shadowColor = '#fbbf24';
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+
+        // 点击检测
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // 从最外层行星往内遍历，优先命中外层
+            [...planets].reverse().forEach(planet => {
+                if (planet.id === 'sun') return;
+                if (!planet.screenX) return;
+
+                const unlocked = game.unlockedPlanets.includes(planet.id) || game.currentStage >= planet.unlockStage;
+                if (!unlocked) return;
+
+                const dx = clickX - planet.screenX;
+                const dy = clickY - planet.screenY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                // 点击区域略大于视觉半径，手机端更易点中
+                const hitRadius = (planet.drawR || planet.radius * scale) + 12;
+
+                if (dist <= hitRadius) {
+                    handlePlanetClick(planet, e.clientX, e.clientY);
+                }
+            });
+        });
+
+        function handlePlanetClick(planet, clientX, clientY) {
+            const earned = game.clickPower * (planet.clickMulti || 1);
+            game.energy += earned;
+            game.totalEarned += earned;
+            game.totalClicks++;
+
+            // 浮动数字
+            const floatingNum = document.createElement('div');
+            floatingNum.className = 'floating-number';
+            floatingNum.textContent = '+' + formatNumber(earned);
+            floatingNum.style.left = clientX + 'px';
+            floatingNum.style.top = clientY + 'px';
+            document.body.appendChild(floatingNum);
+            setTimeout(() => floatingNum.remove(), 1500);
+
+            // 粒子效果
+            if (planet.id !== 'earth') {
+                const earth = planets.find(p => p.id === 'earth');
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        createParticle(planet.screenX, planet.screenY, earth.screenX, earth.screenY);
+                    }, i * 100);
+                }
+            }
+
+            updateUI();
+            checkStageProgress();
+        }
+
+        // 数字格式化
+        function formatNumber(num) {
+            if (num < 1000) return Math.floor(num);
+            if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
+            if (num < 1000000000) return (num / 1000000).toFixed(2) + 'M';
+            return (num / 1000000000).toFixed(2) + 'B';
+        }
+
+        // 初始化升级
+        function initUpgrades() {
+            for (let category in upgradesConfig) {
+                upgradesConfig[category].forEach(config => {
+                    game.upgrades[category].push({ ...config, level: 0 });
+                });
+            }
+        }
+
+        // 渲染升级
+        function renderUpgrades() {
+            for (let category in game.upgrades) {
+                const container = document.getElementById(category + 'Grid');
+                container.innerHTML = '';
+
+                game.upgrades[category].forEach(upgrade => {
+                    const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, upgrade.level));
+                    const canAfford = game.energy >= cost;
+                    const production = upgrade.baseProduction * upgrade.level;
+
+                    const card = document.createElement('div');
+                    card.className = `upgrade-card ${canAfford ? '' : 'disabled'}`;
+                    card.innerHTML = `
+                        <div class="upgrade-card-header">
+                            <span class="upgrade-name">${upgrade.icon} ${upgrade.name}</span>
+                            <span class="upgrade-level-badge">Lv.${upgrade.level}</span>
+                        </div>
+                        <div class="upgrade-stats">
+                            <span class="upgrade-cost-label">💰 ${formatNumber(cost)}</span>
+                            <span class="upgrade-prod-label">${production > 0 ? '+' + formatNumber(production) + '/秒' : ''}</span>
+                        </div>
+                    `;
+
+                    card.onclick = () => buyUpgrade(upgrade);
+                    container.appendChild(card);
+                });
+            }
+        }
+
+        // 购买升级
+        function buyUpgrade(upgrade) {
+            const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult, upgrade.level));
+            if (game.energy >= cost) {
+                game.energy -= cost;
+                upgrade.level++;
+                
+                if (upgrade.bonus === 'click') {
+                    game.clickPower += upgrade.baseProduction;
+                }
+
+                updateProduction();
+                renderUpgrades();
+                updateUI();
+            }
+        }
+
+        // 更新产量
+        function updateProduction() {
+            game.energyPerSec = 0;
+            game.creditsPerSec = 0;
+            game.sciencePerSec = 0;
+
+            for (let category in game.upgrades) {
+                game.upgrades[category].forEach(upgrade => {
+                    const production = upgrade.baseProduction * upgrade.level;
+                    
+                    if (upgrade.outputType === 'credits') {
+                        game.creditsPerSec += production;
+                    } else if (upgrade.outputType === 'science') {
+                        game.sciencePerSec += production;
+                    } else if (!upgrade.bonus) {
+                        game.energyPerSec += production;
+                    }
+                });
+            }
+
+            const dysonLevel = game.upgrades.special.find(u => u.id === 'sp2')?.level || 0;
+            if (dysonLevel > 0) {
+                const bonus = 1 + (dysonLevel * 0.1);
+                game.energyPerSec *= bonus;
+                game.creditsPerSec *= bonus;
+                game.sciencePerSec *= bonus;
+            }
+        }
+
+        // 更新UI
+        function updateUI() {
+            document.getElementById('energyVal').textContent = formatNumber(game.energy);
+            document.getElementById('creditsVal').textContent = formatNumber(game.credits);
+            document.getElementById('scienceVal').textContent = formatNumber(game.science);
+            document.getElementById('energyRate').textContent = '+' + formatNumber(game.energyPerSec) + '/秒';
+            document.getElementById('creditsRate').textContent = '+' + formatNumber(game.creditsPerSec) + '/秒';
+            document.getElementById('scienceRate').textContent = '+' + formatNumber(game.sciencePerSec) + '/秒';
+        }
+
+        // 检查阶段进度
+        function checkStageProgress() {
+            const currentStage = stages[game.currentStage];
+            const nextStage = stages[game.currentStage + 1];
+
+            if (nextStage && game.totalEarned >= nextStage.threshold) {
+                advanceStage(nextStage);
+            }
+
+            if (nextStage) {
+                const progress = ((game.totalEarned - currentStage.threshold) / 
+                                 (nextStage.threshold - currentStage.threshold)) * 100;
+                
+                document.getElementById('progressBar').style.width = Math.min(progress, 100) + '%';
+                document.getElementById('progressPercent').textContent = 
+                    `${Math.floor(Math.min(progress, 100))}% (${formatNumber(game.totalEarned)} / ${formatNumber(nextStage.threshold)})`;
+                document.getElementById('progressTitle').textContent = '🎯 距离' + nextStage.name;
+            } else {
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressPercent').textContent = '100% - 文明巅峰';
+                document.getElementById('progressTitle').textContent = '🎉 文明巅峰';
+            }
+        }
+
+        // 推进阶段
+        function advanceStage(stage) {
+            game.currentStage = stage.id;
+            document.getElementById('civLevel').textContent = stage.name;
+
+            // 解锁行星
+            planets.forEach(planet => {
+                if (planet.unlockStage === stage.id && planet.id !== 'sun') {
+                    game.unlockedPlanets.push(planet.id);
+                }
+            });
+
+            showMilestone(stage);
+        }
+
+        // 显示里程碑
+        function showMilestone(stage) {
+            const modal = document.createElement('div');
+            modal.className = 'milestone-overlay';
+            modal.innerHTML = `
+                <div class="milestone-box">
+                    <div class="milestone-emoji">🎉</div>
+                    <div class="milestone-heading">${stage.name}</div>
+                    <div class="milestone-description">${stage.desc}</div>
+                    <button class="milestone-cta">继续探索宇宙</button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('button').onclick = () => modal.remove();
+        }
+
+        // Tab切换
+        document.querySelectorAll('.tab-button').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            });
+        });
+
+        // 游戏循环
+        setInterval(() => {
+            game.energy += game.energyPerSec / 10;
+            game.credits += game.creditsPerSec / 10;
+            game.science += game.sciencePerSec / 10;
+            game.totalEarned += game.energyPerSec / 10;
+            
+            updateUI();
+            checkStageProgress();
+        }, 100);
+
+        // 渲染循环
+        function gameLoop() {
+            drawSolarSystem();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // 自动保存
+        setInterval(() => {
+            game.lastSaveTime = Date.now();
+            localStorage.setItem('spaceEmpireV4', JSON.stringify(game));
+        }, 5000);
+
+        // 加载游戏
+        function loadGame() {
+            const saved = localStorage.getItem('spaceEmpireV4');
+            if (!saved) return false;
+
+            const savedGame = JSON.parse(saved);
+            Object.assign(game, savedGame);
+
+            const offlineTime = (Date.now() - game.lastSaveTime) / 1000;
+            if (offlineTime > 60) {
+                const offlineEnergy = game.energyPerSec * Math.min(offlineTime, 3600 * 4);
+                showOfflineEarnings(offlineEnergy, offlineTime);
+                game.energy += offlineEnergy;
+            }
+
+            document.getElementById('civLevel').textContent = stages[game.currentStage].name;
+            updateProduction();
+            return true;
+        }
+
+        function showOfflineEarnings(amount, time) {
+            const hours = Math.floor(time / 3600);
+            const minutes = Math.floor((time % 3600) / 60);
+
+            const modal = document.createElement('div');
+            modal.className = 'offline-modal';
+            modal.innerHTML = `
+                <div class="offline-box">
+                    <div class="offline-title">欢迎回来！</div>
+                    <div>离线时间: ${hours}小时 ${minutes}分钟</div>
+                    <div class="offline-amount">+${formatNumber(amount)}</div>
+                    <div style="margin-bottom: 1.5rem;">能量已自动收集</div>
+                    <button class="offline-btn">太棒了！</button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelector('button').onclick = () => {
+                modal.remove();
+                updateUI();
+            };
+        }
+
+        // ===== 国家配置 =====
+        const countryConfigs = {
+            usa:     { name: '美国',   flag: '🇺🇸', energy: 1000, clickPower: 3,  creditsMult: 2.0, scienceMult: 1.0, costDiscount: 1.0 },
+            china:   { name: '中国',   flag: '🇨🇳', energy: 300,  clickPower: 3,  creditsMult: 1.0, scienceMult: 1.5, costDiscount: 1.0 },
+            russia:  { name: '俄罗斯', flag: '🇷🇺', energy: 400,  clickPower: 3,  creditsMult: 1.0, scienceMult: 1.0, costDiscount: 0.8 },
+            germany: { name: '德国',   flag: '🇩🇪', energy: 200,  clickPower: 3,  creditsMult: 1.0, scienceMult: 1.0, costDiscount: 0.85 },
+            india:   { name: '印度',   flag: '🇮🇳', energy: 150,  clickPower: 6,  creditsMult: 1.0, scienceMult: 1.0, costDiscount: 1.0 }
+        };
+
+        function selectCountry(id) {
+            const cfg = countryConfigs[id];
+            game.energy = cfg.energy;
+            game.totalEarned = cfg.energy;
+            game.clickPower = cfg.clickPower;
+            game.country = id;
+            game.countryName = cfg.name;
+            game.costDiscount = cfg.costDiscount;
+            game.creditsMult = cfg.creditsMult;
+            game.scienceMult = cfg.scienceMult;
+
+            // 淡出选国界面，淡入游戏
+            const screen = document.getElementById('countryScreen');
+            screen.style.transition = 'opacity 0.8s ease';
+            screen.style.opacity = '0';
+            setTimeout(() => screen.remove(), 800);
+
+            updateUI();
+            checkStageProgress();
+        }
+
+        // 颜色工具函数
+        function lightenColor(hex, amount) {
+            const num = parseInt(hex.replace('#',''), 16);
+            const r = Math.min(255, (num >> 16) + amount);
+            const g = Math.min(255, ((num >> 8) & 0xFF) + amount);
+            const b = Math.min(255, (num & 0xFF) + amount);
+            return `rgb(${r},${g},${b})`;
+        }
+        function darkenColor(hex, amount) {
+            const num = parseInt(hex.replace('#',''), 16);
+            const r = Math.max(0, (num >> 16) - amount);
+            const g = Math.max(0, ((num >> 8) & 0xFF) - amount);
+            const b = Math.max(0, (num & 0xFF) - amount);
+            return `rgb(${r},${g},${b})`;
+        }
+
+        // 初始化
+        window.addEventListener('resize', () => { resizeCanvas(); });
+        resizeCanvas();
+        initStarfield();
+        initPlanetDivs();   // 创建CSS行星div
+        initUpgrades();
+
+        // 有存档直接进游戏，没有存档显示选国界面
+        const hasSave = loadGame();
+        if (hasSave) {
+            document.getElementById('countryScreen').remove();
+        }
+
+        renderUpgrades();
+        updateUI();
+        checkStageProgress();
+        gameLoop();
+
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem('spaceEmpireV4', JSON.stringify(game));
+        });
+    </script>
+</body>
+</html>
