@@ -76,18 +76,6 @@
             backdrop-filter: blur(10px);
         }
 
-        .game-title {
-            text-align: center;
-            font-family: var(--font-ui);
-            font-size: 2.5rem;
-            font-weight: 900;
-            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 0.5rem;
-            text-shadow: 0 0 40px rgba(0, 217, 255, 0.4);
-        }
-
         .civilization-level {
             text-align: center;
             font-family: var(--font-ui);
@@ -130,16 +118,13 @@
         }
 
         .home-btn {
-            position: absolute;
-            top: 1.5rem;
-            right: 11rem;
-            padding: 0.6rem 1.2rem;
+            padding: 0.5rem 1rem;
             background: rgba(59, 130, 246, 0.15);
             border: 1.5px solid rgba(59, 130, 246, 0.4);
-            border-radius: 10px;
+            border-radius: 8px;
             color: #3b82f6;
             font-family: var(--font-ui);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -151,21 +136,18 @@
         .home-btn:hover {
             background: rgba(59, 130, 246, 0.3);
             border-color: rgba(59, 130, 246, 0.7);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
 
         .reset-btn {
-            position: absolute;
-            top: 1.5rem;
-            right: 2rem;
-            padding: 0.6rem 1.2rem;
+            padding: 0.5rem 1rem;
             background: rgba(220, 38, 38, 0.15);
             border: 1.5px solid rgba(220, 38, 38, 0.4);
-            border-radius: 10px;
+            border-radius: 8px;
             color: #ef4444;
             font-family: var(--font-ui);
-            font-size: 0.85rem;
+            font-size: 0.75rem;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -175,8 +157,17 @@
         .reset-btn:hover {
             background: rgba(220, 38, 38, 0.3);
             border-color: rgba(220, 38, 38, 0.7);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+        }
+
+        .bottom-actions {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
         }
 
         /* 底部控制面板 */
@@ -204,11 +195,11 @@
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid rgba(255, 255, 255, 0.1);
             color: var(--text-gray);
-            padding: 0.8rem 1.5rem;
-            border-radius: 10px;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-size: 0.9rem;
+            font-size: 0.75rem;
             font-weight: 700;
         }
 
@@ -546,11 +537,6 @@
 
         /* 响应式 */
         @media (max-width: 768px) {
-            .game-title {
-                font-size: 1.5rem;
-                margin-bottom: 0.3rem;
-            }
-
             .civilization-level {
                 font-size: 0.9rem;
                 margin-bottom: 0.5rem;
@@ -561,17 +547,8 @@
             }
 
             .home-btn, .reset-btn {
-                padding: 0.4rem 0.8rem;
-                font-size: 0.7rem;
-                top: 1rem;
-            }
-
-            .home-btn {
-                right: 7rem;
-            }
-
-            .reset-btn {
-                right: 1rem;
+                padding: 0.4rem 0.7rem;
+                font-size: 0.65rem;
             }
 
             .resources-compact {
@@ -604,8 +581,8 @@
             }
 
             .tab-button {
-                padding: 0.5rem 0.8rem;
-                font-size: 0.8rem;
+                padding: 0.4rem 0.6rem;
+                font-size: 0.7rem;
             }
 
             .upgrades-grid {
@@ -625,46 +602,51 @@
 
             /* 国家选择界面优化 */
             .country-screen {
-                padding: 1rem;
+                padding: 0.8rem 0.8rem 0.8rem 0.8rem;
+                justify-content: flex-start;
+                padding-top: 1.5rem;
             }
 
             .country-screen-title {
-                font-size: 1.6rem;
-                margin-bottom: 0.3rem;
+                font-size: 1.4rem;
+                margin-bottom: 0.2rem;
             }
 
             .country-screen-subtitle {
-                font-size: 0.85rem;
-                margin-bottom: 1rem;
+                font-size: 0.75rem;
+                margin-bottom: 0.6rem;
             }
 
             .country-grid {
-                gap: 0.8rem;
+                gap: 0.5rem;
                 grid-template-columns: 1fr;
                 max-width: 100%;
             }
 
             .country-card {
-                padding: 1rem;
-                min-height: 180px;
+                padding: 0.8rem;
+                min-height: 130px;
             }
 
             .country-flag {
-                font-size: 2rem;
+                font-size: 1.5rem;
+                margin-bottom: 0.3rem;
             }
 
             .country-name {
-                font-size: 1rem;
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
             }
 
             .country-stats {
-                font-size: 0.75rem;
-                line-height: 1.5;
+                font-size: 0.7rem;
+                line-height: 1.4;
             }
 
             .country-tag {
-                font-size: 0.65rem;
-                padding: 0.15rem 0.5rem;
+                font-size: 0.6rem;
+                padding: 0.1rem 0.4rem;
+                margin-top: 0.4rem;
             }
 
             /* 顶部进度条移动端位置 */
@@ -979,9 +961,6 @@
     <div class="ui-overlay">
         <!-- 顶部栏 -->
         <div class="top-bar">
-            <a href="https://gameart.top" class="home-btn" target="_blank">🏠 首页</a>
-            <button class="reset-btn" onclick="resetGame()">🔄 重新开始</button>
-            <div class="game-title">🌌 太空帝国</div>
             <div class="civilization-level" id="civLevel">🌍 行星文明</div>
             <div class="resources-compact">
                 <div class="resource-compact">
@@ -1041,6 +1020,11 @@
             </div>
             <div class="tab-content" id="tab-special">
                 <div class="upgrades-grid" id="specialGrid"></div>
+            </div>
+            
+            <div class="bottom-actions">
+                <a href="https://gameart.top" class="home-btn" target="_blank">🏠 首页</a>
+                <button class="reset-btn" onclick="resetGame()">🔄 重新开始</button>
             </div>
         </div>
     </div>
