@@ -49,7 +49,7 @@ color:white;
 
 .hero{
 text-align:center;
-padding:120px 20px;
+padding:120px 20px 60px 20px;
 }
 
 .hero h1{
@@ -81,7 +81,7 @@ transform:scale(1.05);
 /* Section */
 
 .section{
-padding:80px 20px;
+padding:40px 20px 80px 20px;
 max-width:1000px;
 margin:auto;
 }
@@ -152,6 +152,32 @@ padding:40px;
 color:#666;
 }
 
+/* 留言板 */
+
+.comments-section{
+padding:60px 20px;
+max-width:900px;
+margin:auto;
+background:#0f1420;
+}
+
+.comments-section h2{
+font-size:32px;
+margin-bottom:20px;
+text-align:center;
+}
+
+.comments-intro{
+text-align:center;
+color:#aaa;
+margin-bottom:30px;
+font-size:16px;
+}
+
+.giscus{
+margin-top:20px;
+}
+
 </style>
 </head>
 <body>
@@ -159,7 +185,7 @@ color:#666;
 
 <div class="header">
 
-<div class="logo">GAMEART</div>
+<div class="logo">GameArt</div>
 
 <div class="nav">
 <a href="/">首页</a>
@@ -179,38 +205,17 @@ color:#666;
 每个游戏，都是一个独立世界。
 </p>
 
-<a href="/solar" class="button">
+<a href="/empire" class="button">
 进入太阳系探索 →
 </a>
 
 </div>
 
-
-
 <div class="section" id="games">
 
 <h2>精选游戏</h2>
 
-
-<div class="game-card" onclick="location.href='/solar'">
-
-<div class="game-title">
-太阳系探索
-</div>
-
-<div class="game-desc">
-从太阳开始，建立你的宇宙文明。<br>
-放置 + 策略 + 长期演化
-</div>
-
-</div>
-
-
 <div class="game-card">
-
-<div class="game-title">
-FindRWA 站外精选
-</div>
 
 <div class="container">
 		<div style="text-align:center; margin:36px 0 0 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;">
@@ -269,6 +274,22 @@ GameArt 是一个新型游戏平台。<br><br>
 
 我们只展示真正有创造力的游戏。
 
+</div>
+
+</div>
+
+
+
+<div class="comments-section" id="comments">
+
+<h2>💬 留言反馈</h2>
+
+<div class="comments-intro">
+欢迎分享你的想法、建议或发现的问题
+</div>
+
+<div style="text-align:center; margin-top:30px; font-size:16px;">
+📧 联系邮箱：<a href="mailto:holyspiritgodsky@gmail.com" style="color:#3b82f6; text-decoration:none;">holyspiritgodsky@gmail.com</a>
 </div>
 
 </div>
