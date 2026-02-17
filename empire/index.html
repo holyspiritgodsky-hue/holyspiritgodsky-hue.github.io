@@ -341,6 +341,23 @@
             color: var(--text-gray);
         }
 
+        /* 顶部进度条 */
+        .top-progress-bar {
+            position: absolute;
+            bottom: 268px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15,23,42,0.75);
+            padding: 0.5rem 1.2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(251,191,36,0.35);
+            min-width: 300px;
+            max-width: 500px;
+            width: 50%;
+            backdrop-filter: blur(8px);
+            pointer-events: none;
+        }
+
         /* 提示文本 */
         .hint-text {
             position: absolute;
@@ -530,20 +547,133 @@
         /* 响应式 */
         @media (max-width: 768px) {
             .game-title {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .civilization-level {
+                font-size: 0.9rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .top-bar {
+                padding: 1rem 1rem;
+            }
+
+            .home-btn, .reset-btn {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
+                top: 1rem;
+            }
+
+            .home-btn {
+                right: 7rem;
+            }
+
+            .reset-btn {
+                right: 1rem;
+            }
+
+            .resources-compact {
+                gap: 0.8rem;
+            }
+
+            .resource-compact {
+                padding: 0.3rem 0.6rem;
+            }
+
+            .resource-icon-small {
+                font-size: 1.2rem;
+            }
+
+            .resource-value-small {
+                font-size: 1rem;
+            }
+
+            .resource-rate-small {
+                font-size: 0.7rem;
             }
 
             .bottom-panel {
-                max-height: 50vh;
+                max-height: 45vh;
+                padding: 1rem 0.8rem;
+            }
+
+            .panel-tabs {
+                margin-bottom: 0.8rem;
+            }
+
+            .tab-button {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.8rem;
             }
 
             .upgrades-grid {
                 grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+
+            .upgrade-card {
+                padding: 0.8rem;
             }
 
             .progress-indicator {
-                min-width: 280px;
-                padding: 1rem 1.5rem;
+                min-width: 260px;
+                padding: 0.8rem 1rem;
+                bottom: 45vh;
+            }
+
+            /* 国家选择界面优化 */
+            .country-screen {
+                padding: 1rem;
+            }
+
+            .country-screen-title {
+                font-size: 1.6rem;
+                margin-bottom: 0.3rem;
+            }
+
+            .country-screen-subtitle {
+                font-size: 0.85rem;
+                margin-bottom: 1rem;
+            }
+
+            .country-grid {
+                gap: 0.8rem;
+                grid-template-columns: 1fr;
+                max-width: 100%;
+            }
+
+            .country-card {
+                padding: 1rem;
+                min-height: 180px;
+            }
+
+            .country-flag {
+                font-size: 2rem;
+            }
+
+            .country-name {
+                font-size: 1rem;
+            }
+
+            .country-stats {
+                font-size: 0.75rem;
+                line-height: 1.5;
+            }
+
+            .country-tag {
+                font-size: 0.65rem;
+                padding: 0.15rem 0.5rem;
+            }
+
+            /* 顶部进度条移动端位置 */
+            .top-progress-bar {
+                bottom: calc(45vh + 10px);
+                width: 80%;
+                min-width: 260px;
+                padding: 0.4rem 0.8rem;
+                font-size: 0.7rem;
             }
         }
 
@@ -879,7 +1009,7 @@
         </div>
 
         <!-- 进度条：固定在底部面板正上方 -->
-        <div style="position:absolute;bottom:268px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.75);padding:0.5rem 1.2rem;border-radius:20px;border:1px solid rgba(251,191,36,0.35);min-width:300px;max-width:500px;width:50%;backdrop-filter:blur(8px);pointer-events:none;">
+        <div class="top-progress-bar">
             <div style="display:flex;align-items:center;gap:0.8rem;">
                 <div id="progressTitle" style="font-family:var(--font-ui);font-size:0.75rem;font-weight:700;color:var(--accent-gold);white-space:nowrap;flex-shrink:0;">🎯 距离地月系统</div>
                 <div style="flex:1;height:10px;background:rgba(0,0,0,0.5);border-radius:5px;overflow:hidden;">
