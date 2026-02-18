@@ -572,8 +572,8 @@
             }
 
             .bottom-panel {
-                max-height: 45vh;
-                padding: 1rem 0.8rem;
+                max-height: 28vh;
+                padding: 0.6rem 0.8rem;
             }
 
             .panel-tabs {
@@ -597,7 +597,7 @@
             .progress-indicator {
                 min-width: 260px;
                 padding: 0.8rem 1rem;
-                bottom: 45vh;
+                bottom: 32vh;
             }
 
             /* 国家选择界面优化 */
@@ -651,7 +651,7 @@
 
             /* 顶部进度条移动端位置 */
             .top-progress-bar {
-                bottom: calc(45vh + 10px);
+                bottom: calc(28vh + 10px);
                 width: 80%;
                 min-width: 260px;
                 padding: 0.4rem 0.8rem;
@@ -910,7 +910,7 @@
                 <div class="country-stats">
                     <span>💎 初始矿石 <b class="highlight">500</b></span>
                     <span>⚡ 能源 <b class="highlight">50</b></span>
-                    <span>👊 点击力 <b class="highlight">100</b></span>
+                    <span>👊 点击力 <b class="highlight">60</b></span>
                     <span class="country-tag tag-vip">★ VIP 优势</span>
                 </div>
             </div>
@@ -918,9 +918,9 @@
                 <span class="country-flag">🇨🇳</span>
                 <div class="country-name">中国</div>
                 <div class="country-stats">
-                    <span>💎 初始矿石 <b class="highlight">300</b></span>
+                    <span>💎 初始矿石 <b class="highlight">200</b></span>
                     <span>⚡ 能源 <b class="highlight">80</b></span>
-                    <span>👊 点击力 <b class="highlight">100</b></span>
+                    <span>👊 点击力 <b class="highlight">80</b></span>
                     <span class="country-tag tag-event">独有事件链</span>
                 </div>
             </div>
@@ -930,7 +930,7 @@
                 <div class="country-stats">
                     <span>💎 初始矿石 <b class="highlight">400</b></span>
                     <span>⚡ 能源 <b class="highlight">60</b></span>
-                    <span>👊 点击力 <b class="highlight">100</b></span>
+                    <span>👊 点击力 <b class="highlight">60</b></span>
                     <span class="country-tag tag-balanced">均衡发展</span>
                 </div>
             </div>
@@ -940,7 +940,7 @@
                 <div class="country-stats">
                     <span>💎 初始矿石 <b class="highlight">250</b></span>
                     <span>⚡ 能源 <b class="highlight">70</b></span>
-                    <span>👊 点击力 <b class="highlight">100</b></span>
+                    <span>👊 点击力 <b class="highlight">60</b></span>
                     <span class="country-tag tag-balanced">工业强国</span>
                 </div>
             </div>
@@ -949,8 +949,8 @@
                 <div class="country-name">日本</div>
                 <div class="country-stats">
                     <span>💎 初始矿石 <b class="highlight">200</b></span>
-                    <span>⚡ 能源 <b class="highlight">50</b></span>
-                    <span>👊 点击力 <b class="highlight">150</b></span>
+                    <span>⚡ 能源 <b class="highlight">100</b></span>
+                    <span>👊 点击力 <b class="highlight">60</b></span>
                     <span class="country-tag tag-event">独有事件链</span>
                 </div>
             </div>
@@ -1118,7 +1118,7 @@
                     r: Math.random() * 1.4 + 0.2,
                     alpha: Math.random() * 0.6 + 0.3,
                     // 三个层次速度：远景慢、近景快，形成视差
-                    speed: Math.random() * 0.0003 + 0.00008,
+                    speed: Math.random() * 0.0008 + 0.0002,
                     offset: Math.random() * Math.PI * 2
                 });
             }
@@ -1796,11 +1796,11 @@
 
         // ===== 国家配置 =====
         const countryConfigs = {
-            usa:     { name: '美国',   flag: '🇺🇸', ore: 500,  energy: 50,  clickPower: 100  },
-            china:   { name: '中国',   flag: '🇨🇳', ore: 300,  energy: 80,  clickPower: 100  },
-            russia:  { name: '俄罗斯', flag: '🇷🇺', ore: 400,  energy: 60,  clickPower: 100  },
-            germany: { name: '德国',   flag: '🇩🇪', ore: 250,  energy: 70,  clickPower: 100  },
-            india:   { name: '印度',   flag: '🇮🇳', ore: 200,  energy: 50,  clickPower: 150  }
+            usa:     { name: '美国',   flag: '🇺🇸', ore: 400,  energy: 50,  clickPower: 60  },
+            china:   { name: '中国',   flag: '🇨🇳', ore: 200,  energy: 80,  clickPower: 80  },
+            russia:  { name: '俄罗斯', flag: '🇷🇺', ore: 500,  energy: 60,  clickPower: 60  },
+            germany: { name: '德国',   flag: '🇩🇪', ore: 250,  energy: 70,  clickPower: 60  },
+            japan:   { name: '日本',   flag: '🇯🇵', ore: 150,  energy: 100, clickPower: 60  }
         };
 
         function selectCountry(id) {
@@ -1811,6 +1811,12 @@
             game.clickPower = cfg.clickPower;
             game.country = id;
             game.countryName = cfg.name;
+
+            // 所有国家默认赠送1级基础工厂
+            const basicFactory = game.upgrades.mining.find(u => u.id === 'm1');
+            if (basicFactory) {
+                basicFactory.level = 1;
+            }
 
             // 淡出选国界面，淡入游戏
             const screen = document.getElementById('countryScreen');
