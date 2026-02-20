@@ -1306,17 +1306,28 @@
             return (num / 1000000000).toFixed(2) + 'B';
         }
 
-        // 初始化升级
-        function initUpgrades() {
+        function buildUpgradesState(savedUpgrades = null) {
+            const normalized = { mining: [], energy: [], tech: [], special: [] };
             for (let category in upgradesConfig) {
+                const savedList = Array.isArray(savedUpgrades?.[category]) ? savedUpgrades[category] : [];
                 upgradesConfig[category].forEach(config => {
-                    const item = { ...config, level: 0 };
+                    const savedItem = savedList.find(item => item.id === config.id) || {};
+                    const item = {
+                        ...config,
+                        level: Math.max(0, Number(savedItem.level) || 0)
+                    };
                     if (category === 'tech') {
-                        item.unlocked = false;  // 科技需要解锁
+                        item.unlocked = !!savedItem.unlocked;
                     }
-                    game.upgrades[category].push(item);
+                    normalized[category].push(item);
                 });
             }
+            return normalized;
+        }
+
+        // 初始化升级
+        function initUpgrades() {
+            game.upgrades = buildUpgradesState();
         }
 
         // 渲染升级
@@ -1641,6 +1652,7 @@
 
             const savedGame = JSON.parse(saved);
             Object.assign(game, savedGame);
+            game.upgrades = buildUpgradesState(savedGame.upgrades);
 
             const offlineTime = (Date.now() - game.lastSaveTime) / 1000;
             if (offlineTime > 60) {
