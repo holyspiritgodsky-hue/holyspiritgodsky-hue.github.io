@@ -78,22 +78,44 @@ window.addEventListener('touchmove', (e) => {
 }, { passive: false });
 window.addEventListener('touchend', ()=>{ _pinchDist=null; }, {passive:true});
 
-// ── 星空（每帧缓慢右移 + 闪烁）──────────────────────────────
-const STARS = Array.from({length:700}, ()=>({
+// ── 星空（参考 space 项目参数：主星亮、次星暗，双层右移）───────
+const STARS = Array.from({length:320}, ()=>(
+{
     x:Math.random(), y:Math.random(),
-    r:Math.random()*1.7+0.35,
-    dx:Math.random()*0.00022+0.00006,
+    r:Math.random()*1.5+0.2,
+    dx:Math.random()*0.00022+0.00008,
     ph:Math.random()*Math.PI*2,
-    ts:Math.random()*0.012+0.003,
-    ba:Math.random()*0.50+0.45,
+    ts:Math.random()*0.010+0.002,
+    ba:Math.random()*0.07+0.93,
+}));
+const SMALL_STARS = Array.from({length:220}, ()=>(
+{
+    x:Math.random(), y:Math.random(),
+    r:Math.random()*0.9+0.1,
+    dx:Math.random()*0.00012+0.00003,
+    ph:Math.random()*Math.PI*2,
+    ts:Math.random()*0.008+0.001,
+    ba:Math.random()*0.35+0.30,
 }));
 function drawStars(vis){
+    const visFactor = 0.55 + 0.45 * vis;
     for(const s of STARS){
-        s.ph+=s.ts; s.x+=s.dx; if(s.x>1)s.x=0;
-        const a=Math.min(1, s.ba*(0.78+0.28*Math.sin(s.ph))*(0.35+0.65*vis));
-        if(a<0.01)continue;
+        s.ph += s.ts;
+        s.x += s.dx;
+        if(s.x > 1){ s.x = 0; s.y = Math.random(); }
+        const a = Math.min(1, s.ba * (0.90 + 0.10 * Math.sin(s.ph)) * visFactor);
+        if(a < 0.01) continue;
         ctx.beginPath(); ctx.arc(s.x*canvas.width,s.y*canvas.height,s.r,0,Math.PI*2);
         ctx.fillStyle=`rgba(255,255,255,${a})`; ctx.fill();
+    }
+    for(const s of SMALL_STARS){
+        s.ph += s.ts;
+        s.x += s.dx;
+        if(s.x > 1){ s.x = 0; s.y = Math.random(); }
+        const a = Math.min(1, s.ba * (0.85 + 0.15 * Math.sin(s.ph)) * visFactor);
+        if(a < 0.01) continue;
+        ctx.beginPath(); ctx.arc(s.x*canvas.width,s.y*canvas.height,s.r,0,Math.PI*2);
+        ctx.fillStyle=`rgba(220,230,255,${a})`; ctx.fill();
     }
 }
 
@@ -131,7 +153,7 @@ const TECH_LEVELS = [
     bodies:[
         {id:'mercury',xf:0.15,yf:0.74,rf:0.003,label:'水星',col:'#b5b3ac'},
         {id:'venus',  xf:0.26,yf:0.65,rf:0.005,label:'金星',col:'#e8c87a'},
-        {id:'mars',   xf:0.82,yf:0.70,rf:0.004,label:'火星',col:'#c1440e'},
+        {id:'mars',   xf:0.82,yf:0.70,rf:0.008,label:'火星',col:'#c1440e'},
         {id:'jupiter',xf:0.88,yf:0.44,rf:0.028,label:'木星',col:'#c88b3a'},
         {id:'saturn', xf:0.12,yf:0.38,rf:0.022,label:'土星',col:'#e4d191',rings:true},
     ], galaxy:false },
@@ -144,7 +166,7 @@ const TECH_LEVELS = [
     bodies:[
         {id:'mercury',xf:0.511,yf:0.507,rf:0.0011,label:'水星',col:'#b5b3ac'},
         {id:'venus',  xf:0.488,yf:0.511,rf:0.0013,label:'金星',col:'#e8c87a'},
-        {id:'mars',   xf:0.516,yf:0.491,rf:0.0011,label:'火星',col:'#c1440e'},
+        {id:'mars',   xf:0.516,yf:0.491,rf:0.0024,label:'火星',col:'#c1440e'},
         {id:'jupiter',xf:0.530,yf:0.479,rf:0.0040,label:'木星',col:'#c88b3a'},
         {id:'saturn', xf:0.464,yf:0.476,rf:0.0034,label:'土星',col:'#e4d191',rings:true},
         {id:'uranus', xf:0.536,yf:0.520,rf:0.0020,label:'天王星',col:'#7de8e8'},
@@ -375,8 +397,8 @@ function handlePlanetMineClick(planet, event) {
             showStoryEvent(
                 '🎉 火星和解协议',
                 '火星人被打服了，火星人欢迎地球人来火星 KTV 做客。<br>火星点击收益已恢复。'
-                + '<div style="margin-top:0.9rem;border:1px dashed rgba(251,191,36,0.7);border-radius:10px;height:160px;display:flex;align-items:center;justify-content:center;color:#fbbf24;background:rgba(251,191,36,0.08);">'
-                + '【这里预留火星 KTV 照片位置】'
+                + '<div style="margin-top:0.9rem;border:1px solid rgba(251,191,36,0.6);border-radius:10px;overflow:hidden;background:rgba(251,191,36,0.08);">'
+                + '<img src="img/KTV.PNG" alt="火星KTV" style="display:block;width:100%;height:180px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=\'height:160px;display:flex;align-items:center;justify-content:center;color:#fbbf24;\'>KTV 图片加载失败</div>\'" />'
                 + '</div>',
                 '去唱一首，继续开采'
             );
@@ -633,7 +655,10 @@ function drawSolarSystem() {
             meta.screenY = by;
             meta.drawR = br;
             const unlocked = game.unlockedPlanets.includes(meta.id) || game.currentStage >= meta.unlockStage;
-            if (unlocked) interactiveBodies.push({ id, x: bx, y: by, r: br });
+            if (unlocked) {
+                const clickR = id === 'mars' ? Math.max(br * 2.2, 18) : br;
+                interactiveBodies.push({ id, x: bx, y: by, r: clickR });
+            }
         }
         ctx.save(); ctx.globalAlpha=alpha;
         sDrawGlow(bx,by,br,br*3.5,body.col,0.3);
