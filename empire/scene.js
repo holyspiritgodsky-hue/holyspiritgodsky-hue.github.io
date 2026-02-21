@@ -10,6 +10,7 @@ let centerX, centerY, scale = 1;
 const particles = [];
 const hitEffects = [];
 const interactiveBodies = [];
+const slotHotspots = [];
 let shakeUntil = 0;
 let shakeMag = 0;
 const planetClickMultiplier = {
@@ -44,6 +45,16 @@ moonImg.src = 'img/moon.jpg';
 // 视图层级偶停：0 = 当前科技等级画面，+1 = 退回一个等级的画面
 let viewOffset = 0.0;
 let viewOffsetTgt = 0.0;
+let rollbackLockUntil = 0;
+let lastObservedTechLevel = 0;
+
+function isRollbackLocked() {
+    return performance.now() < rollbackLockUntil;
+}
+
+function lockRollback(ms = 1200) {
+    rollbackLockUntil = Math.max(rollbackLockUntil, performance.now() + Math.max(0, ms));
+}
 
 // 鼠标滚轮：向上滚 = 拉近（看低等级），向下滚 = 拉远（回到当前等级）
 window.addEventListener('wheel', (e) => {
@@ -52,6 +63,7 @@ window.addEventListener('wheel', (e) => {
     const maxOff = window.game ? (window.game.techLevel || 0) : 0;
     if(maxOff === 0) return; // 等级 0 时无法回退
     const delta = e.deltaY > 0 ? -0.25 : 0.25; // 上滚+，下滚-
+    if (delta > 0 && isRollbackLocked()) return;
     viewOffsetTgt = Math.max(0, Math.min(maxOff, viewOffsetTgt + delta));
 }, { passive: false });
 
@@ -72,6 +84,10 @@ window.addEventListener('touchmove', (e) => {
     if(_pinchDist!==null){
         const maxOff = window.game ? (window.game.techLevel || 0) : 0;
         const delta = (d - _pinchDist) / 120 * 0.25; // 张开 = 拉近
+        if (delta > 0 && isRollbackLocked()) {
+            _pinchDist = d;
+            return;
+        }
         viewOffsetTgt = Math.max(0, Math.min(maxOff, viewOffsetTgt + delta));
     }
     _pinchDist=d;
@@ -119,9 +135,9 @@ function drawStars(vis){
     }
 }
 
-// UI 安全区常量：yf=0 对应顶栏底部，yf=1 对应底部面板顶部
+// UI 安全区常量：yf=0 对应顶栏底部，yf=1 对应右侧抽屉不影响时的底部安全线
 const UI_TOP = 160;   // 顶栏高度 px
-const UI_BOT = 260;   // 底部面板高度 px
+const UI_BOT = 80;    // 底部安全留白 px
 
 // ── 5科技级别场景定义 ─────────────────────────────────────────
 // xf: 0-1 = 屏幕宽度比例   yf: 0-1 = 安全绘图区高度比例（UI_TOP ~ H-UI_BOT）
@@ -362,14 +378,8 @@ function handlePlanetMineClick(planet, event) {
     if (planet.id === 'earth') {
         const st = planetClickStats.earth;
         st.clicks++;
-        if (!st.warningShown && st.clicks >= 10) {
-            st.warningShown = true;
-            planetClickMultiplier.earth = 0.05;
-            showStoryEvent(
-                '⚠️ 地球矿产预警',
-                '地球上的矿产快要被挖空啦！<br>地球点击收益下降 95%，请尽快向外扩张。',
-                '收到，继续推进文明'
-            );
+        if (typeof window.handleEarthConquestClick === 'function') {
+            window.handleEarthConquestClick();
         }
     }
 
@@ -414,6 +424,9 @@ function handlePlanetMineClick(planet, event) {
     }
 
     if (planet.id === 'mercury') {
+        if (typeof window.handlePlanetTaskClick === 'function') {
+            window.handlePlanetTaskClick('mercury');
+        }
         const st = planetClickStats.mercury;
         if (!st.warningShown) {
             st.warningShown = true;
@@ -427,6 +440,9 @@ function handlePlanetMineClick(planet, event) {
     }
 
     if (planet.id === 'venus') {
+        if (typeof window.handlePlanetTaskClick === 'function') {
+            window.handlePlanetTaskClick('venus');
+        }
         const st = planetClickStats.venus;
         if (!st.warningShown) {
             st.warningShown = true;
@@ -477,10 +493,144 @@ function hitTestBody(x, y) {
     return null;
 }
 
+function hitTestSlot(x, y) {
+    for (let i = slotHotspots.length - 1; i >= 0; i--) {
+        const slot = slotHotspots[i];
+        const dx = x - slot.x;
+        const dy = y - slot.y;
+        if (dx * dx + dy * dy <= slot.r * slot.r) return slot;
+    }
+    return null;
+}
+
+function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
+    slotHotspots.length = 0;
+    if (viewLevel !== 0) return;
+    if (earthR < 18) return;
+    if (!window.getPlanetSlotAssignments) return;
+
+    const assignments = window.getPlanetSlotAssignments('earth') || [];
+    const total = assignments.length;
+    if (!total) return;
+
+    const slotR = Math.max(13, Math.min(22, earthR * 0.20));
+    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
+    const spreadR = earthR * 0.78;
+
+    for (let index = 0; index < total; index++) {
+        const t = (index + 0.5) / total;
+        const radial = Math.sqrt(t) * spreadR;
+        const angle = index * goldenAngle;
+        const x = ex + Math.cos(angle) * radial;
+        const y = ey + Math.sin(angle) * radial * 0.86;
+        const slotType = assignments[index] || null;
+
+        slotHotspots.push({ planetId: 'earth', index, x, y, r: slotR, slotType });
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, slotR, 0, Math.PI * 2);
+        if (slotType === 'autoFactory') {
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.95)';
+        } else if (slotType === 'robotLegion') {
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.95)';
+        } else if (slotType === 'energyStation') {
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.96)';
+        } else if (slotType === 'researchCenter') {
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.96)';
+        } else {
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.52)';
+        }
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = slotType ? 'rgba(255,255,255,0.75)' : 'rgba(148,163,184,0.6)';
+        ctx.stroke();
+
+        const icon = slotType === 'autoFactory'
+            ? '🏭'
+            : slotType === 'robotLegion'
+                ? '🤖'
+                : slotType === 'energyStation'
+                    ? '⚡'
+                    : slotType === 'researchCenter'
+                        ? '🔬'
+                        : '+';
+        ctx.fillStyle = slotType ? '#ffffff' : 'rgba(226,232,240,0.85)';
+        ctx.font = `${Math.max(12, slotR * 1.05)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(icon, x, y + 0.5);
+        ctx.restore();
+    }
+}
+
+function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
+    if (!window.getPlanetSlotAssignments) return;
+    if (typeof window.isSlotPlanetUnlocked === 'function' && !window.isSlotPlanetUnlocked(planetId)) return;
+    if (visibleBodyIds && !visibleBodyIds.has(planetId)) return;
+    const meta = planets.find(p => p.id === planetId);
+    if (!meta || !meta.screenX || !meta.screenY || !meta.drawR) return;
+    const assignments = window.getPlanetSlotAssignments(planetId) || [];
+    if (!assignments.length) return;
+
+    const slotType = assignments[0] || null;
+    const slotR = Math.max(11, Math.min(19, meta.drawR * 0.65 + 5));
+    const angle = -Math.PI / 4;
+    const dist = Math.max(meta.drawR * 0.95, slotR * 1.3);
+    const x = meta.screenX + Math.cos(angle) * dist;
+    const y = meta.screenY + Math.sin(angle) * dist;
+
+    slotHotspots.push({ planetId, index: 0, x, y, r: slotR, slotType });
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, slotR, 0, Math.PI * 2);
+    if (slotType === 'autoFactory') {
+        ctx.fillStyle = 'rgba(34, 197, 94, 0.95)';
+    } else if (slotType === 'robotLegion') {
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.95)';
+    } else if (slotType === 'energyStation') {
+        ctx.fillStyle = 'rgba(251, 191, 36, 0.96)';
+    } else if (slotType === 'researchCenter') {
+        ctx.fillStyle = 'rgba(168, 85, 247, 0.96)';
+    } else {
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.52)';
+    }
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = slotType ? 'rgba(255,255,255,0.78)' : 'rgba(148,163,184,0.72)';
+    ctx.stroke();
+
+    const icon = slotType === 'autoFactory'
+        ? '🏭'
+        : slotType === 'robotLegion'
+            ? '🤖'
+            : slotType === 'energyStation'
+                ? '⚡'
+                : slotType === 'researchCenter'
+                    ? '🔬'
+                    : '+';
+    ctx.fillStyle = slotType ? '#ffffff' : 'rgba(226,232,240,0.9)';
+    ctx.font = `${Math.max(12, slotR * 1.02)}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(icon, x, y + 0.5);
+    ctx.restore();
+}
+
 canvas.addEventListener('click', (event) => {
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+
+    const slot = hitTestSlot(x, y);
+    if (slot) {
+        if (typeof window.openSlotBuildMenu === 'function') {
+            window.openSlotBuildMenu(slot.planetId, slot.index);
+        }
+        return;
+    }
+
     const body = hitTestBody(x, y);
     if (!body) return;
     const planet = planets.find(p => p.id === body.id);
@@ -504,8 +654,16 @@ function resizeCanvas() {
 // ── 主渲染帧（solar-scale 插值方式）──────────────────────────
 function drawSolarSystem() {
     const now = performance.now();
+    const currentTechLevel = Math.max(0, window.game?.techLevel || 0);
+    if (currentTechLevel !== lastObservedTechLevel) {
+        if (currentTechLevel > lastObservedTechLevel) {
+            lockRollback(1400);
+        }
+        lastObservedTechLevel = currentTechLevel;
+    }
     shimA += 0.007;
     interactiveBodies.length = 0;
+    slotHotspots.length = 0;
     if(sceneP < 1) sceneP = Math.min(1, (now - sceneT0) / SCENE_DUR);
     const tp = sceneEase(sceneP);
     const A = TECH_LEVELS[sceneFrom], B = TECH_LEVELS[sceneTgt];
@@ -524,13 +682,16 @@ function drawSolarSystem() {
 
     // 计算实际渲染用的场景 rA/rB/rtp
     let rA, rB, rtp;
+    let renderLv;
     if(sceneP < 1 || viewOffset < 0.01){
         rA = A; rB = B; rtp = tp;
+        renderLv = sLerp(sceneFrom, sceneTgt, tp);
     } else {
         const effectiveLv = Math.max(0, sceneTgt - viewOffset);
         const lo = Math.floor(effectiveLv);
         const hi = Math.min(lo + 1, 4);
         rA = TECH_LEVELS[lo]; rB = TECH_LEVELS[hi]; rtp = effectiveLv - lo;
+        renderLv = effectiveLv;
     }
 
     // 星空
@@ -565,22 +726,25 @@ function drawSolarSystem() {
 
     // 画太阳（含边缘探出效果）
     if(sunAlpha>0.01){
+        const level2Blend = Math.max(0, 1 - Math.min(1, Math.abs(renderLv - 2) / 0.55));
+        const dimScale = 1 - level2Blend * 0.48;
+        const warmOuter = level2Blend > 0.15;
         ctx.save();
         if(sunClipX!=null){
             ctx.beginPath(); ctx.rect(sunClipX,0,W-sunClipX,H); ctx.clip();
         }
         ctx.globalAlpha=sunAlpha;
-        sDrawGlow(sx,sy,sunR,sunGlowR*5,'#FF4400',0.04);
-        sDrawGlow(sx,sy,sunR,sunGlowR*3,'#FF8800',0.07);
-        sDrawGlow(sx,sy,sunR,sunGlowR*1.5,'#FFB300',0.16);
-        sDrawGlow(sx,sy,sunR,sunGlowR,'#FFD700',0.32);
+        sDrawGlow(sx,sy,sunR,sunGlowR*5,'#7f3a16',0.04 * dimScale);
+        sDrawGlow(sx,sy,sunR,sunGlowR*3,warmOuter ? '#b65c1f' : '#FF8800',0.07 * dimScale);
+        sDrawGlow(sx,sy,sunR,sunGlowR*1.5,warmOuter ? '#d88b2a' : '#FFB300',0.16 * dimScale);
+        sDrawGlow(sx,sy,sunR,sunGlowR,warmOuter ? '#f0c056' : '#FFD700',0.32 * dimScale);
         if(sunClipX==null){
-            ctx.globalAlpha=sunAlpha*0.05;
+            ctx.globalAlpha=sunAlpha*0.05*dimScale;
             for(let i=0;i<12;i++){
                 const ang=(i/12)*Math.PI*2+shimA*0.4;
                 const r1=sunR*1.2, r2=sunGlowR*(1.2+0.3*Math.sin(shimA*1.5+i));
                 const grd=ctx.createLinearGradient(sx+Math.cos(ang)*r1,sy+Math.sin(ang)*r1,sx+Math.cos(ang)*r2,sy+Math.sin(ang)*r2);
-                grd.addColorStop(0,'#FDB813'); grd.addColorStop(1,'transparent');
+                grd.addColorStop(0,warmOuter ? '#d07a2e' : '#FDB813'); grd.addColorStop(1,'transparent');
                 ctx.strokeStyle=grd; ctx.lineWidth=2+Math.sin(shimA+i*0.7);
                 ctx.beginPath(); ctx.moveTo(sx+Math.cos(ang)*r1,sy+Math.sin(ang)*r1);
                 ctx.lineTo(sx+Math.cos(ang)*r2,sy+Math.sin(ang)*r2); ctx.stroke();
@@ -588,8 +752,77 @@ function drawSolarSystem() {
         }
         ctx.globalAlpha=sunAlpha;
         const sdg=ctx.createRadialGradient(sx-sunR*0.2,sy-sunR*0.2,0,sx,sy,Math.max(sunR,1));
-        sdg.addColorStop(0,'#ffffff'); sdg.addColorStop(0.25,'#fff5c0'); sdg.addColorStop(1,'#FDB813');
+        sdg.addColorStop(0,warmOuter ? '#fff3cc' : '#ffffff');
+        sdg.addColorStop(0.25,warmOuter ? '#ffd38a' : '#fff5c0');
+        sdg.addColorStop(1,warmOuter ? '#d07a2e' : '#FDB813');
         ctx.beginPath(); ctx.arc(sx,sy,Math.max(sunR,1.5),0,Math.PI*2); ctx.fillStyle=sdg; ctx.fill();
+
+        if (sunR > 10) {
+            const inner = sunR * 1.03;
+            const outer = sunR * 1.36;
+            const sampleR = outer * 1.15;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(sx, sy, outer, 0, Math.PI * 2);
+            ctx.arc(sx, sy, inner, 0, Math.PI * 2, true);
+            ctx.clip();
+
+            const hazeAlpha = sunAlpha * (0.22 + 0.14 * level2Blend) * dimScale;
+            for (let i = 0; i < 5; i++) {
+                const phase = shimA * (1.05 + i * 0.42) + i * 1.7;
+                const dx = Math.cos(phase) * sunR * (0.020 + i * 0.007);
+                const dy = Math.sin(phase * 1.31) * sunR * (0.017 + i * 0.006);
+                const wobX = Math.sin(phase * 1.9) * sunR * 0.018;
+                const wobY = Math.cos(phase * 1.6) * sunR * 0.018;
+                ctx.globalAlpha = hazeAlpha * Math.max(0.16, 0.95 - i * 0.17);
+                ctx.drawImage(
+                    canvas,
+                    sx - sampleR + dx,
+                    sy - sampleR + dy,
+                    sampleR * 2,
+                    sampleR * 2,
+                    sx - sampleR + wobX,
+                    sy - sampleR + wobY,
+                    sampleR * 2,
+                    sampleR * 2
+                );
+            }
+
+            ctx.globalCompositeOperation = 'lighter';
+            for (let i = 0; i < 16; i++) {
+                const t = i / 16;
+                const ang = t * Math.PI * 2 + shimA * 0.75;
+                const jitter = Math.sin(shimA * 3.2 + i * 1.8) * sunR * 0.020;
+                const r1 = inner + sunR * 0.02 + jitter;
+                const r2 = outer + sunR * 0.05 + jitter;
+                const x1 = sx + Math.cos(ang) * r1;
+                const y1 = sy + Math.sin(ang) * r1;
+                const x2 = sx + Math.cos(ang) * r2;
+                const y2 = sy + Math.sin(ang) * r2;
+                const grd = ctx.createLinearGradient(x1, y1, x2, y2);
+                grd.addColorStop(0, warmOuter ? 'rgba(255,200,105,0.00)' : 'rgba(255,235,180,0.00)');
+                grd.addColorStop(0.55, warmOuter ? 'rgba(255,194,96,0.24)' : 'rgba(255,235,180,0.21)');
+                grd.addColorStop(1, 'rgba(255,140,60,0.00)');
+                ctx.strokeStyle = grd;
+                ctx.lineWidth = Math.max(1.2, sunR * 0.020);
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+
+            const hazeRing = ctx.createRadialGradient(sx, sy, inner, sx, sy, outer);
+            hazeRing.addColorStop(0, 'rgba(255, 230, 170, 0)');
+            hazeRing.addColorStop(0.45, warmOuter ? 'rgba(255, 204, 120, 0.15)' : 'rgba(255, 236, 185, 0.13)');
+            hazeRing.addColorStop(1, 'rgba(255, 140, 60, 0.05)');
+            ctx.globalAlpha = sunAlpha * dimScale;
+            ctx.fillStyle = hazeRing;
+            ctx.beginPath();
+            ctx.arc(sx, sy, outer, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
         ctx.restore();
     }
 
@@ -638,6 +871,7 @@ function drawSolarSystem() {
     }
 
     // 画其他行星（插值出现/消失）
+    const visibleBodyIds = new Set();
     const allIds=new Set([...rA.bodies.map(b=>b.id),...rB.bodies.map(b=>b.id)]);
     const drawOrder=['neptune','uranus','saturn','jupiter','mars','venus','mercury'];
     for(const id of drawOrder){
@@ -654,6 +888,7 @@ function drawSolarSystem() {
             meta.screenX = bx;
             meta.screenY = by;
             meta.drawR = br;
+            visibleBodyIds.add(id);
             const unlocked = game.unlockedPlanets.includes(meta.id) || game.currentStage >= meta.unlockStage;
             if (unlocked) {
                 const clickR = id === 'mars' ? Math.max(br * 2.2, 18) : br;
@@ -691,6 +926,7 @@ function drawSolarSystem() {
             moonMeta.screenX = mx;
             moonMeta.screenY = my;
             moonMeta.drawR = moonR;
+            visibleBodyIds.add('moon');
             const unlocked = game.unlockedPlanets.includes('moon') || game.currentStage >= moonMeta.unlockStage;
             if (unlocked) interactiveBodies.push({ id: 'moon', x: mx, y: my, r: moonR });
         }
@@ -717,14 +953,15 @@ function drawSolarSystem() {
             earthMeta.screenX = ex;
             earthMeta.screenY = ey;
             earthMeta.drawR = earthR;
+            visibleBodyIds.add('earth');
             const unlocked = game.unlockedPlanets.includes('earth') || game.currentStage >= earthMeta.unlockStage;
             if (unlocked) interactiveBodies.push({ id: 'earth', x: ex, y: ey, r: earthR });
         }
         ctx.save();
         const ag=ctx.createRadialGradient(ex,ey,earthR*0.9,ex,ey,earthR*1.4);
-        ag.addColorStop(0,'transparent'); ag.addColorStop(0.5,'rgba(80,180,255,0.15)'); ag.addColorStop(1,'transparent');
+        ag.addColorStop(0,'transparent'); ag.addColorStop(0.6,'rgba(90,180,255,0.12)'); ag.addColorStop(1,'transparent');
         ctx.beginPath(); ctx.arc(ex,ey,earthR*1.4,0,Math.PI*2); ctx.fillStyle=ag; ctx.fill();
-        sDrawGlow(ex,ey,earthR,earthR*2.5,'#1a7ac0',0.38);
+        sDrawGlow(ex,ey,earthR,earthR*2.2,'#58b7ff',0.22);
         if(earthImgLoaded){
             ctx.save();
             ctx.beginPath(); ctx.arc(ex,ey,earthR,0,Math.PI*2); ctx.clip();
@@ -741,9 +978,21 @@ function drawSolarSystem() {
             }
         }
         const tg2=ctx.createRadialGradient(ex+earthR*0.4,ey-earthR*0.1,0,ex,ey,earthR*1.02);
-        tg2.addColorStop(0,'transparent'); tg2.addColorStop(0.5,'transparent'); tg2.addColorStop(1,'rgba(0,0,12,0.72)');
+        tg2.addColorStop(0,'transparent'); tg2.addColorStop(0.6,'transparent'); tg2.addColorStop(1,'rgba(0,0,12,0.10)');
         ctx.globalAlpha=1; ctx.beginPath(); ctx.arc(ex,ey,earthR,0,Math.PI*2); ctx.fillStyle=tg2; ctx.fill();
         ctx.restore();
+
+    }
+
+    const slotViewLv = sceneP < 1 || viewOffset < 0.01
+        ? Math.max(0, Math.min(4, Math.round(sLerp(sceneFrom, sceneTgt, tp))))
+        : Math.max(0, Math.min(4, Math.round(sceneTgt - viewOffset)));
+    if (slotViewLv === 0) {
+        drawEarthSlots(ex, ey, earthR, slotViewLv);
+    } else if (slotViewLv === 1) {
+        ['moon', 'venus', 'mercury'].forEach(id => drawSinglePlanetSlot(id, visibleBodyIds));
+    } else if (slotViewLv === 2) {
+        ['mars', 'jupiter', 'saturn'].forEach(id => drawSinglePlanetSlot(id, visibleBodyIds));
     }
 
     // 银河带（level 4）
@@ -897,3 +1146,5 @@ function applyUserZoom() {
     viewOffsetTgt = 0.0;
     viewOffset = 0.0;
 }
+
+window.lockLevelRollback = lockRollback;
