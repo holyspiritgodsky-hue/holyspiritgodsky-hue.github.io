@@ -81,40 +81,59 @@
             font-family: var(--font-ui);
             font-size: 1.1rem;
             color: var(--accent-gold);
-            margin-bottom: 1rem;
+            margin-bottom: 0;
+            white-space: nowrap;
+        }
+
+        .top-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.7rem;
+            margin-bottom: 0.8rem;
+            flex-wrap: nowrap;
+        }
+
+        .top-inline-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            flex-wrap: nowrap;
         }
 
         .resources-compact {
             display: flex;
             justify-content: center;
-            gap: 2rem;
+            gap: 1rem;
             flex-wrap: wrap;
         }
 
         .resource-compact {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
             background: rgba(0, 0, 0, 0.5);
-            padding: 0.5rem 1rem;
+            padding: 0.35rem 0.7rem;
             border-radius: 20px;
             border: 1px solid rgba(0, 217, 255, 0.3);
         }
 
         .resource-icon-small {
-            font-size: 1.5rem;
+            font-size: 1.25rem;
         }
 
         .resource-value-small {
             font-family: var(--font-mono);
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--accent-cyan);
+            line-height: 1.1;
         }
 
         .resource-rate-small {
-            font-size: 0.8rem;
+            font-size: 0.72rem;
             color: var(--accent-green);
+            line-height: 1.1;
         }
 
         .home-btn {
@@ -162,7 +181,7 @@
         }
 
         .bottom-actions {
-            display: flex;
+            display: none;
             justify-content: center;
             gap: 0.8rem;
             margin-top: 1rem;
@@ -172,15 +191,20 @@
 
         /* 底部控制面板 */
         .bottom-panel {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(to top, rgba(10, 14, 26, 0.95), transparent);
+            position: fixed;
+            top: 5.5rem;
+            right: 0.8rem;
+            bottom: 1rem;
+            left: auto;
+            width: min(440px, 36vw);
+            background: rgba(10, 14, 26, 0.96);
             backdrop-filter: blur(15px);
-            padding: 1.5rem 2rem;
-            max-height: 40vh;
+            border: 1px solid rgba(0, 217, 255, 0.25);
+            border-radius: 14px;
+            padding: 1rem;
             overflow-y: auto;
+            transition: transform 0.25s ease, opacity 0.25s ease;
+            z-index: 1250;
         }
 
         .panel-tabs {
@@ -335,7 +359,7 @@
         /* 顶部进度条 */
         .top-progress-bar {
             position: absolute;
-            bottom: 268px;
+            bottom: 50px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(15,23,42,0.75);
@@ -535,45 +559,191 @@
             box-shadow: 0 0 30px rgba(0, 217, 255, 0.4);
         }
 
+        .slot-build-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 4200;
+            padding: 1rem;
+        }
+
+        .slot-build-modal.show {
+            display: flex;
+        }
+
+        .slot-build-box {
+            width: min(420px, 92vw);
+            background: rgba(15, 23, 42, 0.96);
+            border: 1.5px solid rgba(0, 217, 255, 0.45);
+            border-radius: 14px;
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.25);
+            padding: 1rem;
+        }
+
+        .slot-build-title {
+            font-family: var(--font-ui);
+            font-size: 1rem;
+            color: var(--accent-cyan);
+            font-weight: 700;
+            margin-bottom: 0.7rem;
+            text-align: center;
+        }
+
+        .slot-build-desc {
+            color: var(--text-gray);
+            font-size: 0.78rem;
+            text-align: center;
+            margin-bottom: 0.75rem;
+            line-height: 1.5;
+        }
+
+        .slot-build-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+        }
+
+        .slot-build-btn {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.05);
+            color: #e2e8f0;
+            border-radius: 10px;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.8rem;
+            font-family: var(--font-ui);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .slot-build-btn:hover:not(:disabled) {
+            border-color: rgba(0, 217, 255, 0.5);
+            background: rgba(0, 217, 255, 0.15);
+        }
+
+        .slot-build-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        .slot-build-close {
+            margin-top: 0.7rem;
+            width: 100%;
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border-radius: 10px;
+            padding: 0.55rem;
+            font-size: 0.78rem;
+            font-family: var(--font-ui);
+            cursor: pointer;
+        }
+
+        .level-action-hud {
+            position: fixed;
+            display: none;
+            align-items: center;
+            gap: 0.45rem;
+            transform: translate(-50%, 0);
+            z-index: 1200;
+            pointer-events: auto;
+        }
+
+        .level-action-btn {
+            border: 1px solid rgba(0, 217, 255, 0.45);
+            background: rgba(15, 23, 42, 0.9);
+            color: #e2e8f0;
+            border-radius: 999px;
+            padding: 0.35rem 0.75rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            font-family: var(--font-ui);
+            cursor: pointer;
+            backdrop-filter: blur(6px);
+            white-space: nowrap;
+        }
+
+        .level-action-btn:hover {
+            background: rgba(0, 217, 255, 0.2);
+            border-color: rgba(0, 217, 255, 0.75);
+        }
+
+        .right-edge-actions {
+            position: fixed;
+            right: 0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 1300;
+        }
+
+        .bottom-panel.is-collapsed {
+            transform: translateX(120%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
         /* 响应式 */
         @media (max-width: 768px) {
             .civilization-level {
-                font-size: 0.9rem;
-                margin-bottom: 0.5rem;
+                font-size: 0.78rem;
+            }
+
+            .top-status-row {
+                gap: 0.35rem;
+                margin-bottom: 0.45rem;
+            }
+
+            .top-inline-actions {
+                gap: 0.25rem;
             }
 
             .top-bar {
-                padding: 1rem 1rem;
+                padding: 0.8rem 0.45rem;
             }
 
             .home-btn, .reset-btn {
-                padding: 0.4rem 0.7rem;
-                font-size: 0.65rem;
+                padding: 0.25rem 0.4rem;
+                font-size: 0.58rem;
             }
 
             .resources-compact {
-                gap: 0.8rem;
+                gap: 0.35rem;
+                flex-wrap: nowrap;
+                justify-content: space-between;
             }
 
             .resource-compact {
-                padding: 0.3rem 0.6rem;
+                flex: 1 1 0;
+                min-width: 0;
+                padding: 0.25rem 0.32rem;
+                gap: 0.25rem;
+                border-radius: 12px;
             }
 
             .resource-icon-small {
-                font-size: 1.2rem;
+                font-size: 0.95rem;
             }
 
             .resource-value-small {
-                font-size: 1rem;
+                font-size: 0.78rem;
             }
 
             .resource-rate-small {
-                font-size: 0.7rem;
+                font-size: 0.58rem;
             }
 
             .bottom-panel {
-                max-height: 28vh;
-                padding: 0.6rem 0.8rem;
+                top: 5.4rem;
+                right: 0.45rem;
+                bottom: 0.6rem;
+                width: min(96vw, 420px);
+                padding: 0.75rem;
             }
 
             .panel-tabs {
@@ -651,7 +821,7 @@
 
             /* 顶部进度条移动端位置 */
             .top-progress-bar {
-                bottom: calc(28vh + 10px);
+                bottom: 14px;
                 width: 80%;
                 min-width: 260px;
                 padding: 0.4rem 0.8rem;
@@ -1153,7 +1323,15 @@
     <div class="ui-overlay">
         <!-- 顶部栏 -->
         <div class="top-bar">
-            <div class="civilization-level" id="civLevel">🌍 行星文明</div>
+            <div class="top-status-row">
+                <div class="civilization-level" id="gameDate">📅 2025年1月</div>
+                <div class="civilization-level" id="civLevel">🌍 行星文明</div>
+                <div class="top-inline-actions">
+                    <a href="https://gameart.top" class="home-btn" target="_blank">🏠 首页</a>
+                    <button class="reset-btn" onclick="resetGame()">🔄 重新开始</button>
+                    <button class="home-btn" onclick="testTechLevel()" style="background: rgba(147, 112, 219, 0.15); border-color: rgba(147, 112, 219, 0.4); color: #9370db;">🧪 测试科技等级</button>
+                </div>
+            </div>
             <div class="resources-compact">
                 <div class="resource-compact">
                     <span class="resource-icon-small">💎</span>
@@ -1190,12 +1368,17 @@
             </div>
         </div>
 
+        <div class="right-edge-actions">
+            <button class="level-action-btn" onclick="openRightPanel('tech')">🔬 科技</button>
+            <button class="level-action-btn" onclick="openRightPanel('special')">🏗️ 伟大工程</button>
+        </div>
+
         <!-- 提示文本已移除，由点击反馈代替 -->
 
         <!-- 底部面板 -->
         <div class="bottom-panel">
             <div class="panel-tabs">
-                <button class="tab-button active" data-tab="mining">💎 自动产线</button>
+                <button class="tab-button active" data-tab="mining">💎 槽位工厂</button>
                 <button class="tab-button" data-tab="energy">⚡ 自动能源</button>
                 <button class="tab-button" data-tab="tech">🔬 科技系统</button>
                 <button class="tab-button" data-tab="special">✨ 特殊</button>
@@ -1213,12 +1396,15 @@
             <div class="tab-content" id="tab-special">
                 <div class="upgrades-grid" id="specialGrid"></div>
             </div>
-            
-            <div class="bottom-actions">
-                <a href="https://gameart.top" class="home-btn" target="_blank">🏠 首页</a>
-                <button class="reset-btn" onclick="resetGame()">🔄 重新开始</button>
-                <button class="home-btn" onclick="testTechLevel()" style="background: rgba(147, 112, 219, 0.15); border-color: rgba(147, 112, 219, 0.4); color: #9370db;">🧪 测试科技等级</button>
-            </div>
+        </div>
+    </div>
+
+    <div class="slot-build-modal" id="slotBuildModal" onclick="if(event.target===this) closeSlotBuildMenu()">
+        <div class="slot-build-box">
+            <div class="slot-build-title" id="slotBuildTitle">🧩 槽位部署</div>
+            <div class="slot-build-desc" id="slotBuildDesc">选择要执行的操作</div>
+            <div class="slot-build-actions" id="slotBuildActions"></div>
+            <button class="slot-build-close" onclick="closeSlotBuildMenu()">关闭</button>
         </div>
     </div>
 
@@ -1230,6 +1416,9 @@
             energy: 0,        // 能源（用矿石生产）
             tech: 0,          // 科技点（用能源驱动）
             techLevel: 0,     // 科技等级 0-4
+            startYear: 2025,
+            calendarMonthsElapsed: 0,
+            baseClickPower: 100,
             clickPower: 100,  // 点击获得矿石
             orePerSec: 0,     // 矿石产量
             energyPerSec: 0,  // 能源产量
@@ -1239,6 +1428,13 @@
             currentStage: 0,
             lastSaveTime: Date.now(),
             unlockedPlanets: ['earth'],
+            planetSlots: null,
+            slotLayout: null,
+            researchPowerNeed: 0,
+            earthClickCount: 0,
+            earthConquestLevel: 0,
+            venusClickCount: 0,
+            mercuryClickCount: 0,
             upgrades: { mining: [], energy: [], tech: [], special: [] }
         };
         window.game = game;  // 供 scene.js 访问
@@ -1270,12 +1466,10 @@
 
         // 升级配置 - 新的资源链条：矿石→能源→科技
         const upgradesConfig = {
-            // 采矿设施：产出矿石（免费，自动产出）
+            // 采矿设施：槽位建造（地球10格、月球1格、火星6格）
             mining: [
-                { id: 'm1', name: '基础工厂', icon: '🏭', baseProduction: 2, baseCost: 50, costMult: 1.12, costType: 'ore', outputType: 'ore' },
-                { id: 'm2', name: '自动产线', icon: '🤖', baseProduction: 10, baseCost: 300, costMult: 1.12, costType: 'ore', outputType: 'ore' },
-                { id: 'm3', name: '纳米工厂', icon: '⚙️', baseProduction: 50, baseCost: 1500, costMult: 1.12, costType: 'ore', outputType: 'ore' },
-                { id: 'm4', name: '量子工厂', icon: '⚛️', baseProduction: 250, baseCost: 8000, costMult: 1.12, costType: 'ore', outputType: 'ore' }
+                { id: 'mf1', name: '自动工厂', icon: '🏭', baseProduction: 4, baseCost: 120, costMult: 1.35, costType: 'ore', buildingKey: 'autoFactory' },
+                { id: 'mr1', name: '机器人军团', icon: '🤖', clickBonusMult: 1.35, baseCost: 180, costMult: 1.4, costType: 'ore', buildingKey: 'robotLegion' }
             ],
             // 能源设施：消耗矿石，产出能源
             energy: [
@@ -1284,12 +1478,12 @@
                 { id: 'e3', name: '卫星太阳能', icon: '🛰️', baseProduction: 120, baseCost: 5000, costMult: 1.14, costType: 'ore', outputType: 'energy' },
                 { id: 'e4', name: '反物质引擎', icon: '✨', baseProduction: 800, baseCost: 30000, costMult: 1.14, costType: 'ore', outputType: 'energy' }
             ],
-            // 科技系统：消耗能源，解锁科技等级（每个只能购买一次）
+            // 科技系统：消耗科研值，解锁科技等级（每个只能购买一次）
             tech: [
-                { id: 't1', name: '地月引力桥', icon: '🌙', techLevel: 1, baseCost: 5000, desc: '连接地球与月球，开启文明新纪元', costType: 'energy', unlocked: false },
-                { id: 't2', name: '太阳系引力桥', icon: '☀️', techLevel: 2, baseCost: 3000, desc: '掌控太阳系内行星，文明跨越式发展', costType: 'energy', unlocked: false },
-                { id: 't3', name: '星际引力桥', icon: '🌠', techLevel: 3, baseCost: 20000, desc: '穿越恒星系间的虚空，开创星际文明新纪元', costType: 'energy', unlocked: false },
-                { id: 't4', name: '银河系引力桥', icon: '🌌', techLevel: 4, baseCost: 150000, desc: '银河文明巅峰，征服星辰大海', costType: 'energy', unlocked: false }
+                { id: 't1', name: '地月引力桥', icon: '🌙', techLevel: 1, baseCost: 100, desc: '连接地球与月球，开启文明新纪元', costType: 'tech', unlocked: false },
+                { id: 't2', name: '太阳系引力桥', icon: '☀️', techLevel: 2, baseCost: 300, desc: '掌控太阳系内行星，文明跨越式发展', costType: 'tech', unlocked: false },
+                { id: 't3', name: '星际引力桥', icon: '🌠', techLevel: 3, baseCost: 1500, desc: '穿越恒星系间的虚空，开创星际文明新纪元', costType: 'tech', unlocked: false },
+                { id: 't4', name: '银河系引力桥', icon: '🌌', techLevel: 4, baseCost: 8000, desc: '银河文明巅峰，征服星辰大海', costType: 'tech', unlocked: false }
             ],
             special: [
                 { id: 'sp1', name: '太空电梯', icon: '🚡', baseProduction: 50, baseCost: 500, costMult: 1.15, costType: 'ore', bonus: 'click' },
@@ -1306,6 +1500,374 @@
             return (num / 1000000000).toFixed(2) + 'B';
         }
 
+        function getCalendarText() {
+            const startYear = Number(game.startYear) || 2025;
+            const elapsed = Math.max(0, Number(game.calendarMonthsElapsed) || 0);
+            const monthIndex = Math.floor(elapsed);
+            const year = startYear + Math.floor(monthIndex / 12);
+            const month = (monthIndex % 12) + 1;
+            return `📅 ${year}年${month}月`;
+        }
+
+        const planetSlotRules = {
+            earth: { name: '地球', total: 8, unlockTech: 0 },
+            moon: { name: '月球', total: 1, unlockTech: 1 },
+            venus: { name: '金星', total: 1, unlockTech: 1 },
+            mercury: { name: '水星', total: 1, unlockTech: 1 },
+            mars: { name: '火星', total: 6, unlockTech: 2 },
+            jupiter: { name: '木星', total: 1, unlockTech: 2 },
+            saturn: { name: '土星', total: 1, unlockTech: 2 }
+        };
+
+        const earthConquestMilestones = [5, 10, 15, 20];
+        const earthConquestMessages = [
+            '恭喜征服了非洲沙漠',
+            '恭喜征服了南极',
+            '恭喜征服了海底',
+            '恭喜征服了地心'
+        ];
+
+        function getPlanetTotalSlots(planetId) {
+            const baseTotal = planetSlotRules[planetId]?.total || 0;
+            if (planetId !== 'earth') return baseTotal;
+            const unlockedExtra = Math.max(0, Math.min(4, Math.floor(Number(game.earthConquestLevel) || 0)));
+            return Math.min(baseTotal, 4 + unlockedExtra);
+        }
+
+        function getDefaultPlanetSlots() {
+            return {
+                earth: { autoFactory: 1, robotLegion: 1 },
+                moon: { autoFactory: 0, robotLegion: 0 },
+                venus: { autoFactory: 0, robotLegion: 0 },
+                mercury: { autoFactory: 0, robotLegion: 0 },
+                mars: { autoFactory: 0, robotLegion: 0 },
+                jupiter: { autoFactory: 0, robotLegion: 0 },
+                saturn: { autoFactory: 0, robotLegion: 0 }
+            };
+        }
+
+        function getDefaultSlotLayout() {
+            return {
+                earth: ['autoFactory', 'robotLegion', null, null, null, null, null, null],
+                moon: [null],
+                venus: [null],
+                mercury: [null],
+                mars: [null, null, null, null, null, null],
+                jupiter: [null],
+                saturn: [null]
+            };
+        }
+
+        function normalizePlanetSlots(rawSlots = null) {
+            const defaults = getDefaultPlanetSlots();
+            const normalized = {};
+            Object.keys(planetSlotRules).forEach(planetId => {
+                const source = rawSlots?.[planetId] || {};
+                const autoFactory = Math.max(0, Number(source.autoFactory));
+                const robotLegion = Math.max(0, Number(source.robotLegion));
+                const fallback = defaults[planetId];
+                normalized[planetId] = {
+                    autoFactory: Number.isFinite(autoFactory) ? Math.floor(autoFactory) : fallback.autoFactory,
+                    robotLegion: Number.isFinite(robotLegion) ? Math.floor(robotLegion) : fallback.robotLegion
+                };
+
+                const maxTotal = planetSlotRules[planetId].total;
+                while (normalized[planetId].autoFactory + normalized[planetId].robotLegion > maxTotal) {
+                    if (normalized[planetId].robotLegion > 0) {
+                        normalized[planetId].robotLegion--;
+                    } else if (normalized[planetId].autoFactory > 0) {
+                        normalized[planetId].autoFactory--;
+                    } else {
+                        break;
+                    }
+                }
+            });
+            return normalized;
+        }
+
+        function normalizeSlotLayout(rawLayout = null, normalizedSlots = null, savedUpgrades = null) {
+            const layout = {};
+            const slots = normalizedSlots || normalizePlanetSlots();
+            const energyTotal = (savedUpgrades?.energy || game.upgrades?.energy || []).reduce((sum, item) => sum + (item.level || 0), 0);
+
+            Object.keys(planetSlotRules).forEach(planetId => {
+                const total = planetSlotRules[planetId].total;
+                const sourceArr = Array.isArray(rawLayout?.[planetId]) ? rawLayout[planetId] : null;
+                const arr = new Array(total).fill(null);
+
+                if (sourceArr) {
+                    for (let i = 0; i < total; i++) {
+                        const value = sourceArr[i];
+                        arr[i] = value === 'autoFactory' || value === 'robotLegion' || value === 'energyStation' || value === 'researchCenter' ? value : null;
+                    }
+                } else {
+                    let cursor = 0;
+                    const autoCount = slots[planetId]?.autoFactory || 0;
+                    const robotCount = slots[planetId]?.robotLegion || 0;
+                    for (let i = 0; i < autoCount && cursor < total; i++, cursor++) arr[cursor] = 'autoFactory';
+                    for (let i = 0; i < robotCount && cursor < total; i++, cursor++) arr[cursor] = 'robotLegion';
+                    if (planetId === 'earth') {
+                        for (let i = 0; i < energyTotal && cursor < total; i++, cursor++) arr[cursor] = 'energyStation';
+                    }
+                }
+
+                layout[planetId] = arr;
+            });
+
+            return layout;
+        }
+
+        function recountPlanetSlotsFromLayout() {
+            const next = {};
+            Object.keys(planetSlotRules).forEach(planetId => {
+                const arr = getPlanetSlotAssignments(planetId);
+                next[planetId] = {
+                    autoFactory: arr.filter(item => item === 'autoFactory').length,
+                    robotLegion: arr.filter(item => item === 'robotLegion').length
+                };
+            });
+            game.planetSlots = next;
+        }
+
+        function isPlanetConquestUnlocked(planetId) {
+            if (planetId === 'moon') {
+                const moonBridge = game.upgrades?.tech?.find(item => item.id === 't1');
+                return !!moonBridge?.unlocked;
+            }
+            if (planetId === 'venus') {
+                return (Number(game.venusClickCount) || 0) >= 5;
+            }
+            if (planetId === 'mercury') {
+                return (Number(game.mercuryClickCount) || 0) >= 10;
+            }
+            return true;
+        }
+
+        function isSlotPlanetUnlocked(planetId) {
+            const rule = planetSlotRules[planetId];
+            if (!rule) return false;
+            const techUnlocked = (game.techLevel || 0) >= rule.unlockTech;
+            if (!techUnlocked) return false;
+            return isPlanetConquestUnlocked(planetId);
+        }
+
+        function getPlanetUsedSlots(planetId) {
+            const arr = getPlanetSlotAssignments(planetId);
+            return arr.filter(item => !!item).length;
+        }
+
+        function getPlanetEnergyStationCount(planetId) {
+            const arr = getPlanetSlotAssignments(planetId);
+            return arr.filter(item => item === 'energyStation').length;
+        }
+
+        function getPlanetSlotAssignments(planetId) {
+            const total = getPlanetTotalSlots(planetId);
+            if (!isSlotPlanetUnlocked(planetId)) {
+                return new Array(total).fill(null);
+            }
+            const arr = game.slotLayout?.[planetId] || [];
+            return [...arr.slice(0, total), ...new Array(Math.max(0, total - arr.length)).fill(null)];
+        }
+
+        function getBuildingCount(buildingKey) {
+            return Object.keys(planetSlotRules).reduce((sum, planetId) => {
+                return sum + getPlanetSlotAssignments(planetId).filter(item => item === buildingKey).length;
+            }, 0);
+        }
+
+        function getResearchCenterCount() {
+            return Object.keys(planetSlotRules).reduce((sum, planetId) => {
+                return sum + getPlanetSlotAssignments(planetId).filter(item => item === 'researchCenter').length;
+            }, 0);
+        }
+
+        function getUnlockedSlotStats() {
+            const values = { total: 0, used: 0 };
+            Object.keys(planetSlotRules).forEach(planetId => {
+                if (!isSlotPlanetUnlocked(planetId)) return;
+                values.total += getPlanetTotalSlots(planetId);
+                values.used += getPlanetUsedSlots(planetId);
+            });
+            return values;
+        }
+
+        function getNextPlacementPlanet() {
+            const order = ['earth', 'moon', 'venus', 'mercury', 'mars', 'jupiter', 'saturn'];
+            for (const planetId of order) {
+                if (!isSlotPlanetUnlocked(planetId)) continue;
+                if (getPlanetUsedSlots(planetId) < getPlanetTotalSlots(planetId)) {
+                    return planetId;
+                }
+            }
+            return null;
+        }
+
+        function syncMiningLevelsWithSlots() {
+            recountPlanetSlotsFromLayout();
+            const autoFactory = game.upgrades.mining.find(item => item.id === 'mf1');
+            const robotLegion = game.upgrades.mining.find(item => item.id === 'mr1');
+            if (autoFactory) autoFactory.level = getBuildingCount('autoFactory');
+            if (robotLegion) robotLegion.level = getBuildingCount('robotLegion');
+        }
+
+        function placeMiningBuilding(buildingKey) {
+            const nextPlanet = getNextPlacementPlanet();
+            if (!nextPlanet) return null;
+            const assignments = getPlanetSlotAssignments(nextPlanet);
+            const firstEmpty = assignments.findIndex(item => !item);
+            if (firstEmpty < 0) return null;
+            game.slotLayout[nextPlanet][firstEmpty] = buildingKey;
+            syncMiningLevelsWithSlots();
+            return nextPlanet;
+        }
+
+        function getMiningUpgradeByBuildingKey(buildingKey) {
+            return game.upgrades.mining.find(item => item.buildingKey === buildingKey);
+        }
+
+        function getMiningBuildCost(buildingKey) {
+            const upgrade = getMiningUpgradeByBuildingKey(buildingKey);
+            if (!upgrade) return Infinity;
+            return Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult || 1.12, upgrade.level));
+        }
+
+        function getEnergyBuildCost() {
+            const energyUpgrade = game.upgrades.energy.find(item => item.id === 'e1');
+            if (!energyUpgrade) return Infinity;
+            return Math.floor(energyUpgrade.baseCost * Math.pow(energyUpgrade.costMult || 1.12, energyUpgrade.level));
+        }
+
+        function placeMiningBuildingAtSlot(planetId, slotIndex, buildingKey) {
+            if (!isSlotPlanetUnlocked(planetId)) return false;
+            const total = getPlanetTotalSlots(planetId);
+            if (slotIndex < 0 || slotIndex >= total) return false;
+            const assignments = getPlanetSlotAssignments(planetId);
+            if (assignments[slotIndex]) return false;
+            const cost = getMiningBuildCost(buildingKey);
+            if (!Number.isFinite(cost) || game.ore < cost) return false;
+
+            game.ore -= cost;
+            game.slotLayout[planetId][slotIndex] = buildingKey;
+            syncMiningLevelsWithSlots();
+            updateProduction();
+            renderUpgrades();
+            updateUI();
+            return true;
+        }
+
+        function removeBuildingFromSlot(planetId, slotIndex) {
+            if (!isSlotPlanetUnlocked(planetId)) return false;
+            const total = getPlanetTotalSlots(planetId);
+            if (slotIndex < 0 || slotIndex >= total) return false;
+            const assignments = getPlanetSlotAssignments(planetId);
+            const slotType = assignments[slotIndex];
+            if (!slotType) return false;
+
+            game.slotLayout[planetId][slotIndex] = null;
+
+            if (slotType === 'autoFactory' || slotType === 'robotLegion' || slotType === 'researchCenter') {
+                // 由 slotLayout 自动回算
+            } else if (slotType === 'energyStation') {
+                const target = [...game.upgrades.energy].reverse().find(item => item.level > 0);
+                if (!target) return false;
+                target.level -= 1;
+            } else {
+                return false;
+            }
+
+            syncMiningLevelsWithSlots();
+            updateProduction();
+            renderUpgrades();
+            updateUI();
+            return true;
+        }
+
+        function placeEnergyStationAtSlot(planetId, slotIndex) {
+            if (planetId !== 'earth') return false;
+            if (!isSlotPlanetUnlocked(planetId)) return false;
+            const total = getPlanetTotalSlots(planetId);
+            if (slotIndex < 0 || slotIndex >= total) return false;
+            const assignments = getPlanetSlotAssignments(planetId);
+            if (assignments[slotIndex]) return false;
+
+            const energyUpgrade = game.upgrades.energy.find(item => item.id === 'e1');
+            if (!energyUpgrade) return false;
+            const cost = getEnergyBuildCost();
+            if (!Number.isFinite(cost) || game.ore < cost) return false;
+
+            game.ore -= cost;
+            energyUpgrade.level += 1;
+            game.slotLayout[planetId][slotIndex] = 'energyStation';
+            syncMiningLevelsWithSlots();
+            updateProduction();
+            renderUpgrades();
+            updateUI();
+            return true;
+        }
+
+        function getSlotLabel(slotType) {
+            if (slotType === 'autoFactory') return '🏭 自动工厂';
+            if (slotType === 'robotLegion') return '🤖 机器人军团';
+            if (slotType === 'energyStation') return '⚡ 能源电站';
+            if (slotType === 'researchCenter') return '🔬 科研中心';
+            return '空槽';
+        }
+
+        function getResearchCenterBuildCost() {
+            const count = getResearchCenterCount();
+            return Math.floor(260 * Math.pow(1.22, count));
+        }
+
+        function placeResearchCenterAtSlot(planetId, slotIndex) {
+            if (!isSlotPlanetUnlocked(planetId)) return false;
+            const total = getPlanetTotalSlots(planetId);
+            if (slotIndex < 0 || slotIndex >= total) return false;
+            const assignments = getPlanetSlotAssignments(planetId);
+            if (assignments[slotIndex]) return false;
+
+            const cost = getResearchCenterBuildCost();
+            if (!Number.isFinite(cost) || game.ore < cost) return false;
+
+            game.ore -= cost;
+            game.slotLayout[planetId][slotIndex] = 'researchCenter';
+            syncMiningLevelsWithSlots();
+            updateProduction();
+            renderUpgrades();
+            updateUI();
+            return true;
+        }
+
+        function getFirstEmptySlotIndex(planetId) {
+            const assignments = getPlanetSlotAssignments(planetId);
+            return assignments.findIndex(item => !item);
+        }
+
+        function getFirstFilledSlotIndex(planetId) {
+            const assignments = getPlanetSlotAssignments(planetId);
+            return assignments.findIndex(item => !!item);
+        }
+
+        function openPlanetSlotMenu(planetId) {
+            if (!isSlotPlanetUnlocked(planetId)) return;
+            const emptyIndex = getFirstEmptySlotIndex(planetId);
+            if (emptyIndex >= 0) {
+                openSlotBuildMenu(planetId, emptyIndex);
+                return;
+            }
+            const filledIndex = getFirstFilledSlotIndex(planetId);
+            if (filledIndex >= 0) {
+                openSlotBuildMenu(planetId, filledIndex);
+            }
+        }
+
+        function updateLevelActionHud() {
+            const hud = document.getElementById('levelActionHud');
+            if (!hud) return;
+            hud.style.display = 'none';
+            hud.innerHTML = '';
+        }
+
         function buildUpgradesState(savedUpgrades = null) {
             const normalized = { mining: [], energy: [], tech: [], special: [] };
             for (let category in upgradesConfig) {
@@ -1314,6 +1876,7 @@
                     const savedItem = savedList.find(item => item.id === config.id) || {};
                     const item = {
                         ...config,
+                        category,
                         level: Math.max(0, Number(savedItem.level) || 0)
                     };
                     if (category === 'tech') {
@@ -1328,6 +1891,9 @@
         // 初始化升级
         function initUpgrades() {
             game.upgrades = buildUpgradesState();
+            game.planetSlots = normalizePlanetSlots();
+            game.slotLayout = normalizeSlotLayout(null, game.planetSlots, game.upgrades);
+            syncMiningLevelsWithSlots();
         }
 
         // 渲染升级
@@ -1337,10 +1903,31 @@
                 if (!container) continue;
                 container.innerHTML = '';
 
+                if (category === 'mining') {
+                    const slotStats = getUnlockedSlotStats();
+                    const summary = document.createElement('div');
+                    summary.className = 'upgrade-card';
+                    summary.innerHTML = `
+                        <div class="upgrade-card-header">
+                            <span class="upgrade-name">🧩 星球槽位部署</span>
+                            <span class="upgrade-level-badge">${slotStats.used}/${slotStats.total}</span>
+                        </div>
+                        <div style="font-size:0.75rem;color:#94a3b8;line-height:1.6;">
+                            ${Object.keys(planetSlotRules).map(planetId => {
+                                const rule = planetSlotRules[planetId];
+                                const unlocked = isSlotPlanetUnlocked(planetId);
+                                const used = getPlanetUsedSlots(planetId);
+                                return `${rule.name}: ${unlocked ? `${used}/${getPlanetTotalSlots(planetId)}` : `🔒 Lv.${rule.unlockTech}`}`;
+                            }).join(' ｜ ')}
+                        </div>
+                    `;
+                    container.appendChild(summary);
+                }
+
                 game.upgrades[category].forEach((upgrade, index) => {
                     // 科技系统特殊处理
                     if (category === 'tech') {
-                        const canAfford = game.energy >= upgrade.baseCost;
+                        const canAfford = game.tech >= upgrade.baseCost;
                         const isLocked = index > 0 && !game.upgrades.tech[index - 1].unlocked;
                         const alreadyUnlocked = upgrade.unlocked;
 
@@ -1353,7 +1940,7 @@
                             </div>
                             <div style="font-size:0.75rem;color:#94a3b8;margin:0.5rem 0;line-height:1.4;">${upgrade.desc}</div>
                             <div class="upgrade-stats">
-                                <span class="upgrade-cost-label">⚡ ${formatNumber(upgrade.baseCost)} 能源</span>
+                                <span class="upgrade-cost-label">🔬 ${formatNumber(upgrade.baseCost)} 科研值</span>
                                 <span style="color:#a855f7;font-size:0.75rem;">Lv.${upgrade.techLevel}</span>
                             </div>
                             ${isLocked ? '<div style="font-size:0.7rem;color:#f59e0b;margin-top:0.3rem;">需要前置科技</div>' : ''}
@@ -1368,16 +1955,24 @@
                         const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult || 1.12, upgrade.level));
                         const costType = upgrade.costType || 'ore';
                         const canAfford = costType === 'ore' ? game.ore >= cost : game.energy >= cost;
-                        const production = upgrade.baseProduction * upgrade.level;
+                        const slotStats = (category === 'mining' || category === 'energy') ? getUnlockedSlotStats() : null;
+                        const hasSlot = (category === 'mining' || category === 'energy') ? slotStats.used < slotStats.total : true;
+                        const nextPlanet = category === 'mining' ? getNextPlacementPlanet() : null;
 
                         let costIcon = costType === 'ore' ? '💎' : '⚡';
                         let costName = costType === 'ore' ? '矿石' : '能源';
                         
                         let prodText = '';
-                        if (upgrade.outputType === 'ore') {
+                        if (category === 'mining' && upgrade.buildingKey === 'autoFactory') {
+                            prodText = `每座 💎 +${formatNumber(upgrade.baseProduction)}/秒`;
+                        } else if (category === 'mining' && upgrade.buildingKey === 'robotLegion') {
+                            prodText = `每座 点击 +${Math.round((upgrade.clickBonusMult - 1) * 100)}%`;
+                        } else if (upgrade.outputType === 'ore') {
+                            const production = upgrade.baseProduction * upgrade.level;
                             prodText = production > 0 ? `💎 +${formatNumber(production)}/秒` : '';
                         } else if (upgrade.outputType === 'energy') {
-                            prodText = production > 0 ? `⚡ +${formatNumber(production)}/秒` : '';
+                            const production = upgrade.baseProduction * upgrade.level;
+                            prodText = production > 0 ? `⚡ +${formatNumber(production)}/秒（每次建造占1槽）` : '每次建造占1槽';
                         } else if (upgrade.bonus === 'click') {
                             prodText = `点击 +${upgrade.baseProduction * upgrade.level}`;
                         } else if (upgrade.bonus === 'energyBoost') {
@@ -1387,12 +1982,13 @@
                         }
 
                         const card = document.createElement('div');
-                        card.className = `upgrade-card ${canAfford ? '' : 'disabled'}`;
+                        card.className = `upgrade-card ${canAfford && hasSlot ? '' : 'disabled'}`;
                         card.innerHTML = `
                             <div class="upgrade-card-header">
                                 <span class="upgrade-name">${upgrade.icon} ${upgrade.name}</span>
                                 <span class="upgrade-level-badge">Lv.${upgrade.level}</span>
                             </div>
+                            ${(category === 'mining' || category === 'energy') ? `<div style="font-size:0.72rem;color:#94a3b8;margin:0.35rem 0;">${hasSlot ? (category === 'mining' ? `下一个部署星球：${planetSlotRules[nextPlanet]?.name || '—'}` : `可用槽位：${slotStats.total - slotStats.used}`) : '当前可用槽位已满，请先解锁更高文明层级'}</div>` : ''}
                             <div class="upgrade-stats">
                                 <span class="upgrade-cost-label">${costIcon} ${formatNumber(cost)} ${costName}</span>
                                 <span class="upgrade-prod-label">${prodText}</span>
@@ -1414,16 +2010,39 @@
             const canAfford = costType === 'ore' ? game.ore >= cost : game.energy >= cost;
             
             if (canAfford) {
+                if (upgrade.category === 'mining' || upgrade.category === 'energy') {
+                    const slotStats = getUnlockedSlotStats();
+                    if (slotStats.used >= slotStats.total) {
+                        return;
+                    }
+                }
+
                 if (costType === 'ore') {
                     game.ore -= cost;
                 } else {
                     game.energy -= cost;
                 }
-                
-                upgrade.level++;
-                
-                if (upgrade.bonus === 'click') {
-                    game.clickPower += upgrade.baseProduction;
+
+                if (upgrade.category === 'mining') {
+                    const placed = placeMiningBuilding(upgrade.buildingKey);
+                    if (!placed) {
+                        if (costType === 'ore') game.ore += cost;
+                        else game.energy += cost;
+                        return;
+                    }
+                } else if (upgrade.category === 'energy') {
+                    const energyPlanet = 'earth';
+                    const emptyIndex = getFirstEmptySlotIndex(energyPlanet);
+                    if (emptyIndex < 0) {
+                        if (costType === 'ore') game.ore += cost;
+                        else game.energy += cost;
+                        return;
+                    }
+                    game.slotLayout[energyPlanet][emptyIndex] = 'energyStation';
+                    upgrade.level++;
+                    syncMiningLevelsWithSlots();
+                } else {
+                    upgrade.level++;
                 }
 
                 updateProduction();
@@ -1434,8 +2053,8 @@
 
         // 购买科技
         function buyTech(tech) {
-            if (game.energy >= tech.baseCost && !tech.unlocked) {
-                game.energy -= tech.baseCost;
+            if (game.tech >= tech.baseCost && !tech.unlocked) {
+                game.tech -= tech.baseCost;
                 tech.unlocked = true;
                 game.techLevel = tech.techLevel;
                 
@@ -1501,28 +2120,41 @@
 
         // 更新产量
         function updateProduction() {
-            game.orePerSec = 0;
+            const autoFactoryUpgrade = game.upgrades.mining.find(u => u.id === 'mf1');
+            const robotLegionUpgrade = game.upgrades.mining.find(u => u.id === 'mr1');
+            const autoFactoryCount = getBuildingCount('autoFactory');
+            const robotLegionCount = getBuildingCount('robotLegion');
+            const researchCenterCount = getResearchCenterCount();
+
+            game.orePerSec = autoFactoryCount * (autoFactoryUpgrade?.baseProduction || 0);
             game.energyPerSec = 0;
             game.techPerSec = 0;
+            game.researchPowerNeed = 0;
 
-            // 1. 计算矿石产量（采矿工厂）
-            game.upgrades.mining.forEach(upgrade => {
-                if (upgrade.outputType === 'ore') {
-                    game.orePerSec += upgrade.baseProduction * upgrade.level;
-                }
-            });
+            const robotBonus = 1 + robotLegionCount * ((robotLegionUpgrade?.clickBonusMult || 1.35) - 1);
+            const elevator = game.upgrades.special.find(u => u.id === 'sp1');
+            const flatClickBonus = (elevator?.level || 0) * (elevator?.baseProduction || 0);
+            game.clickPower = Math.max(1, Math.floor(game.baseClickPower * robotBonus + flatClickBonus));
 
-            // 2. 计算能源产量（能源设施）
+            // 1. 计算能源产量（能源设施）
             game.upgrades.energy.forEach(upgrade => {
                 if (upgrade.outputType === 'energy') {
                     game.energyPerSec += upgrade.baseProduction * upgrade.level;
                 }
             });
 
-            // 3. 科技产量（基于能源和科技等级）
-            game.techPerSec = game.energyPerSec * 0.01 * (1 + game.techLevel * 0.5);
+            // 2. 科技产量：必须有科研中心，且持续消耗电力
+            const powerNeedPerCenter = 3.5;
+            const totalPowerNeed = researchCenterCount * powerNeedPerCenter;
+            game.researchPowerNeed = totalPowerNeed;
+            let researchEfficiency = 0;
+            if (totalPowerNeed > 0) {
+                researchEfficiency = Math.min(1, game.energyPerSec / totalPowerNeed);
+                game.energyPerSec = Math.max(0, game.energyPerSec - totalPowerNeed * researchEfficiency);
+            }
+            game.techPerSec = researchCenterCount * 1 * researchEfficiency;
 
-            // 4. 特殊建筑加成
+            // 3. 特殊建筑加成
             const dysonLevel = game.upgrades.special.find(u => u.id === 'sp2')?.level || 0;
             if (dysonLevel > 0) {
                 const boost = game.upgrades.special.find(u => u.id === 'sp2')?.boostValue || 1;
@@ -1540,36 +2172,180 @@
 
         // 更新UI
         function updateUI() {
+            const gameDateEl = document.getElementById('gameDate');
+            if (gameDateEl) {
+                gameDateEl.textContent = getCalendarText();
+            }
             document.getElementById('oreVal').textContent = formatNumber(game.ore);
             document.getElementById('energyVal').textContent = formatNumber(game.energy);
             document.getElementById('techVal').textContent = formatNumber(game.tech);
             document.getElementById('oreRate').textContent = '+' + formatNumber(game.orePerSec) + '/秒';
             document.getElementById('energyRate').textContent = '+' + formatNumber(game.energyPerSec) + '/秒';
-            document.getElementById('techRate').textContent = '+' + formatNumber(game.techPerSec) + '/秒';
+            const researchCenterCount = getResearchCenterCount();
+            document.getElementById('techRate').textContent = researchCenterCount > 0
+                ? `+${formatNumber(game.techPerSec)}/秒 · 需电${formatNumber(game.researchPowerNeed)}`
+                : '+0/秒 · 建科研中心';
+            updateLevelActionHud();
         }
 
         // 检查阶段进度
         function checkStageProgress() {
             const currentStage = stages[game.currentStage];
             const nextStage = stages[game.currentStage + 1];
+            const conquestLevel = Math.max(0, Math.min(earthConquestMilestones.length, Number(game.earthConquestLevel) || 0));
+            const hasConquestGoal = conquestLevel < earthConquestMilestones.length;
+            const moonBridge = game.upgrades.tech.find(item => item.id === 't1');
+            const moonBridgeUnlocked = !!moonBridge?.unlocked;
+            const solarBridge = game.upgrades.tech.find(item => item.id === 't2');
+            const solarBridgeUnlocked = !!solarBridge?.unlocked;
+            const researchCenterCount = getResearchCenterCount();
+            const energyStationCount = getBuildingCount('energyStation');
+            const moonRobotCount = getPlanetSlotAssignments('moon').filter(item => item === 'robotLegion').length;
+            const venusClicks = Math.max(0, Number(game.venusClickCount) || 0);
+            const mercuryClicks = Math.max(0, Number(game.mercuryClickCount) || 0);
+            const stage3TaskStep = researchCenterCount < 1 ? 1
+                : (energyStationCount < 2 ? 2
+                : (!moonBridgeUnlocked ? 3
+                : (moonRobotCount < 1 ? 4
+                : (venusClicks < 5 ? 5
+                : (mercuryClicks < 10 ? 6
+                : (solarBridgeUnlocked ? 8 : 7))))));
 
-            if (nextStage && game.totalEarned >= nextStage.threshold) {
-                advanceStage(nextStage);
+            if (nextStage) {
+                if (nextStage.id === 2) {
+                    if ((game.earthClickCount || 0) >= 5) {
+                        advanceStage(nextStage);
+                    }
+                } else if (nextStage.id === 3) {
+                    if (stage3TaskStep >= 8) {
+                        advanceStage(nextStage);
+                    }
+                } else if (game.totalEarned >= nextStage.threshold) {
+                    advanceStage(nextStage);
+                }
+            }
+
+            if (hasConquestGoal) {
+                const clickTarget = earthConquestMilestones[conquestLevel] || 5;
+                const clicks = Math.max(0, Number(game.earthClickCount) || 0);
+                const progress = Math.min(100, (clicks / clickTarget) * 100);
+                document.getElementById('progressBar').style.width = progress + '%';
+                document.getElementById('progressPercent').textContent = `${Math.min(clicks, clickTarget)} / ${clickTarget}`;
+                document.getElementById('progressTitle').textContent = `🎯 点击地球${clickTarget}次`;
+                return;
             }
 
             if (nextStage) {
-                const progress = ((game.totalEarned - currentStage.threshold) / 
-                                 (nextStage.threshold - currentStage.threshold)) * 100;
-                
-                document.getElementById('progressBar').style.width = Math.min(progress, 100) + '%';
-                document.getElementById('progressPercent').textContent = 
-                    `${Math.floor(Math.min(progress, 100))}% (${formatNumber(game.totalEarned)} / ${formatNumber(nextStage.threshold)})`;
-                document.getElementById('progressTitle').textContent = '🎯 距离' + nextStage.name;
+                if (nextStage.id === 2) {
+                    const nextConquestIndex = Math.max(0, Math.min(earthConquestMilestones.length - 1, Number(game.earthConquestLevel) || 0));
+                    const clickTarget = earthConquestMilestones[nextConquestIndex] || 5;
+                    const clicks = Math.max(0, Number(game.earthClickCount) || 0);
+                    const progress = Math.min(100, (clicks / clickTarget) * 100);
+                    document.getElementById('progressBar').style.width = progress + '%';
+                    document.getElementById('progressPercent').textContent = `${Math.min(clicks, clickTarget)} / ${clickTarget}`;
+                    document.getElementById('progressTitle').textContent = `🎯 点击地球${clickTarget}次`;
+                } else if (nextStage.id === 3) {
+                    if (stage3TaskStep === 1) {
+                        const target = 1;
+                        const progress = Math.min(100, (researchCenterCount / target) * 100);
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressPercent').textContent = `${Math.min(researchCenterCount, target)} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '🎯 修建1个科研中心';
+                    } else if (stage3TaskStep === 2) {
+                        const target = 2;
+                        const progress = Math.min(100, (energyStationCount / target) * 100);
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressPercent').textContent = `${Math.min(energyStationCount, target)} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '🎯 修建2个电厂让科研中心正常运转';
+                    } else if (stage3TaskStep === 3) {
+                        const target = 1;
+                        const done = moonBridgeUnlocked ? 1 : 0;
+                        document.getElementById('progressBar').style.width = `${done * 100}%`;
+                        document.getElementById('progressPercent').textContent = `${done} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '🎯 研究地月桥科技，人类大规模走出地球';
+                    } else if (stage3TaskStep === 4) {
+                        const target = 1;
+                        const done = Math.min(1, moonRobotCount);
+                        document.getElementById('progressBar').style.width = `${done * 100}%`;
+                        document.getElementById('progressPercent').textContent = `${done} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '🎯 在月球上修建1个机器人军团，机器人军团使点击开采的矿石增加';
+                    } else if (stage3TaskStep === 5) {
+                        const target = 5;
+                        const progress = Math.min(100, (venusClicks / target) * 100);
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressPercent').textContent = `${Math.min(venusClicks, target)} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '🎯 征服金星（点击金星5次）';
+                    } else if (stage3TaskStep === 6) {
+                        const target = 10;
+                        const progress = Math.min(100, (mercuryClicks / target) * 100);
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressPercent').textContent = `${Math.min(mercuryClicks, target)} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '🎯 征服水星（点击水星10次）';
+                    } else {
+                        const target = 1;
+                        const done = solarBridgeUnlocked ? 1 : 0;
+                        document.getElementById('progressBar').style.width = `${done * 100}%`;
+                        document.getElementById('progressPercent').textContent = `${done} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '🎯 研究太阳系引力桥科技，人类向太阳系殖民';
+                    }
+                } else {
+                    const progress = ((game.totalEarned - currentStage.threshold) /
+                                     (nextStage.threshold - currentStage.threshold)) * 100;
+                    document.getElementById('progressBar').style.width = Math.min(progress, 100) + '%';
+                    document.getElementById('progressPercent').textContent =
+                        `${Math.floor(Math.min(progress, 100))}% (${formatNumber(game.totalEarned)} / ${formatNumber(nextStage.threshold)})`;
+                    document.getElementById('progressTitle').textContent = '🎯 距离' + nextStage.name;
+                }
             } else {
                 document.getElementById('progressBar').style.width = '100%';
                 document.getElementById('progressPercent').textContent = '100% - 文明巅峰';
                 document.getElementById('progressTitle').textContent = '🎉 文明巅峰';
             }
+        }
+
+        function showEarthConquestMilestone(message) {
+            const modal = document.createElement('div');
+            modal.className = 'milestone-overlay';
+            modal.innerHTML = `
+                <div class="milestone-box">
+                    <div class="milestone-emoji">🌍</div>
+                    <div class="milestone-heading">${message}</div>
+                    <div class="milestone-description">地球新增 1 个槽位</div>
+                    <button class="milestone-cta">继续征服</button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            modal.querySelector('button').onclick = () => modal.remove();
+        }
+
+        function handleEarthConquestClick() {
+            game.earthClickCount = Math.max(0, Number(game.earthClickCount) || 0) + 1;
+            let changed = false;
+            while ((game.earthConquestLevel || 0) < earthConquestMilestones.length) {
+                const nextLevel = game.earthConquestLevel || 0;
+                const needClicks = earthConquestMilestones[nextLevel];
+                if (game.earthClickCount < needClicks) break;
+                game.earthConquestLevel = nextLevel + 1;
+                showEarthConquestMilestone(earthConquestMessages[nextLevel]);
+                changed = true;
+            }
+            if (changed) {
+                renderUpgrades();
+                updateProduction();
+                updateUI();
+            }
+            checkStageProgress();
+        }
+
+        function handlePlanetTaskClick(planetId) {
+            if (planetId === 'venus') {
+                game.venusClickCount = Math.max(0, Number(game.venusClickCount) || 0) + 1;
+            } else if (planetId === 'mercury') {
+                game.mercuryClickCount = Math.max(0, Number(game.mercuryClickCount) || 0) + 1;
+            } else {
+                return;
+            }
+            checkStageProgress();
         }
 
         // 推进阶段
@@ -1584,7 +2360,9 @@
                 }
             });
 
-            showMilestone(stage);
+            if (stage.id !== 1 && stage.id !== 2 && stage.id !== 3) {
+                showMilestone(stage);
+            }
         }
 
         // 显示里程碑
@@ -1604,14 +2382,20 @@
             modal.querySelector('button').onclick = () => modal.remove();
         }
 
+        function switchToTab(tabName) {
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            const btn = document.querySelector(`.tab-button[data-tab="${tabName}"]`);
+            const content = document.getElementById('tab-' + tabName);
+            if (btn) btn.classList.add('active');
+            if (content) content.classList.add('active');
+        }
+
         // Tab切换
         document.querySelectorAll('.tab-button').forEach(btn => {
             btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                btn.classList.add('active');
-                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+                switchToTab(btn.dataset.tab);
             });
         });
 
@@ -1621,6 +2405,7 @@
             game.energy += game.energyPerSec / 5;
             game.tech += game.techPerSec / 5;
             game.totalEarned += game.orePerSec / 5;
+            game.calendarMonthsElapsed += 0.2;
             
             updateUI();
             checkStageProgress();
@@ -1653,6 +2438,16 @@
             const savedGame = JSON.parse(saved);
             Object.assign(game, savedGame);
             game.upgrades = buildUpgradesState(savedGame.upgrades);
+            game.startYear = Number(game.startYear) || 2025;
+            game.calendarMonthsElapsed = Math.max(0, Number(game.calendarMonthsElapsed) || 0);
+            game.baseClickPower = Number(game.baseClickPower) > 0 ? Number(game.baseClickPower) : (Number(game.clickPower) > 0 ? Number(game.clickPower) : 100);
+            game.earthClickCount = Math.max(0, Number(game.earthClickCount) || 0);
+            game.earthConquestLevel = Math.max(0, Math.min(4, Math.floor(Number(game.earthConquestLevel) || 0)));
+            game.venusClickCount = Math.max(0, Number(game.venusClickCount) || 0);
+            game.mercuryClickCount = Math.max(0, Number(game.mercuryClickCount) || 0);
+            game.planetSlots = normalizePlanetSlots(savedGame.planetSlots);
+            game.slotLayout = normalizeSlotLayout(savedGame.slotLayout, game.planetSlots, game.upgrades);
+            syncMiningLevelsWithSlots();
 
             const offlineTime = (Date.now() - game.lastSaveTime) / 1000;
             if (offlineTime > 60) {
@@ -1698,6 +2493,98 @@
             };
         }
 
+        function openSlotBuildMenu(planetId, slotIndex) {
+            const modal = document.getElementById('slotBuildModal');
+            const title = document.getElementById('slotBuildTitle');
+            const desc = document.getElementById('slotBuildDesc');
+            const actions = document.getElementById('slotBuildActions');
+            if (!modal || !title || !desc || !actions) return;
+
+            const rule = planetSlotRules[planetId];
+            if (!rule || !isSlotPlanetUnlocked(planetId)) return;
+
+            const assignments = getPlanetSlotAssignments(planetId);
+            const slotType = assignments[slotIndex] || null;
+
+            title.textContent = `🧩 ${rule.name}`;
+            desc.textContent = '';
+            actions.innerHTML = '';
+
+            if (!slotType) {
+                const buildOptions = [
+                    { key: 'autoFactory', label: '建造 🏭 自动工厂' },
+                    { key: 'robotLegion', label: '建造 🤖 机器人军团' }
+                ];
+                buildOptions.forEach(option => {
+                    const cost = getMiningBuildCost(option.key);
+                    const upgrade = getMiningUpgradeByBuildingKey(option.key);
+                    const effectText = option.key === 'autoFactory'
+                        ? `每秒 +${formatNumber(upgrade?.baseProduction || 0)} 矿石`
+                        : `点击收益 +${Math.round(((upgrade?.clickBonusMult || 1) - 1) * 100)}%`;
+                    const button = document.createElement('button');
+                    button.className = 'slot-build-btn';
+                    button.textContent = `${option.label}（💎 ${formatNumber(cost)}） · ${effectText}`;
+                    button.disabled = !Number.isFinite(cost) || game.ore < cost;
+                    button.onclick = () => {
+                        const ok = placeMiningBuildingAtSlot(planetId, slotIndex, option.key);
+                        if (ok) closeSlotBuildMenu();
+                    };
+                    actions.appendChild(button);
+                });
+
+                if (planetId === 'earth') {
+                    const energyCost = getEnergyBuildCost();
+                    const energyUpgrade = game.upgrades.energy.find(item => item.id === 'e1');
+                    const energyBtn = document.createElement('button');
+                    energyBtn.className = 'slot-build-btn';
+                    energyBtn.textContent = `建造 ⚡ 能源电站（💎 ${formatNumber(energyCost)}） · 每秒 +${formatNumber(energyUpgrade?.baseProduction || 0)} 能源`;
+                    energyBtn.disabled = !Number.isFinite(energyCost) || game.ore < energyCost;
+                    energyBtn.onclick = () => {
+                        const ok = placeEnergyStationAtSlot(planetId, slotIndex);
+                        if (ok) closeSlotBuildMenu();
+                    };
+                    actions.appendChild(energyBtn);
+                }
+
+                const researchCost = getResearchCenterBuildCost();
+                const researchBtn = document.createElement('button');
+                researchBtn.className = 'slot-build-btn';
+                researchBtn.textContent = `建造 🔬 科研中心（💎 ${formatNumber(researchCost)}） · +1科研/秒，-3.5能源/秒`;
+                researchBtn.disabled = !Number.isFinite(researchCost) || game.ore < researchCost;
+                researchBtn.onclick = () => {
+                    const ok = placeResearchCenterAtSlot(planetId, slotIndex);
+                    if (ok) closeSlotBuildMenu();
+                };
+                actions.appendChild(researchBtn);
+            }
+
+            if (slotType) {
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'slot-build-btn';
+                removeBtn.textContent = `拆除 ${getSlotLabel(slotType)}（不返还资源）`;
+                removeBtn.onclick = () => {
+                    const ok = removeBuildingFromSlot(planetId, slotIndex);
+                    if (ok) closeSlotBuildMenu();
+                };
+                actions.appendChild(removeBtn);
+            }
+
+            modal.classList.add('show');
+        }
+
+        function closeSlotBuildMenu() {
+            const modal = document.getElementById('slotBuildModal');
+            if (modal) modal.classList.remove('show');
+            updateLevelActionHud();
+        }
+
+        window.openSlotBuildMenu = openSlotBuildMenu;
+        window.getPlanetSlotAssignments = getPlanetSlotAssignments;
+        window.openPlanetSlotMenu = openPlanetSlotMenu;
+        window.isSlotPlanetUnlocked = isSlotPlanetUnlocked;
+        window.handleEarthConquestClick = handleEarthConquestClick;
+        window.handlePlanetTaskClick = handlePlanetTaskClick;
+
         // ===== 国家配置 =====
         const countryConfigs = {
             usa:     { name: '美国',   flag: '🇺🇸', ore: 400,  energy: 50,  clickPower: 60  },
@@ -1712,15 +2599,19 @@
             game.ore = cfg.ore;
             game.energy = cfg.energy;
             game.totalEarned = 0;  // 初始礼包不计入总收益，避免立刻触发阶段推进
+            game.baseClickPower = cfg.clickPower;
             game.clickPower = cfg.clickPower;
+            game.startYear = 2025;
+            game.calendarMonthsElapsed = 0;
+            game.earthClickCount = 0;
+            game.earthConquestLevel = 0;
+            game.venusClickCount = 0;
+            game.mercuryClickCount = 0;
             game.country = id;
             game.countryName = cfg.name;
-
-            // 所有国家默认赠送1级基础工厂
-            const basicFactory = game.upgrades.mining.find(u => u.id === 'm1');
-            if (basicFactory) {
-                basicFactory.level = 1;
-            }
+            game.planetSlots = normalizePlanetSlots();
+            game.slotLayout = normalizeSlotLayout();
+            syncMiningLevelsWithSlots();
 
             // 淡出选国界面，淡入游戏
             const screen = document.getElementById('countryScreen');
@@ -1846,6 +2737,37 @@
                 localStorage.setItem('spaceEmpireV5', JSON.stringify(game));
             }
         });
+
+        const panelTabs = document.querySelector('.panel-tabs');
+        if (panelTabs) panelTabs.style.display = 'none';
+        const bottomPanel = document.querySelector('.bottom-panel');
+        if (bottomPanel) bottomPanel.classList.add('is-collapsed');
+        let activeRightTab = null;
+
+        function openRightPanel(tabName) {
+            const panel = document.querySelector('.bottom-panel');
+            if (!panel) return;
+            const isCollapsed = panel.classList.contains('is-collapsed');
+            if (!isCollapsed && activeRightTab === tabName) {
+                panel.classList.add('is-collapsed');
+                activeRightTab = null;
+                return;
+            }
+            panel.classList.remove('is-collapsed');
+            switchToTab(tabName);
+            activeRightTab = tabName;
+        }
+
+        function closeRightPanel() {
+            const panel = document.querySelector('.bottom-panel');
+            if (!panel) return;
+            panel.classList.add('is-collapsed');
+            activeRightTab = null;
+        }
+
+        window.switchToTab = switchToTab;
+        window.openRightPanel = openRightPanel;
+        window.closeRightPanel = closeRightPanel;
     </script>
 </body>
 </html>
