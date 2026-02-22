@@ -215,6 +215,37 @@
             margin-bottom: 1rem;
         }
 
+        .panel-topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.6rem;
+        }
+
+        .panel-topbar .panel-tabs {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .panel-close-btn {
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border-radius: 8px;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.72rem;
+            font-family: var(--font-ui);
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .panel-close-btn:hover {
+            background: rgba(239, 68, 68, 0.25);
+            border-color: rgba(248, 113, 113, 0.7);
+        }
+
         .tab-button {
             font-family: var(--font-ui);
             background: rgba(255, 255, 255, 0.05);
@@ -675,7 +706,7 @@
         .right-edge-actions {
             position: fixed;
             right: 0.7rem;
-            top: 43%;
+            top: 35%;
             transform: translateY(-50%);
             display: flex;
             flex-direction: column;
@@ -687,6 +718,47 @@
             transform: translateX(120%);
             opacity: 0;
             pointer-events: none;
+        }
+
+        .mvp-meta {
+            position: fixed;
+            right: 0.7rem;
+            bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+            z-index: 1320;
+            pointer-events: auto;
+        }
+
+        .mvp-version-badge {
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            background: rgba(15, 23, 42, 0.78);
+            color: #cbd5e1;
+            border-radius: 999px;
+            padding: 0.25rem 0.58rem;
+            font-family: var(--font-ui);
+            font-size: 0.66rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .mvp-feedback-btn {
+            border: 1px solid rgba(0, 217, 255, 0.45);
+            background: rgba(15, 23, 42, 0.88);
+            color: var(--accent-cyan);
+            border-radius: 999px;
+            padding: 0.28rem 0.68rem;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-decoration: none;
+            backdrop-filter: blur(6px);
+        }
+
+        .mvp-feedback-btn:hover {
+            background: rgba(0, 217, 255, 0.16);
+            border-color: rgba(0, 217, 255, 0.72);
         }
 
         /* 响应式 */
@@ -829,6 +901,34 @@
                 min-width: 260px;
                 padding: 0.4rem 0.8rem;
                 font-size: 0.7rem;
+            }
+
+            .right-edge-actions {
+                right: 0.45rem;
+                top: 6.3rem;
+                transform: none;
+                gap: 0.35rem;
+            }
+
+            .level-action-btn {
+                font-size: 0.64rem;
+                padding: 0.26rem 0.58rem;
+            }
+
+            .mvp-meta {
+                right: 0.45rem;
+                bottom: 0.5rem;
+                gap: 0.35rem;
+            }
+
+            .mvp-version-badge {
+                font-size: 0.58rem;
+                padding: 0.2rem 0.45rem;
+            }
+
+            .mvp-feedback-btn {
+                font-size: 0.62rem;
+                padding: 0.24rem 0.52rem;
             }
         }
 
@@ -1384,11 +1484,14 @@
 
         <!-- 底部面板 -->
         <div class="bottom-panel">
-            <div class="panel-tabs">
-                <button class="tab-button active" data-tab="mining">💎 槽位工厂</button>
-                <button class="tab-button" data-tab="energy">⚡ 自动能源</button>
-                <button class="tab-button" data-tab="tech">🔬 科技系统</button>
-                <button class="tab-button" data-tab="special">✨ 特殊</button>
+            <div class="panel-topbar">
+                <div class="panel-tabs">
+                    <button class="tab-button active" data-tab="mining">💎 槽位工厂</button>
+                    <button class="tab-button" data-tab="energy">⚡ 自动能源</button>
+                    <button class="tab-button" data-tab="tech">🔬 科技系统</button>
+                    <button class="tab-button" data-tab="special">✨ 特殊</button>
+                </div>
+                <button class="panel-close-btn" onclick="closeRightPanel()">✕ 关闭</button>
             </div>
 
             <div class="tab-content active" id="tab-mining">
@@ -1403,6 +1506,11 @@
             <div class="tab-content" id="tab-special">
                 <div class="upgrades-grid" id="specialGrid"></div>
             </div>
+        </div>
+
+        <div class="mvp-meta">
+            <div class="mvp-version-badge">v0.1.0-mvp</div>
+            <a class="mvp-feedback-btn" href="https://gameart.top" target="_blank" rel="noopener noreferrer">💬 反馈</a>
         </div>
     </div>
 
@@ -1443,6 +1551,9 @@
             moonClickCount: 0,
             venusClickCount: 0,
             mercuryClickCount: 0,
+            marsClickCount: 0,
+            jupiterClickCount: 0,
+            saturnClickCount: 0,
             upgrades: { mining: [], energy: [], tech: [], special: [] }
         };
         window.game = game;  // 供 scene.js 访问
@@ -1494,9 +1605,11 @@
                 { id: 't4', name: '银河系引力桥', icon: '🌌', techLevel: 4, baseCost: 8000, desc: '银河文明巅峰，征服星辰大海', costType: 'tech', unlocked: false }
             ],
             special: [
-                { id: 'sp1', name: '太空电梯', icon: '🚡', baseProduction: 50, baseCost: 500, costMult: 1.15, costType: 'ore', bonus: 'click' },
-                { id: 'sp2', name: '戴森球', icon: '🌟', baseProduction: 0, baseCost: 10000, costMult: 1.18, costType: 'ore', bonus: 'energyBoost', boostValue: 2.0 },
-                { id: 'sp3', name: '时空加速器', icon: '⏰', baseProduction: 0, baseCost: 50000, costMult: 1.2, costType: 'energy', bonus: 'speed', speedMult: 1.5 }
+                { id: 'sp1', name: '星链', icon: '🛰️', baseProduction: 32, baseCost: 380, costMult: 1.13, costType: 'ore', bonus: 'click' },
+                { id: 'sp2', name: '太空光伏大陆', icon: '☀️', baseProduction: 90, baseCost: 6800, costMult: 1.16, costType: 'ore', bonus: 'energyFlat' },
+                { id: 'sp3', name: '戴森球', icon: '🌟', baseProduction: 260, baseCost: 42000, costMult: 1.18, costType: 'energy', bonus: 'energyFlat' },
+                { id: 'sp4', name: '月面氦-3反应堆群', icon: '🌕', baseProduction: 520, baseCost: 165000, costMult: 1.21, costType: 'ore', bonus: 'energyFlat' },
+                { id: 'sp5', name: '轨道量子通信网', icon: '📡', baseProduction: 0, baseCost: 320000, costMult: 1.24, costType: 'energy', bonus: 'techBoost', techBoostValue: 1.22 }
             ]
         };
 
@@ -1528,6 +1641,15 @@
         };
 
         const earthConquestMilestones = [5, 10, 15, 20];
+        const marsWarTargets = {
+            clicks: 35,
+            marsRobots: 2,
+            totalRobots: 6
+        };
+        const outerConquestTargets = {
+            jupiter: 8,
+            saturn: 10
+        };
         const earthConquestMessages = [
             '恭喜征服了非洲沙漠',
             '恭喜征服了南极',
@@ -1606,14 +1728,21 @@
                 if (sourceArr) {
                     for (let i = 0; i < total; i++) {
                         const value = sourceArr[i];
-                        arr[i] = value === 'autoFactory' || value === 'robotLegion' || value === 'energyStation' || value === 'researchCenter' ? value : null;
+                        const isKnownType = value === 'autoFactory' || value === 'robotLegion' || value === 'energyStation' || value === 'researchCenter';
+                        arr[i] = isKnownType && isBuildingAllowedOnPlanet(planetId, value) ? value : null;
                     }
                 } else {
                     let cursor = 0;
                     const autoCount = slots[planetId]?.autoFactory || 0;
                     const robotCount = slots[planetId]?.robotLegion || 0;
-                    for (let i = 0; i < autoCount && cursor < total; i++, cursor++) arr[cursor] = 'autoFactory';
-                    for (let i = 0; i < robotCount && cursor < total; i++, cursor++) arr[cursor] = 'robotLegion';
+                    for (let i = 0; i < autoCount && cursor < total; i++) {
+                        if (!isBuildingAllowedOnPlanet(planetId, 'autoFactory')) break;
+                        arr[cursor++] = 'autoFactory';
+                    }
+                    for (let i = 0; i < robotCount && cursor < total; i++) {
+                        if (!isBuildingAllowedOnPlanet(planetId, 'robotLegion')) break;
+                        arr[cursor++] = 'robotLegion';
+                    }
                     if (planetId === 'earth') {
                         for (let i = 0; i < energyTotal && cursor < total; i++, cursor++) arr[cursor] = 'energyStation';
                     }
@@ -1647,6 +1776,15 @@
             }
             if (planetId === 'mercury') {
                 return (Number(game.mercuryClickCount) || 0) >= 10;
+            }
+            if (planetId === 'mars') {
+                return (Number(game.marsClickCount) || 0) >= marsWarTargets.clicks;
+            }
+            if (planetId === 'jupiter') {
+                return (Number(game.jupiterClickCount) || 0) >= outerConquestTargets.jupiter;
+            }
+            if (planetId === 'saturn') {
+                return (Number(game.saturnClickCount) || 0) >= outerConquestTargets.saturn;
             }
             return true;
         }
@@ -1700,10 +1838,18 @@
             return values;
         }
 
-        function getNextPlacementPlanet() {
+        function isBuildingAllowedOnPlanet(planetId, buildingKey) {
+            if (planetId === 'venus') {
+                return buildingKey === 'robotLegion' || buildingKey === 'energyStation';
+            }
+            return buildingKey === 'autoFactory' || buildingKey === 'robotLegion' || buildingKey === 'energyStation' || buildingKey === 'researchCenter';
+        }
+
+        function getNextPlacementPlanet(buildingKey = null) {
             const order = ['earth', 'moon', 'venus', 'mercury', 'mars', 'jupiter', 'saturn'];
             for (const planetId of order) {
                 if (!isSlotPlanetUnlocked(planetId)) continue;
+                if (buildingKey && !isBuildingAllowedOnPlanet(planetId, buildingKey)) continue;
                 if (getPlanetUsedSlots(planetId) < getPlanetTotalSlots(planetId)) {
                     return planetId;
                 }
@@ -1720,7 +1866,7 @@
         }
 
         function placeMiningBuilding(buildingKey) {
-            const nextPlanet = getNextPlacementPlanet();
+            const nextPlanet = getNextPlacementPlanet(buildingKey);
             if (!nextPlanet) return null;
             const assignments = getPlanetSlotAssignments(nextPlanet);
             const firstEmpty = assignments.findIndex(item => !item);
@@ -1748,6 +1894,7 @@
 
         function placeMiningBuildingAtSlot(planetId, slotIndex, buildingKey) {
             if (!isSlotPlanetUnlocked(planetId)) return false;
+            if (!isBuildingAllowedOnPlanet(planetId, buildingKey)) return false;
             const total = getPlanetTotalSlots(planetId);
             if (slotIndex < 0 || slotIndex >= total) return false;
             const assignments = getPlanetSlotAssignments(planetId);
@@ -1792,7 +1939,7 @@
         }
 
         function placeEnergyStationAtSlot(planetId, slotIndex) {
-            if (planetId !== 'earth') return false;
+            if (!isBuildingAllowedOnPlanet(planetId, 'energyStation')) return false;
             if (!isSlotPlanetUnlocked(planetId)) return false;
             const total = getPlanetTotalSlots(planetId);
             if (slotIndex < 0 || slotIndex >= total) return false;
@@ -1829,6 +1976,7 @@
 
         function placeResearchCenterAtSlot(planetId, slotIndex) {
             if (!isSlotPlanetUnlocked(planetId)) return false;
+            if (!isBuildingAllowedOnPlanet(planetId, 'researchCenter')) return false;
             const total = getPlanetTotalSlots(planetId);
             if (slotIndex < 0 || slotIndex >= total) return false;
             const assignments = getPlanetSlotAssignments(planetId);
@@ -1965,7 +2113,7 @@
                         const canAfford = costType === 'ore' ? game.ore >= cost : game.energy >= cost;
                         const slotStats = (category === 'mining' || category === 'energy') ? getUnlockedSlotStats() : null;
                         const hasSlot = (category === 'mining' || category === 'energy') ? slotStats.used < slotStats.total : true;
-                        const nextPlanet = category === 'mining' ? getNextPlacementPlanet() : null;
+                        const nextPlanet = category === 'mining' ? getNextPlacementPlanet(upgrade.buildingKey) : null;
 
                         let costIcon = costType === 'ore' ? '💎' : '⚡';
                         let costName = costType === 'ore' ? '矿石' : '能源';
@@ -1985,6 +2133,12 @@
                             prodText = `点击 +${upgrade.baseProduction * upgrade.level}`;
                         } else if (upgrade.bonus === 'energyBoost') {
                             prodText = upgrade.level > 0 ? `能源 ×${upgrade.boostValue}` : '';
+                        } else if (upgrade.bonus === 'energyFlat') {
+                            const production = upgrade.baseProduction * upgrade.level;
+                            prodText = production > 0 ? `⚡ +${formatNumber(production)}/秒` : '';
+                        } else if (upgrade.bonus === 'techBoost') {
+                            const techMult = Math.pow(upgrade.techBoostValue || 1, upgrade.level || 0);
+                            prodText = upgrade.level > 0 ? `科研 ×${techMult.toFixed(2)}` : '';
                         } else if (upgrade.bonus === 'speed') {
                             prodText = upgrade.level > 0 ? `速度 ×${upgrade.speedMult}` : '';
                         }
@@ -2157,6 +2311,12 @@
                 }
             });
 
+            game.upgrades.special.forEach(upgrade => {
+                if (upgrade.bonus === 'energyFlat' && upgrade.level > 0) {
+                    game.energyPerSec += upgrade.baseProduction * upgrade.level;
+                }
+            });
+
             // 2. 科技产量：必须有科研中心，且持续消耗电力
             const powerNeedPerCenter = 3.5;
             const totalPowerNeed = researchCenterCount * powerNeedPerCenter;
@@ -2169,18 +2329,10 @@
             game.techPerSec = researchCenterCount * 1 * researchEfficiency;
 
             // 3. 特殊建筑加成
-            const dysonLevel = game.upgrades.special.find(u => u.id === 'sp2')?.level || 0;
-            if (dysonLevel > 0) {
-                const boost = game.upgrades.special.find(u => u.id === 'sp2')?.boostValue || 1;
-                game.energyPerSec *= boost;
-            }
-
-            const acceleratorLevel = game.upgrades.special.find(u => u.id === 'sp3')?.level || 0;
-            if (acceleratorLevel > 0) {
-                const speedMult = game.upgrades.special.find(u => u.id === 'sp3')?.speedMult || 1;
-                game.orePerSec *= speedMult;
-                game.energyPerSec *= speedMult;
-                game.techPerSec *= speedMult;
+            const techNetLevel = game.upgrades.special.find(u => u.id === 'sp5')?.level || 0;
+            if (techNetLevel > 0) {
+                const techBoost = game.upgrades.special.find(u => u.id === 'sp5')?.techBoostValue || 1;
+                game.techPerSec *= Math.pow(techBoost, techNetLevel);
             }
         }
 
@@ -2218,14 +2370,33 @@
             const moonClicks = Math.max(0, Number(game.moonClickCount) || 0);
             const venusClicks = Math.max(0, Number(game.venusClickCount) || 0);
             const mercuryClicks = Math.max(0, Number(game.mercuryClickCount) || 0);
-            const stage3TaskStep = researchCenterCount < 1 ? 1
-                : (energyStationCount < 2 ? 2
-                : (!moonBridgeUnlocked ? 3
-                : (moonClicks < 5 ? 4
-                : (moonRobotCount < 1 ? 5
-                : (venusClicks < 5 ? 6
-                : (mercuryClicks < 10 ? 7
-                : (solarBridgeUnlocked ? 9 : 8)))))));
+            const marsClicks = Math.max(0, Number(game.marsClickCount) || 0);
+            const marsRobotCount = getPlanetSlotAssignments('mars').filter(item => item === 'robotLegion').length;
+            const totalRobotCount = getBuildingCount('robotLegion');
+            let stage3TaskStep = 12;
+            if (researchCenterCount < 1) {
+                stage3TaskStep = 1;
+            } else if (energyStationCount < 2) {
+                stage3TaskStep = 2;
+            } else if (!moonBridgeUnlocked) {
+                stage3TaskStep = 3;
+            } else if (moonClicks < 5) {
+                stage3TaskStep = 4;
+            } else if (moonRobotCount < 1) {
+                stage3TaskStep = 5;
+            } else if (venusClicks < 5) {
+                stage3TaskStep = 6;
+            } else if (mercuryClicks < 10) {
+                stage3TaskStep = 7;
+            } else if (marsClicks < marsWarTargets.clicks) {
+                stage3TaskStep = 8;
+            } else if (marsRobotCount < marsWarTargets.marsRobots) {
+                stage3TaskStep = 9;
+            } else if (totalRobotCount < marsWarTargets.totalRobots) {
+                stage3TaskStep = 10;
+            } else if (!solarBridgeUnlocked) {
+                stage3TaskStep = 11;
+            }
 
             if (nextStage) {
                 if (nextStage.id === 2) {
@@ -2233,7 +2404,7 @@
                         advanceStage(nextStage);
                     }
                 } else if (nextStage.id === 3) {
-                    if (stage3TaskStep >= 9) {
+                    if (stage3TaskStep >= 12) {
                         advanceStage(nextStage);
                     }
                 } else if (game.totalEarned >= nextStage.threshold) {
@@ -2303,12 +2474,36 @@
                         document.getElementById('progressBar').style.width = progress + '%';
                         document.getElementById('progressPercent').textContent = `${Math.min(mercuryClicks, target)} / ${target}`;
                         document.getElementById('progressTitle').textContent = '🎯 征服水星（点击水星10次）';
-                    } else {
+                    } else if (stage3TaskStep === 8) {
+                        const target = marsWarTargets.clicks;
+                        const progress = Math.min(100, (marsClicks / target) * 100);
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressPercent').textContent = `${Math.min(marsClicks, target)} / ${target}`;
+                        document.getElementById('progressTitle').textContent = `🎯 火星进攻：点击火星${target}次`;
+                    } else if (stage3TaskStep === 9) {
+                        const target = marsWarTargets.marsRobots;
+                        const done = Math.min(target, marsRobotCount);
+                        document.getElementById('progressBar').style.width = `${(done / target) * 100}%`;
+                        document.getElementById('progressPercent').textContent = `${done} / ${target}`;
+                        document.getElementById('progressTitle').textContent = `🎯 在火星部署${target}个机器人军团`;
+                    } else if (stage3TaskStep === 10) {
+                        const target = marsWarTargets.totalRobots;
+                        const done = Math.min(target, totalRobotCount);
+                        document.getElementById('progressBar').style.width = `${(done / target) * 100}%`;
+                        document.getElementById('progressPercent').textContent = `${done} / ${target}`;
+                        document.getElementById('progressTitle').textContent = `🎯 总机器人军团达到${target}个（压制火星地底反抗）`;
+                    } else if (stage3TaskStep === 11) {
                         const target = 1;
                         const done = solarBridgeUnlocked ? 1 : 0;
                         document.getElementById('progressBar').style.width = `${done * 100}%`;
                         document.getElementById('progressPercent').textContent = `${done} / ${target}`;
                         document.getElementById('progressTitle').textContent = '🎯 研究太阳系引力桥科技，人类向太阳系殖民';
+                    } else {
+                        const target = 1;
+                        const done = solarBridgeUnlocked ? 1 : 0;
+                        document.getElementById('progressBar').style.width = `${done * 100}%`;
+                        document.getElementById('progressPercent').textContent = `${done} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '✅ 火星战役完成，太阳系已连通';
                     }
                 } else {
                     const progress = ((game.totalEarned - currentStage.threshold) /
@@ -2371,6 +2566,12 @@
                 game.venusClickCount = Math.max(0, Number(game.venusClickCount) || 0) + 1;
             } else if (planetId === 'mercury') {
                 game.mercuryClickCount = Math.max(0, Number(game.mercuryClickCount) || 0) + 1;
+            } else if (planetId === 'mars') {
+                game.marsClickCount = Math.max(0, Number(game.marsClickCount) || 0) + 1;
+            } else if (planetId === 'jupiter') {
+                game.jupiterClickCount = Math.max(0, Number(game.jupiterClickCount) || 0) + 1;
+            } else if (planetId === 'saturn') {
+                game.saturnClickCount = Math.max(0, Number(game.saturnClickCount) || 0) + 1;
             } else {
                 return;
             }
@@ -2475,6 +2676,9 @@
             game.moonClickCount = Math.max(0, Number(game.moonClickCount) || 0);
             game.venusClickCount = Math.max(0, Number(game.venusClickCount) || 0);
             game.mercuryClickCount = Math.max(0, Number(game.mercuryClickCount) || 0);
+            game.marsClickCount = Math.max(0, Number(game.marsClickCount) || 0);
+            game.jupiterClickCount = Math.max(0, Number(game.jupiterClickCount) || 0);
+            game.saturnClickCount = Math.max(0, Number(game.saturnClickCount) || 0);
             game.planetSlots = normalizePlanetSlots(savedGame.planetSlots);
             game.slotLayout = normalizeSlotLayout(savedGame.slotLayout, game.planetSlots, game.upgrades);
             syncMiningLevelsWithSlots();
@@ -2541,10 +2745,11 @@
             actions.innerHTML = '';
 
             if (!slotType) {
-                const buildOptions = [
+                const baseBuildOptions = [
                     { key: 'autoFactory', label: '建造 🏭 自动工厂' },
                     { key: 'robotLegion', label: '建造 🤖 机器人军团' }
                 ];
+                const buildOptions = baseBuildOptions.filter(option => isBuildingAllowedOnPlanet(planetId, option.key));
                 buildOptions.forEach(option => {
                     const cost = getMiningBuildCost(option.key);
                     const upgrade = getMiningUpgradeByBuildingKey(option.key);
@@ -2562,7 +2767,7 @@
                     actions.appendChild(button);
                 });
 
-                if (planetId === 'earth') {
+                if (isBuildingAllowedOnPlanet(planetId, 'energyStation')) {
                     const energyCost = getEnergyBuildCost();
                     const energyUpgrade = game.upgrades.energy.find(item => item.id === 'e1');
                     const energyBtn = document.createElement('button');
@@ -2576,16 +2781,18 @@
                     actions.appendChild(energyBtn);
                 }
 
-                const researchCost = getResearchCenterBuildCost();
-                const researchBtn = document.createElement('button');
-                researchBtn.className = 'slot-build-btn';
-                researchBtn.textContent = `建造 🔬 科研中心（💎 ${formatNumber(researchCost)}） · +1科研/秒，-3.5能源/秒`;
-                researchBtn.disabled = !Number.isFinite(researchCost) || game.ore < researchCost;
-                researchBtn.onclick = () => {
-                    const ok = placeResearchCenterAtSlot(planetId, slotIndex);
-                    if (ok) closeSlotBuildMenu();
-                };
-                actions.appendChild(researchBtn);
+                if (isBuildingAllowedOnPlanet(planetId, 'researchCenter')) {
+                    const researchCost = getResearchCenterBuildCost();
+                    const researchBtn = document.createElement('button');
+                    researchBtn.className = 'slot-build-btn';
+                    researchBtn.textContent = `建造 🔬 科研中心（💎 ${formatNumber(researchCost)}） · +1科研/秒，-3.5能源/秒`;
+                    researchBtn.disabled = !Number.isFinite(researchCost) || game.ore < researchCost;
+                    researchBtn.onclick = () => {
+                        const ok = placeResearchCenterAtSlot(planetId, slotIndex);
+                        if (ok) closeSlotBuildMenu();
+                    };
+                    actions.appendChild(researchBtn);
+                }
             }
 
             if (slotType) {
@@ -2610,6 +2817,7 @@
 
         window.openSlotBuildMenu = openSlotBuildMenu;
         window.getPlanetSlotAssignments = getPlanetSlotAssignments;
+        window.getBuildingCount = getBuildingCount;
         window.openPlanetSlotMenu = openPlanetSlotMenu;
         window.isSlotPlanetUnlocked = isSlotPlanetUnlocked;
         window.handleEarthConquestClick = handleEarthConquestClick;
@@ -2638,6 +2846,9 @@
             game.moonClickCount = 0;
             game.venusClickCount = 0;
             game.mercuryClickCount = 0;
+            game.marsClickCount = 0;
+            game.jupiterClickCount = 0;
+            game.saturnClickCount = 0;
             game.country = id;
             game.countryName = cfg.name;
             game.planetSlots = normalizePlanetSlots();
