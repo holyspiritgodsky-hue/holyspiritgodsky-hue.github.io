@@ -34,6 +34,7 @@ const planetClickStats = {
     jupiter: { warningShown: false },
     saturn: { warningShown: false }
 };
+let lastMarsAttackAnimAt = 0;
 const isCoarsePointer = typeof window.matchMedia === 'function'
     ? window.matchMedia('(pointer: coarse)').matches
     : false;
@@ -364,6 +365,77 @@ function showEarthDestroyedEvent() {
     });
 }
 
+function playEarthToMarsAttackAnimation(force = false) {
+    const earth = planets.find(item => item.id === 'earth');
+    const mars = planets.find(item => item.id === 'mars');
+    if (!earth || !mars) return;
+    if (!Number.isFinite(earth.screenX) || !Number.isFinite(earth.screenY)) return;
+    if (!Number.isFinite(mars.screenX) || !Number.isFinite(mars.screenY)) return;
+
+    const now = performance.now();
+    if (!force && now - lastMarsAttackAnimAt < 280) return;
+    lastMarsAttackAnimAt = now;
+
+    const sx = earth.screenX;
+    const sy = earth.screenY;
+    const tx = mars.screenX;
+    const ty = mars.screenY;
+    const dx = tx - sx;
+    const dy = ty - sy;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const duration = force ? 900 : 680;
+    const icon = document.createElement('div');
+    icon.textContent = '🚀';
+    icon.style.cssText = `
+        position: fixed;
+        left: 0;
+        top: 0;
+        font-size: ${force ? 24 : 20}px;
+        pointer-events: none;
+        z-index: 10070;
+        filter: drop-shadow(0 0 10px rgba(251, 191, 36, 0.75));
+        transform: translate(${sx}px, ${sy}px) rotate(${Math.atan2(dy, dx)}rad);
+    `;
+    document.body.appendChild(icon);
+
+    const startedAt = performance.now();
+    function tick(frameNow) {
+        const p = Math.min(1, (frameNow - startedAt) / duration);
+        const eased = 1 - Math.pow(1 - p, 2);
+        const x = sx + dx * eased;
+        const y = sy + dy * eased - Math.sin(eased * Math.PI) * Math.min(28, distance * 0.1);
+        const scale = 0.9 + 0.35 * Math.sin(eased * Math.PI);
+        icon.style.transform = `translate(${x}px, ${y}px) rotate(${Math.atan2(dy, dx)}rad) scale(${scale})`;
+        icon.style.opacity = `${1 - p * 0.25}`;
+        if (p < 1) {
+            requestAnimationFrame(tick);
+            return;
+        }
+        icon.remove();
+
+        const boom = document.createElement('div');
+        boom.textContent = '💥';
+        boom.style.cssText = `
+            position: fixed;
+            left: 0;
+            top: 0;
+            font-size: 22px;
+            pointer-events: none;
+            z-index: 10071;
+            transform: translate(${tx}px, ${ty}px) scale(0.7);
+            filter: drop-shadow(0 0 12px rgba(248, 113, 113, 0.9));
+            transition: transform 280ms ease, opacity 280ms ease;
+        `;
+        document.body.appendChild(boom);
+        requestAnimationFrame(() => {
+            boom.style.transform = `translate(${tx}px, ${ty}px) scale(1.22)`;
+            boom.style.opacity = '0';
+        });
+        setTimeout(() => boom.remove(), 320);
+    }
+    requestAnimationFrame(tick);
+}
+
 function updateHitEffects(now) {
     for (let i = hitEffects.length - 1; i >= 0; i--) {
         const e = hitEffects[i];
@@ -456,11 +528,15 @@ function handlePlanetMineClick(planet, event) {
     }
 
     if (planet.id === 'mars') {
+        if (typeof window.handlePlanetTaskClick === 'function') {
+            window.handlePlanetTaskClick('mars');
+        }
         const st = planetClickStats.mars;
         st.clicks++;
         if (!st.rebellionShown && st.clicks >= 5) {
             st.rebellionShown = true;
             planetClickMultiplier.mars = 0.05;
+            playEarthToMarsAttackAnimation(true);
             showStoryEvent(
                 '🚨 火星地底人反抗',
                 '火星地底势力发起反扑，地球采矿据点遭到袭击。<br>火星点击收益下降 95%。',
@@ -468,24 +544,29 @@ function handlePlanetMineClick(planet, event) {
             );
         }
 
-        if (st.rebellionShown && !st.peaceShown && st.clicks >= 20) {
+        if (st.rebellionShown && !st.peaceShown) {
+            playEarthToMarsAttackAnimation(false);
+        }
+
+        if (st.rebellionShown && !st.peaceShown && st.clicks >= 35) {
             let robotCount = 0;
             if (typeof window.getBuildingCount === 'function') {
                 robotCount = Math.max(0, Number(window.getBuildingCount('robotLegion')) || 0);
             }
 
-            if (robotCount < 5) {
+            if (robotCount < 6) {
                 if (!st.requirementShown) {
                     st.requirementShown = true;
                     showStoryEvent(
                         '🛡️ 火星防线过强',
-                        `火星地底人构建了深层防线，当前机器人军团不足（${robotCount}/5）。<br>至少需要 5 个机器人军团才能完成征服。`,
+                        `火星地底人构建了深层防线，当前机器人军团不足（${robotCount}/6）。<br>至少需要 6 个机器人军团才能完成征服。`,
                         '继续扩军'
                     );
                 }
             } else {
                 st.peaceShown = true;
                 planetClickMultiplier.mars = 1;
+                playEarthToMarsAttackAnimation(true);
                 showStoryEvent(
                     '🏁 火星战役完成',
                     '地球远征军已全面控制火星地表与地底据点。<br>火星点击收益已恢复。'
@@ -563,6 +644,9 @@ function handlePlanetMineClick(planet, event) {
     }
 
     if (planet.id === 'jupiter') {
+        if (typeof window.handlePlanetTaskClick === 'function') {
+            window.handlePlanetTaskClick('jupiter');
+        }
         const st = planetClickStats.jupiter;
         if (!st.warningShown) {
             st.warningShown = true;
@@ -575,6 +659,9 @@ function handlePlanetMineClick(planet, event) {
     }
 
     if (planet.id === 'saturn') {
+        if (typeof window.handlePlanetTaskClick === 'function') {
+            window.handlePlanetTaskClick('saturn');
+        }
         const st = planetClickStats.saturn;
         if (!st.warningShown) {
             st.warningShown = true;
