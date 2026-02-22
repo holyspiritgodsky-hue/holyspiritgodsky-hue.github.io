@@ -13,6 +13,9 @@ const interactiveBodies = [];
 const slotHotspots = [];
 let shakeUntil = 0;
 let shakeMag = 0;
+let lastViewportW = 0;
+let lastViewportH = 0;
+let resizeRaf = 0;
 const planetClickMultiplier = {
     earth: 1,
     moon: 1,
@@ -25,12 +28,15 @@ const planetClickMultiplier = {
 const planetClickStats = {
     earth: { clicks: 0, warningShown: false },
     moon: { clicks: 0, warningShown: false },
-    mars: { clicks: 0, rebellionShown: false, peaceShown: false },
-    mercury: { warningShown: false },
-    venus: { warningShown: false },
+    mars: { clicks: 0, rebellionShown: false, peaceShown: false, requirementShown: false },
+    mercury: { firstHintShown: false, counterAttackShown: false, conqueredShown: false, gameOverShown: false },
+    venus: { clicks: 0, warningShown: false },
     jupiter: { warningShown: false },
     saturn: { warningShown: false }
 };
+const isCoarsePointer = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(pointer: coarse)').matches
+    : false;
 
 // 地球/月球贴图（来自 img 文件夹）
 const earthImg = new Image();
@@ -157,8 +163,8 @@ const TECH_LEVELS = [
         centauri:{xf:0.64,yf:0.48,rf:0.0,alpha:0},
     sun:{xf:-0.22,yf:0.42,rf:0.35,glowR:0.38,alpha:1.0,clipXf:0.0},
     bodies:[
-        {id:'venus',  xf:0.28,yf:0.30,rf:0.007,label:'金星',col:'#e8c87a'},
-        {id:'mercury',xf:0.68,yf:0.50,rf:0.004,label:'水星',col:'#b5b3ac'},
+        {id:'venus',  xf:0.28,yf:0.30,rf:0.011,label:'金星',col:'#e8c87a'},
+        {id:'mercury',xf:0.68,yf:0.50,rf:0.007,label:'水星',col:'#b5b3ac'},
     ], galaxy:false },
   // ── Level 2: 太阳系文明，太阳居中放大 ──
   { starVis:0.75, fogR:1.5, fogAlpha:0.0,
@@ -167,9 +173,9 @@ const TECH_LEVELS = [
         centauri:{xf:0.64,yf:0.46,rf:0.0,alpha:0},
         sun:{xf:0.50,yf:0.35,rf:0.46,glowR:0.56,alpha:1.0,clipXf:null},
     bodies:[
-        {id:'mercury',xf:0.15,yf:0.74,rf:0.003,label:'水星',col:'#b5b3ac'},
-        {id:'venus',  xf:0.26,yf:0.65,rf:0.005,label:'金星',col:'#e8c87a'},
-        {id:'mars',   xf:0.82,yf:0.70,rf:0.008,label:'火星',col:'#c1440e'},
+        {id:'mercury',xf:0.15,yf:0.74,rf:0.005,label:'水星',col:'#b5b3ac'},
+        {id:'venus',  xf:0.26,yf:0.65,rf:0.008,label:'金星',col:'#e8c87a'},
+        {id:'mars',   xf:0.82,yf:0.70,rf:0.012,label:'火星',col:'#c1440e'},
         {id:'jupiter',xf:0.88,yf:0.44,rf:0.028,label:'木星',col:'#c88b3a'},
         {id:'saturn', xf:0.12,yf:0.38,rf:0.022,label:'土星',col:'#e4d191',rings:true},
     ], galaxy:false },
@@ -256,6 +262,13 @@ function applyScreenShake(now) {
     }
 }
 
+function getViewportSize() {
+    const vv = window.visualViewport;
+    const width = Math.max(320, Math.floor(vv ? vv.width : window.innerWidth));
+    const height = Math.max(480, Math.floor(vv ? vv.height : window.innerHeight));
+    return { width, height };
+}
+
 function createHitEffect(planet, hitX, hitY, gain) {
     if (!planet) return;
     const px = planet.screenX || centerX;
@@ -307,6 +320,48 @@ function showStoryEvent(title, contentHtml, buttonText = '继续') {
     `;
     document.body.appendChild(modal);
     modal.querySelector('button').addEventListener('click', () => modal.remove());
+}
+
+function showEarthDestroyedEvent() {
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: min(520px, 88vw);
+        background: rgba(28, 8, 10, 0.97);
+        border: 2px solid rgba(239, 68, 68, 0.9);
+        border-radius: 16px;
+        box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
+        padding: 1.2rem 1.3rem;
+        z-index: 10060;
+        color: #fee2e2;
+        text-align: center;
+        backdrop-filter: blur(8px);
+    `;
+    modal.innerHTML = `
+        <div style="font-size:1.45rem;font-weight:900;color:#ef4444;margin-bottom:0.55rem;">💥 地球灭亡</div>
+        <div style="line-height:1.75;color:#fecaca;margin-bottom:1rem;">机器人军团被水星微生物腐蚀！地球灭亡</div>
+        <button style="
+            border:none;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color:#fff;
+            font-weight:800;
+            border-radius:10px;
+            padding:0.68rem 1rem;
+            cursor:pointer;
+            width:100%;
+        ">重新开始</button>
+    `;
+    document.body.appendChild(modal);
+    modal.querySelector('button').addEventListener('click', () => {
+        try {
+            localStorage.removeItem('spaceEmpireV5');
+            sessionStorage.setItem('resetFlag', 'true');
+        } catch (_) {}
+        location.reload(true);
+    });
 }
 
 function updateHitEffects(now) {
@@ -384,6 +439,9 @@ function handlePlanetMineClick(planet, event) {
     }
 
     if (planet.id === 'moon') {
+        if (typeof window.handlePlanetTaskClick === 'function') {
+            window.handlePlanetTaskClick('moon');
+        }
         const st = planetClickStats.moon;
         st.clicks++;
         if (!st.warningShown && st.clicks >= 10) {
@@ -400,26 +458,43 @@ function handlePlanetMineClick(planet, event) {
     if (planet.id === 'mars') {
         const st = planetClickStats.mars;
         st.clicks++;
-        if (!st.peaceShown && st.clicks >= 20) {
-            st.peaceShown = true;
-            st.rebellionShown = true;
-            planetClickMultiplier.mars = 1;
-            showStoryEvent(
-                '🎉 火星和解协议',
-                '火星人被打服了，火星人欢迎地球人来火星 KTV 做客。<br>火星点击收益已恢复。'
-                + '<div style="margin-top:0.9rem;border:1px solid rgba(251,191,36,0.6);border-radius:10px;overflow:hidden;background:rgba(251,191,36,0.08);">'
-                + '<img src="img/KTV.PNG" alt="火星KTV" style="display:block;width:100%;height:180px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=\'height:160px;display:flex;align-items:center;justify-content:center;color:#fbbf24;\'>KTV 图片加载失败</div>\'" />'
-                + '</div>',
-                '去唱一首，继续开采'
-            );
-        } else if (!st.rebellionShown && st.clicks >= 5) {
+        if (!st.rebellionShown && st.clicks >= 5) {
             st.rebellionShown = true;
             planetClickMultiplier.mars = 0.05;
             showStoryEvent(
                 '🚨 火星地底人反抗',
-                '火星地底人出现，反抗邪恶的地球人入侵！<br>火星点击收益下降 95%。',
+                '火星地底势力发起反扑，地球采矿据点遭到袭击。<br>火星点击收益下降 95%。',
                 '继续镇压反抗'
             );
+        }
+
+        if (st.rebellionShown && !st.peaceShown && st.clicks >= 20) {
+            let robotCount = 0;
+            if (typeof window.getBuildingCount === 'function') {
+                robotCount = Math.max(0, Number(window.getBuildingCount('robotLegion')) || 0);
+            }
+
+            if (robotCount < 5) {
+                if (!st.requirementShown) {
+                    st.requirementShown = true;
+                    showStoryEvent(
+                        '🛡️ 火星防线过强',
+                        `火星地底人构建了深层防线，当前机器人军团不足（${robotCount}/5）。<br>至少需要 5 个机器人军团才能完成征服。`,
+                        '继续扩军'
+                    );
+                }
+            } else {
+                st.peaceShown = true;
+                planetClickMultiplier.mars = 1;
+                showStoryEvent(
+                    '🏁 火星战役完成',
+                    '地球远征军已全面控制火星地表与地底据点。<br>火星点击收益已恢复。'
+                    + '<div style="margin-top:0.9rem;border:1px solid rgba(251,191,36,0.6);border-radius:10px;overflow:hidden;background:rgba(251,191,36,0.08);">'
+                    + '<img src="img/KTV.PNG" alt="火星KTV" style="display:block;width:100%;height:180px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=\'height:160px;display:flex;align-items:center;justify-content:center;color:#fbbf24;\'>KTV 图片加载失败</div>\'" />'
+                    + '</div>',
+                    '去唱一首，继续开采'
+                );
+            }
         }
     }
 
@@ -428,13 +503,44 @@ function handlePlanetMineClick(planet, event) {
             window.handlePlanetTaskClick('mercury');
         }
         const st = planetClickStats.mercury;
-        if (!st.warningShown) {
-            st.warningShown = true;
+        const mercuryClicks = Math.max(0, Number(game.mercuryClickCount) || 0);
+
+        if (!st.firstHintShown && mercuryClicks >= 5) {
+            st.firstHintShown = true;
             planetClickMultiplier.mercury = 0;
             showStoryEvent(
                 '🪨 水星勘探报告',
-                '水星上根本没有资源！<br>当前阶段点击水星不会获得矿石收益。',
-                '收到，切换目标'
+                '水星发现高活性微生物群，已对前线采矿构成威胁。请派机器人军团清剿。',
+                '继续点击'
+            );
+        }
+
+        if (st.firstHintShown && !st.counterAttackShown && mercuryClicks >= 6) {
+            st.counterAttackShown = true;
+            showStoryEvent(
+                '⚠️ 紧急战报',
+                '水星微生物群开始反攻地球前线据点！',
+                '准备防御'
+            );
+
+            let robotCount = 0;
+            if (typeof window.getBuildingCount === 'function') {
+                robotCount = Math.max(0, Number(window.getBuildingCount('robotLegion')) || 0);
+            }
+
+            if (robotCount < 3 && !st.gameOverShown) {
+                st.gameOverShown = true;
+                showEarthDestroyedEvent();
+                return;
+            }
+        }
+
+        if (st.counterAttackShown && !st.gameOverShown && !st.conqueredShown && mercuryClicks >= 10) {
+            st.conqueredShown = true;
+            showStoryEvent(
+                '🏁 战役完成',
+                '地球人消灭了水星上的一切微生物，寸草不留',
+                '继续远征'
             );
         }
     }
@@ -444,13 +550,14 @@ function handlePlanetMineClick(planet, event) {
             window.handlePlanetTaskClick('venus');
         }
         const st = planetClickStats.venus;
-        if (!st.warningShown) {
+        st.clicks = Math.max(0, Number(game.venusClickCount) || 0);
+        if (!st.warningShown && st.clicks >= 5) {
             st.warningShown = true;
             planetClickMultiplier.venus = 0;
             showStoryEvent(
                 '🌫️ 金星勘探报告',
-                '金星上根本没有资源！<br>当前阶段点击金星不会获得矿石收益。',
-                '收到，切换目标'
+                '金星上没有金子，也没有任何方便开采的矿石。',
+                '知道了'
             );
         }
     }
@@ -501,6 +608,32 @@ function hitTestSlot(x, y) {
         if (dx * dx + dy * dy <= slot.r * slot.r) return slot;
     }
     return null;
+}
+
+function getCanvasPointerPosition(event) {
+    const rect = canvas.getBoundingClientRect();
+    const source = event?.touches?.[0] || event?.changedTouches?.[0] || event;
+    const clientX = source?.clientX ?? 0;
+    const clientY = source?.clientY ?? 0;
+
+    const vv = window.visualViewport;
+    if (vv) {
+        const scaleX = canvas.width / Math.max(1, rect.width);
+        const scaleY = canvas.height / Math.max(1, rect.height);
+        const x = (clientX - rect.left) * scaleX;
+        const y = (clientY - rect.top) * scaleY;
+        return {
+            x: Math.max(0, Math.min(canvas.width, x)),
+            y: Math.max(0, Math.min(canvas.height, y))
+        };
+    }
+
+    const scaleX = canvas.width / Math.max(1, rect.width);
+    const scaleY = canvas.height / Math.max(1, rect.height);
+    return {
+        x: (clientX - rect.left) * scaleX,
+        y: (clientY - rect.top) * scaleY
+    };
 }
 
 function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
@@ -619,9 +752,9 @@ function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
 }
 
 canvas.addEventListener('click', (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const pointer = getCanvasPointerPosition(event);
+    const x = pointer.x;
+    const y = pointer.y;
 
     const slot = hitTestSlot(x, y);
     if (slot) {
@@ -638,18 +771,81 @@ canvas.addEventListener('click', (event) => {
     handlePlanetMineClick(planet, { clientX: x, clientY: y });
 });
 
+canvas.addEventListener('touchstart', (event) => {
+    if (!event.touches || event.touches.length !== 1) return;
+    event.preventDefault();
+    const pointer = getCanvasPointerPosition(event);
+    const x = pointer.x;
+    const y = pointer.y;
+
+    const slot = hitTestSlot(x, y);
+    if (slot) {
+        if (typeof window.openSlotBuildMenu === 'function') {
+            window.openSlotBuildMenu(slot.planetId, slot.index);
+        }
+        return;
+    }
+
+    const body = hitTestBody(x, y);
+    if (!body) return;
+    const planet = planets.find(p => p.id === body.id);
+    if (!planet) return;
+    handlePlanetMineClick(planet, { clientX: x, clientY: y });
+}, { passive: false });
+
 // ── Canvas 尺寸 ───────────────────────────────────────────────
 function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const viewport = getViewportSize();
+    const width = viewport.width;
+    const height = viewport.height;
+
+    if (width === lastViewportW && height === lastViewportH) return;
+    lastViewportW = width;
+    lastViewportH = height;
+
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    canvas.width = width;
+    canvas.height = height;
+
     centerX = canvas.width / 2;
-    const uiTopHeight = 160;
-    const bottomPanelHeight = 260;
+
+    const topBar = document.querySelector('.top-bar');
+    const topBarRect = topBar ? topBar.getBoundingClientRect() : null;
+    const uiTopHeight = Math.max(120, Math.round((topBarRect?.height || 150) + 8));
+
+    const panel = document.querySelector('.bottom-panel');
+    const progressBar = document.querySelector('.top-progress-bar');
+    let bottomPanelHeight = 84;
+    if (panel && !panel.classList.contains('is-collapsed')) {
+        const rect = panel.getBoundingClientRect();
+        bottomPanelHeight = Math.max(84, Math.round(canvas.height - rect.top + 10));
+    } else if (progressBar) {
+        const rect = progressBar.getBoundingClientRect();
+        bottomPanelHeight = Math.max(84, Math.round(canvas.height - rect.top + 10));
+    }
+
     const availableH = canvas.height - uiTopHeight - bottomPanelHeight;
     centerY = uiTopHeight + availableH / 2;
     const availableW = canvas.width * 0.9;
     scale = Math.min(availableW, availableH) / (450 * 2 + 80);
 }
+
+function scheduleViewportResize() {
+    if (resizeRaf) return;
+    resizeRaf = requestAnimationFrame(() => {
+        resizeRaf = 0;
+        resizeCanvas();
+    });
+}
+
+window.addEventListener('resize', scheduleViewportResize, { passive: true });
+window.addEventListener('orientationchange', scheduleViewportResize, { passive: true });
+if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', scheduleViewportResize, { passive: true });
+    window.visualViewport.addEventListener('scroll', scheduleViewportResize, { passive: true });
+}
+window.scheduleViewportResize = scheduleViewportResize;
 
 // ── 主渲染帧（solar-scale 插值方式）──────────────────────────
 function drawSolarSystem() {
@@ -891,7 +1087,10 @@ function drawSolarSystem() {
             visibleBodyIds.add(id);
             const unlocked = game.unlockedPlanets.includes(meta.id) || game.currentStage >= meta.unlockStage;
             if (unlocked) {
-                const clickR = id === 'mars' ? Math.max(br * 2.2, 18) : br;
+                const touchBoost = isCoarsePointer ? 1.45 : 1;
+                const clickR = id === 'mars'
+                    ? Math.max(br * 2.2 * touchBoost, 24)
+                    : Math.max(br * touchBoost, isCoarsePointer ? 16 : 10);
                 interactiveBodies.push({ id, x: bx, y: by, r: clickR });
             }
         }
@@ -928,7 +1127,10 @@ function drawSolarSystem() {
             moonMeta.drawR = moonR;
             visibleBodyIds.add('moon');
             const unlocked = game.unlockedPlanets.includes('moon') || game.currentStage >= moonMeta.unlockStage;
-            if (unlocked) interactiveBodies.push({ id: 'moon', x: mx, y: my, r: moonR });
+            if (unlocked) {
+                const touchBoost = isCoarsePointer ? 1.45 : 1;
+                interactiveBodies.push({ id: 'moon', x: mx, y: my, r: Math.max(moonR * touchBoost, isCoarsePointer ? 16 : 10) });
+            }
         }
         if(moonR>0.8){
             ctx.save();
@@ -955,7 +1157,10 @@ function drawSolarSystem() {
             earthMeta.drawR = earthR;
             visibleBodyIds.add('earth');
             const unlocked = game.unlockedPlanets.includes('earth') || game.currentStage >= earthMeta.unlockStage;
-            if (unlocked) interactiveBodies.push({ id: 'earth', x: ex, y: ey, r: earthR });
+            if (unlocked) {
+                const touchBoost = isCoarsePointer ? 1.4 : 1;
+                interactiveBodies.push({ id: 'earth', x: ex, y: ey, r: Math.max(earthR * touchBoost, isCoarsePointer ? 24 : 12) });
+            }
         }
         ctx.save();
         const ag=ctx.createRadialGradient(ex,ey,earthR*0.9,ex,ey,earthR*1.4);
