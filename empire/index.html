@@ -31,7 +31,7 @@
             font-family: var(--font-body);
             background: #000;
             color: var(--text-white);
-            overflow-x: hidden;
+            overflow: hidden;
             min-height: 100vh;
         }
 
@@ -40,8 +40,9 @@
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
             background: radial-gradient(ellipse at center, #0a0e1a 0%, #000 100%);
         }
 
@@ -674,7 +675,7 @@
         .right-edge-actions {
             position: fixed;
             right: 0.7rem;
-            top: 50%;
+            top: 43%;
             transform: translateY(-50%);
             display: flex;
             flex-direction: column;
@@ -739,11 +740,13 @@
             }
 
             .bottom-panel {
-                top: 5.4rem;
+                top: auto;
                 right: 0.45rem;
-                bottom: 0.6rem;
-                width: min(96vw, 420px);
-                padding: 0.75rem;
+                bottom: 3.8rem;
+                width: min(86vw, 340px);
+                max-height: 44vh;
+                padding: 0.65rem;
+                border-radius: 12px;
             }
 
             .panel-tabs {
@@ -774,7 +777,7 @@
             .country-screen {
                 padding: 0.8rem 0.8rem 0.8rem 0.8rem;
                 justify-content: flex-start;
-                padding-top: 1.5rem;
+                padding-top: 0.9rem;
             }
 
             .country-screen-title {
@@ -788,35 +791,35 @@
             }
 
             .country-grid {
-                gap: 0.5rem;
+                gap: 0.35rem;
                 grid-template-columns: 1fr;
                 max-width: 100%;
             }
 
             .country-card {
-                padding: 0.8rem;
-                min-height: 130px;
+                padding: 0.55rem 0.6rem;
+                min-height: 96px;
             }
 
             .country-flag {
-                font-size: 1.5rem;
-                margin-bottom: 0.3rem;
+                font-size: 1.2rem;
+                margin-bottom: 0.18rem;
             }
 
             .country-name {
-                font-size: 0.9rem;
-                margin-bottom: 0.5rem;
+                font-size: 0.8rem;
+                margin-bottom: 0.3rem;
             }
 
             .country-stats {
-                font-size: 0.7rem;
-                line-height: 1.4;
+                font-size: 0.62rem;
+                line-height: 1.2;
             }
 
             .country-tag {
-                font-size: 0.6rem;
+                font-size: 0.52rem;
                 padding: 0.1rem 0.4rem;
-                margin-top: 0.4rem;
+                margin-top: 0.22rem;
             }
 
             /* 顶部进度条移动端位置 */
@@ -930,7 +933,9 @@
         #planetLayer {
             position: fixed;
             top: 0; left: 0;
-            width: 100%; height: 100%;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
             pointer-events: none;   /* 默认不拦截，行星自己开启 */
             z-index: 10;
         }
@@ -985,6 +990,8 @@
             justify-content: center;
             padding: 2rem;
             animation: fadeIn 1s ease;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .country-screen-title {
@@ -1433,6 +1440,7 @@
             researchPowerNeed: 0,
             earthClickCount: 0,
             earthConquestLevel: 0,
+            moonClickCount: 0,
             venusClickCount: 0,
             mercuryClickCount: 0,
             upgrades: { mining: [], energy: [], tech: [], special: [] }
@@ -1452,11 +1460,11 @@
         // 行星数据（距离/角度决定布局，cssClass对应真实图片）
         const planets = [
             { id: 'sun',     name: '太阳',   radius: 44, color: '#FDB813', unlockStage: 0, isSun: true,  cssClass: 'p-sun',     clickMulti: 0  },
-            { id: 'mercury', name: '水星',   distance: 105, angle: 15,  radius: 9,  color: '#8C7853', unlockStage: 2, cssClass: 'p-mercury', clickMulti: 2  },
-            { id: 'venus',   name: '金星',   distance: 148, angle: 55,  radius: 13, color: '#E8C07D', unlockStage: 2, cssClass: 'p-venus',   clickMulti: 3  },
+            { id: 'mercury', name: '水星',   distance: 105, angle: 15,  radius: 13, color: '#8C7853', unlockStage: 2, cssClass: 'p-mercury', clickMulti: 2  },
+            { id: 'venus',   name: '金星',   distance: 148, angle: 55,  radius: 18, color: '#E8C07D', unlockStage: 2, cssClass: 'p-venus',   clickMulti: 3  },
             { id: 'earth',   name: '地球',   distance: 192, angle: 100, radius: 16, color: '#4A90E2', unlockStage: 0, cssClass: 'p-earth',   clickMulti: 1  },
             { id: 'moon',    name: '月球',   distance: 222, angle: 113, radius: 9,  color: '#CCCCCC', unlockStage: 1, cssClass: 'p-moon',    clickMulti: 2  },
-            { id: 'mars',    name: '火星',   distance: 252, angle: 148, radius: 12, color: '#D94A2E', unlockStage: 2, cssClass: 'p-mars',    clickMulti: 4  },
+            { id: 'mars',    name: '火星',   distance: 252, angle: 148, radius: 17, color: '#D94A2E', unlockStage: 2, cssClass: 'p-mars',    clickMulti: 4  },
             { id: 'jupiter', name: '木星',   distance: 328, angle: 195, radius: 30, color: '#C88B3A', unlockStage: 3, cssClass: 'p-jupiter', clickMulti: 8  },
             { id: 'saturn',  name: '土星',   distance: 385, angle: 238, radius: 25, color: '#FAD5A5', unlockStage: 3, cssClass: 'p-saturn',  clickMulti: 10 },
             { id: 'uranus',  name: '天王星', distance: 430, angle: 278, radius: 19, color: '#4FD5D6', unlockStage: 3, cssClass: 'p-uranus',  clickMulti: 12 },
@@ -1632,7 +1640,7 @@
         function isPlanetConquestUnlocked(planetId) {
             if (planetId === 'moon') {
                 const moonBridge = game.upgrades?.tech?.find(item => item.id === 't1');
-                return !!moonBridge?.unlocked;
+                return !!moonBridge?.unlocked && (Number(game.moonClickCount) || 0) >= 5;
             }
             if (planetId === 'venus') {
                 return (Number(game.venusClickCount) || 0) >= 5;
@@ -2067,13 +2075,19 @@
                 
                 // 更新太阳系背景层视觉效果
                 updateSolarOverlay();
-                
-                // 显示通知
-                showTechUnlocked(tech);
+
+                // 等场景过渡动画完成后再显示通知
+                setTimeout(() => {
+                    showTechUnlocked(tech);
+                }, 1500);
                 
                 updateProduction();
                 renderUpgrades();
                 updateUI();
+
+                if (typeof closeRightPanel === 'function') {
+                    closeRightPanel();
+                }
             }
         }
         
@@ -2201,15 +2215,17 @@
             const researchCenterCount = getResearchCenterCount();
             const energyStationCount = getBuildingCount('energyStation');
             const moonRobotCount = getPlanetSlotAssignments('moon').filter(item => item === 'robotLegion').length;
+            const moonClicks = Math.max(0, Number(game.moonClickCount) || 0);
             const venusClicks = Math.max(0, Number(game.venusClickCount) || 0);
             const mercuryClicks = Math.max(0, Number(game.mercuryClickCount) || 0);
             const stage3TaskStep = researchCenterCount < 1 ? 1
                 : (energyStationCount < 2 ? 2
                 : (!moonBridgeUnlocked ? 3
-                : (moonRobotCount < 1 ? 4
-                : (venusClicks < 5 ? 5
-                : (mercuryClicks < 10 ? 6
-                : (solarBridgeUnlocked ? 8 : 7))))));
+                : (moonClicks < 5 ? 4
+                : (moonRobotCount < 1 ? 5
+                : (venusClicks < 5 ? 6
+                : (mercuryClicks < 10 ? 7
+                : (solarBridgeUnlocked ? 9 : 8)))))));
 
             if (nextStage) {
                 if (nextStage.id === 2) {
@@ -2217,7 +2233,7 @@
                         advanceStage(nextStage);
                     }
                 } else if (nextStage.id === 3) {
-                    if (stage3TaskStep >= 8) {
+                    if (stage3TaskStep >= 9) {
                         advanceStage(nextStage);
                     }
                 } else if (game.totalEarned >= nextStage.threshold) {
@@ -2264,18 +2280,24 @@
                         document.getElementById('progressPercent').textContent = `${done} / ${target}`;
                         document.getElementById('progressTitle').textContent = '🎯 研究地月桥科技，人类大规模走出地球';
                     } else if (stage3TaskStep === 4) {
+                        const target = 5;
+                        const progress = Math.min(100, (moonClicks / target) * 100);
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressPercent').textContent = `${Math.min(moonClicks, target)} / ${target}`;
+                        document.getElementById('progressTitle').textContent = '🎯 征服月球（点击月球5次）';
+                    } else if (stage3TaskStep === 5) {
                         const target = 1;
                         const done = Math.min(1, moonRobotCount);
                         document.getElementById('progressBar').style.width = `${done * 100}%`;
                         document.getElementById('progressPercent').textContent = `${done} / ${target}`;
                         document.getElementById('progressTitle').textContent = '🎯 在月球上修建1个机器人军团，机器人军团使点击开采的矿石增加';
-                    } else if (stage3TaskStep === 5) {
+                    } else if (stage3TaskStep === 6) {
                         const target = 5;
                         const progress = Math.min(100, (venusClicks / target) * 100);
                         document.getElementById('progressBar').style.width = progress + '%';
                         document.getElementById('progressPercent').textContent = `${Math.min(venusClicks, target)} / ${target}`;
                         document.getElementById('progressTitle').textContent = '🎯 征服金星（点击金星5次）';
-                    } else if (stage3TaskStep === 6) {
+                    } else if (stage3TaskStep === 7) {
                         const target = 10;
                         const progress = Math.min(100, (mercuryClicks / target) * 100);
                         document.getElementById('progressBar').style.width = progress + '%';
@@ -2338,7 +2360,14 @@
         }
 
         function handlePlanetTaskClick(planetId) {
-            if (planetId === 'venus') {
+            if (planetId === 'moon') {
+                const prev = Math.max(0, Number(game.moonClickCount) || 0);
+                game.moonClickCount = prev + 1;
+                if (prev < 5 && game.moonClickCount >= 5) {
+                    renderUpgrades();
+                    updateUI();
+                }
+            } else if (planetId === 'venus') {
                 game.venusClickCount = Math.max(0, Number(game.venusClickCount) || 0) + 1;
             } else if (planetId === 'mercury') {
                 game.mercuryClickCount = Math.max(0, Number(game.mercuryClickCount) || 0) + 1;
@@ -2443,6 +2472,7 @@
             game.baseClickPower = Number(game.baseClickPower) > 0 ? Number(game.baseClickPower) : (Number(game.clickPower) > 0 ? Number(game.clickPower) : 100);
             game.earthClickCount = Math.max(0, Number(game.earthClickCount) || 0);
             game.earthConquestLevel = Math.max(0, Math.min(4, Math.floor(Number(game.earthConquestLevel) || 0)));
+            game.moonClickCount = Math.max(0, Number(game.moonClickCount) || 0);
             game.venusClickCount = Math.max(0, Number(game.venusClickCount) || 0);
             game.mercuryClickCount = Math.max(0, Number(game.mercuryClickCount) || 0);
             game.planetSlots = normalizePlanetSlots(savedGame.planetSlots);
@@ -2605,6 +2635,7 @@
             game.calendarMonthsElapsed = 0;
             game.earthClickCount = 0;
             game.earthConquestLevel = 0;
+            game.moonClickCount = 0;
             game.venusClickCount = 0;
             game.mercuryClickCount = 0;
             game.country = id;
@@ -2699,8 +2730,18 @@
         // 鼠标滚轮缩放 / 触摸捏合缩放 → 由 scene.js 统一处理
         
         // 初始化
-        window.addEventListener('resize', () => { resizeCanvas(); });
-        resizeCanvas();
+        window.addEventListener('resize', () => {
+            if (typeof window.scheduleViewportResize === 'function') {
+                window.scheduleViewportResize();
+            } else {
+                resizeCanvas();
+            }
+        });
+        if (typeof window.scheduleViewportResize === 'function') {
+            window.scheduleViewportResize();
+        } else {
+            resizeCanvas();
+        }
         // initStarfield() 已移除，改用 STARS 数组（solar-scale 方式）
         initPlanetDivs();   // 创建CSS行星div
         initUpgrades();
