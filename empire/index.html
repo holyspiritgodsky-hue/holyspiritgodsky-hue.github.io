@@ -745,6 +745,8 @@
         }
 
         .mvp-feedback-btn {
+            appearance: none;
+            -webkit-appearance: none;
             border: 1px solid rgba(0, 217, 255, 0.45);
             background: rgba(15, 23, 42, 0.88);
             color: var(--accent-cyan);
@@ -755,6 +757,7 @@
             font-weight: 700;
             text-decoration: none;
             backdrop-filter: blur(6px);
+            cursor: pointer;
         }
 
         .mvp-feedback-btn:hover {
@@ -1435,11 +1438,6 @@
             <div class="top-status-row">
                 <div class="civilization-level" id="gameDate">📅 2025年1月</div>
                 <div class="civilization-level" id="civLevel">🌍 行星文明</div>
-                <div class="top-inline-actions">
-                    <a href="https://gameart.top" class="home-btn" target="_blank">🏠 首页</a>
-                    <button class="reset-btn" onclick="resetGame()">🔄 重新开始</button>
-                    <button class="home-btn" onclick="testTechLevel()" style="background: rgba(147, 112, 219, 0.15); border-color: rgba(147, 112, 219, 0.4); color: #9370db;">🧪 测试科技等级</button>
-                </div>
             </div>
             <div class="resources-compact">
                 <div class="resource-compact">
@@ -1511,7 +1509,9 @@
         </div>
 
         <div class="mvp-meta">
-            <div class="mvp-version-badge">v0.1.0-mvp</div>
+            <a class="mvp-feedback-btn" href="https://gameart.top" target="_blank" rel="noopener noreferrer">🏠 首页</a>
+            <button class="mvp-feedback-btn" onclick="resetGame()">🔄 重新开始</button>
+            <button class="mvp-feedback-btn" onclick="testTechLevel()">🧪 测试科技等级</button>
             <a class="mvp-feedback-btn" href="mailto:258775554@qq.com">💬 反馈邮箱</a>
             <a class="mvp-feedback-btn" href="tel:15221056162">📞 反馈电话</a>
         </div>
@@ -1637,7 +1637,8 @@
             const monthIndex = Math.floor(elapsed);
             const year = startYear + Math.floor(monthIndex / 12);
             const month = (monthIndex % 12) + 1;
-            return `📅 ${year}年${month}月`;
+            const monthText = String(month).padStart(2, '0');
+            return `📅 ${year}.${monthText}`;
         }
 
         const planetSlotRules = {
@@ -2415,20 +2416,9 @@
             document.getElementById('oreVal').textContent = formatNumber(game.ore);
             document.getElementById('energyVal').textContent = formatNumber(game.energy);
             document.getElementById('techVal').textContent = formatNumber(game.tech);
-            const overCapText = (game.robotPenalty || 1) < 1
-                ? ` · 超编减产${Math.round((1 - game.robotPenalty) * 100)}%`
-                : '';
-            document.getElementById('oreRate').textContent = '+' + formatNumber(game.orePerSec) + '/秒' + overCapText;
-
-            const robotPowerText = (game.robotPowerNeed || 0) > 0
-                ? ` · 养护需电${formatNumber(game.robotPowerNeed)}`
-                : '';
-            document.getElementById('energyRate').textContent = '+' + formatNumber(game.energyPerSec) + '/秒' + robotPowerText;
-
-            const researchCenterCount = getResearchCenterCount();
-            document.getElementById('techRate').textContent = researchCenterCount > 0
-                ? `+${formatNumber(game.techPerSec)}/秒 · 需电${formatNumber(game.researchPowerNeed)}`
-                : '+0/秒 · 建科研中心';
+            document.getElementById('oreRate').textContent = '+' + formatNumber(game.orePerSec) + '/秒';
+            document.getElementById('energyRate').textContent = '+' + formatNumber(game.energyPerSec) + '/秒';
+            document.getElementById('techRate').textContent = '+' + formatNumber(game.techPerSec) + '/秒';
             updateLevelActionHud();
         }
 
