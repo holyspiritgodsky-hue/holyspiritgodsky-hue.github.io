@@ -287,7 +287,7 @@ function createHitEffect(planet, hitX, hitY, gain) {
     if (hitEffects.length > 40) hitEffects.shift();
 }
 
-function showStoryEvent(title, contentHtml, buttonText = '继续') {
+function showStoryEvent(title, contentHtml, buttonText = '继续', onConfirm = null) {
     const modal = document.createElement('div');
     modal.style.cssText = `
         position: fixed;
@@ -320,10 +320,15 @@ function showStoryEvent(title, contentHtml, buttonText = '继续') {
         ">${buttonText}</button>
     `;
     document.body.appendChild(modal);
-    modal.querySelector('button').addEventListener('click', () => modal.remove());
+    modal.querySelector('button').addEventListener('click', () => {
+        modal.remove();
+        if (typeof onConfirm === 'function') {
+            onConfirm();
+        }
+    });
 }
 
-function showEarthDestroyedEvent() {
+function showEarthDestroyedEvent(reasonText = '机器人军团被水星微生物打败！地球灭亡') {
     const modal = document.createElement('div');
     modal.style.cssText = `
         position: fixed;
@@ -343,7 +348,7 @@ function showEarthDestroyedEvent() {
     `;
     modal.innerHTML = `
         <div style="font-size:1.45rem;font-weight:900;color:#ef4444;margin-bottom:0.55rem;">💥 地球灭亡</div>
-        <div style="line-height:1.75;color:#fecaca;margin-bottom:1rem;">机器人军团被水星微生物腐蚀！地球灭亡</div>
+        <div style="line-height:1.75;color:#fecaca;margin-bottom:1rem;">${reasonText}</div>
         <button style="
             border:none;
             background: linear-gradient(135deg, #ef4444, #b91c1c);
@@ -533,49 +538,34 @@ function handlePlanetMineClick(planet, event) {
         }
         const st = planetClickStats.mars;
         st.clicks++;
-        if (!st.rebellionShown && st.clicks >= 5) {
+        const marsBattleWon = !!window.game?.marsBattleWon;
+
+        if (!st.rebellionShown) {
             st.rebellionShown = true;
             planetClickMultiplier.mars = 0.05;
             playEarthToMarsAttackAnimation(true);
             showStoryEvent(
                 '🚨 火星地底人反抗',
-                '火星地底势力发起反扑，地球采矿据点遭到袭击。<br>火星点击收益下降 95%。',
-                '继续镇压反抗'
+                '火星地底势力发起反扑，地球采矿据点遭到袭击。<br>请在任务栏点击战斗按钮主动进攻火星前线。',
+                '前往战斗',
+                () => {
+                    if (typeof window.openMarsBattle === 'function') {
+                        window.openMarsBattle();
+                    }
+                }
             );
         }
 
-        if (st.rebellionShown && !st.peaceShown) {
+        if (!marsBattleWon) {
+            planetClickMultiplier.mars = 0.05;
             playEarthToMarsAttackAnimation(false);
-        }
-
-        if (st.rebellionShown && !st.peaceShown && st.clicks >= 35) {
-            let robotCount = 0;
-            if (typeof window.getBuildingCount === 'function') {
-                robotCount = Math.max(0, Number(window.getBuildingCount('robotLegion')) || 0);
+            if (typeof window.openMarsBattle === 'function' && st.clicks % 4 === 0) {
+                window.openMarsBattle();
             }
-
-            if (robotCount < 6) {
-                if (!st.requirementShown) {
-                    st.requirementShown = true;
-                    showStoryEvent(
-                        '🛡️ 火星防线过强',
-                        `火星地底人构建了深层防线，当前机器人军团不足（${robotCount}/6）。<br>至少需要 6 个机器人军团才能完成征服。`,
-                        '继续扩军'
-                    );
-                }
-            } else {
-                st.peaceShown = true;
-                planetClickMultiplier.mars = 1;
-                playEarthToMarsAttackAnimation(true);
-                showStoryEvent(
-                    '🏁 火星战役完成',
-                    '地球远征军已全面控制火星地表与地底据点。<br>火星点击收益已恢复。'
-                    + '<div style="margin-top:0.9rem;border:1px solid rgba(251,191,36,0.6);border-radius:10px;overflow:hidden;background:rgba(251,191,36,0.08);">'
-                    + '<img src="img/KTV.PNG" alt="火星KTV" style="display:block;width:100%;height:180px;object-fit:cover;" onerror="this.style.display=\'none\';this.parentElement.innerHTML=\'<div style=\'height:160px;display:flex;align-items:center;justify-content:center;color:#fbbf24;\'>KTV 图片加载失败</div>\'" />'
-                    + '</div>',
-                    '去唱一首，继续开采'
-                );
-            }
+        } else if (!st.peaceShown) {
+            st.peaceShown = true;
+            planetClickMultiplier.mars = 1;
+            playEarthToMarsAttackAnimation(true);
         }
     }
 
@@ -793,49 +783,57 @@ function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
     const assignments = window.getPlanetSlotAssignments(planetId) || [];
     if (!assignments.length) return;
 
-    const slotType = assignments[0] || null;
-    const slotR = Math.max(11, Math.min(19, meta.drawR * 0.65 + 5));
-    const angle = -Math.PI / 4;
-    const dist = Math.max(meta.drawR * 0.95, slotR * 1.3);
-    const x = meta.screenX + Math.cos(angle) * dist;
-    const y = meta.screenY + Math.sin(angle) * dist;
+    const total = assignments.length;
+    const baseSlotR = Math.max(10, Math.min(19, meta.drawR * 0.62 + 4));
+    const slotR = total <= 2 ? baseSlotR : Math.max(9, Math.min(16, baseSlotR * 0.92));
+    const ringDist = Math.max(meta.drawR * 1.1, slotR * (total <= 2 ? 1.4 : 2.0));
+    const startAngle = -Math.PI / 2;
 
-    slotHotspots.push({ planetId, index: 0, x, y, r: slotR, slotType });
+    for (let index = 0; index < total; index++) {
+        const slotType = assignments[index] || null;
+        const angle = total === 1
+            ? -Math.PI / 4
+            : startAngle + (index / total) * Math.PI * 2;
+        const x = meta.screenX + Math.cos(angle) * ringDist;
+        const y = meta.screenY + Math.sin(angle) * ringDist;
 
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(x, y, slotR, 0, Math.PI * 2);
-    if (slotType === 'autoFactory') {
-        ctx.fillStyle = 'rgba(34, 197, 94, 0.95)';
-    } else if (slotType === 'robotLegion') {
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.95)';
-    } else if (slotType === 'energyStation') {
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.96)';
-    } else if (slotType === 'researchCenter') {
-        ctx.fillStyle = 'rgba(168, 85, 247, 0.96)';
-    } else {
-        ctx.fillStyle = 'rgba(148, 163, 184, 0.52)';
+        slotHotspots.push({ planetId, index, x, y, r: slotR, slotType });
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(x, y, slotR, 0, Math.PI * 2);
+        if (slotType === 'autoFactory') {
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.95)';
+        } else if (slotType === 'robotLegion') {
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.95)';
+        } else if (slotType === 'energyStation') {
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.96)';
+        } else if (slotType === 'researchCenter') {
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.96)';
+        } else {
+            ctx.fillStyle = 'rgba(148, 163, 184, 0.52)';
+        }
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = slotType ? 'rgba(255,255,255,0.78)' : 'rgba(148,163,184,0.72)';
+        ctx.stroke();
+
+        const icon = slotType === 'autoFactory'
+            ? '🏭'
+            : slotType === 'robotLegion'
+                ? '🤖'
+                : slotType === 'energyStation'
+                    ? '⚡'
+                    : slotType === 'researchCenter'
+                        ? '🔬'
+                        : '+';
+        ctx.fillStyle = slotType ? '#ffffff' : 'rgba(226,232,240,0.9)';
+        ctx.font = `${Math.max(12, slotR * 1.02)}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(icon, x, y + 0.5);
+        ctx.restore();
     }
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = slotType ? 'rgba(255,255,255,0.78)' : 'rgba(148,163,184,0.72)';
-    ctx.stroke();
-
-    const icon = slotType === 'autoFactory'
-        ? '🏭'
-        : slotType === 'robotLegion'
-            ? '🤖'
-            : slotType === 'energyStation'
-                ? '⚡'
-                : slotType === 'researchCenter'
-                    ? '🔬'
-                    : '+';
-    ctx.fillStyle = slotType ? '#ffffff' : 'rgba(226,232,240,0.9)';
-    ctx.font = `${Math.max(12, slotR * 1.02)}px sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(icon, x, y + 0.5);
-    ctx.restore();
 }
 
 canvas.addEventListener('click', (event) => {
@@ -1192,10 +1190,16 @@ function drawSolarSystem() {
             ctx.strokeStyle='rgba(212,185,96,0.55)'; ctx.lineWidth=br*0.5; ctx.stroke();
         }
         if(br>=1.5){
-            ctx.globalAlpha=alpha*Math.min(1,br/4)*0.7;
-            ctx.font=`${Math.max(10,Math.min(12,br*1.8))}px sans-serif`;
-            ctx.fillStyle='#bbb'; ctx.textAlign='left';
-            ctx.fillText(body.label,bx+br+5,by+4);
+            const labelAlpha = Math.max(0.66, alpha * (0.78 + Math.min(0.22, br / 10)));
+            ctx.globalAlpha = labelAlpha;
+            ctx.font = `${Math.max(11, Math.min(14, br * 1.9))}px sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = Math.max(1.4, br * 0.14);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.58)';
+            ctx.strokeText(body.label, bx + br + 5, by + 3.5);
+            ctx.fillStyle = 'rgba(238, 242, 255, 0.98)';
+            ctx.fillText(body.label, bx + br + 5, by + 3.5);
         }
         ctx.restore();
     }
@@ -1439,4 +1443,6 @@ function applyUserZoom() {
     viewOffset = 0.0;
 }
 
+window.showStoryEvent = showStoryEvent;
+window.showEarthDestroyedEvent = showEarthDestroyedEvent;
 window.lockLevelRollback = lockRollback;
