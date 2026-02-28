@@ -11,6 +11,7 @@ const particles = [];
 const hitEffects = [];
 const interactiveBodies = [];
 const slotHotspots = [];
+let storyEventOpen = false;
 let shakeUntil = 0;
 let shakeMag = 0;
 let lastViewportW = 0;
@@ -34,19 +35,44 @@ const planetClickStats = {
     jupiter: { warningShown: false },
     saturn: { warningShown: false }
 };
+const earthSlotRegionNames = [
+    '东亚平原',
+    '美洲大草原',
+    '欧洲大草原',
+    '太平洋岛屿',
+    '非洲沙漠',
+    '南极冰原',
+    '海底',
+    '地心前哨'
+];
+const earthSlotAnchorOffsets = [
+    { x: 0.45, y: -0.16 },
+    { x: 0.58, y: -0.72 },
+    { x: -0.74, y: -0.38 },
+    { x: 0.76, y: -0.40 },
+    { x: -0.70, y: 0.24 },
+    { x: -0.16, y: 0.82 },
+    { x: 0.70, y: 0.50 },
+    { x: -0.40, y: 0.66 }
+];
 let lastMarsAttackAnimAt = 0;
+let lastOreShortageHintAt = 0;
 const isCoarsePointer = typeof window.matchMedia === 'function'
     ? window.matchMedia('(pointer: coarse)').matches
     : false;
 
 // 地球/月球贴图（来自 img 文件夹）
 const earthImg = new Image();
+const earthSplitImg = new Image();
 const moonImg = new Image();
 let earthImgLoaded = false;
+let earthSplitImgLoaded = false;
 let moonImgLoaded = false;
 earthImg.onload = () => { earthImgLoaded = true; };
+earthSplitImg.onload = () => { earthSplitImgLoaded = true; };
 moonImg.onload = () => { moonImgLoaded = true; };
 earthImg.src = 'img/earth.jpg';
+earthSplitImg.src = 'img/earth2.jpg';
 moonImg.src = 'img/moon.jpg';
 
 // 视图层级偶停：0 = 当前科技等级画面，+1 = 退回一个等级的画面
@@ -288,6 +314,8 @@ function createHitEffect(planet, hitX, hitY, gain) {
 }
 
 function showStoryEvent(title, contentHtml, buttonText = '继续', onConfirm = null) {
+    if (storyEventOpen) return;
+    storyEventOpen = true;
     const modal = document.createElement('div');
     modal.style.cssText = `
         position: fixed;
@@ -322,6 +350,7 @@ function showStoryEvent(title, contentHtml, buttonText = '继续', onConfirm = n
     document.body.appendChild(modal);
     modal.querySelector('button').addEventListener('click', () => {
         modal.remove();
+        storyEventOpen = false;
         if (typeof onConfirm === 'function') {
             onConfirm();
         }
@@ -329,6 +358,8 @@ function showStoryEvent(title, contentHtml, buttonText = '继续', onConfirm = n
 }
 
 function showEarthDestroyedEvent(reasonText = '机器人军团被水星微生物打败！地球灭亡') {
+    if (storyEventOpen) return;
+    storyEventOpen = true;
     const modal = document.createElement('div');
     modal.style.cssText = `
         position: fixed;
@@ -489,23 +520,32 @@ function updateHitEffects(now) {
 }
 
 function handlePlanetMineClick(planet, event) {
+    if (storyEventOpen) return;
     if (!planet || planet.isSun) return;
     const unlocked = game.unlockedPlanets.includes(planet.id) || game.currentStage >= planet.unlockStage;
     if (!unlocked) return;
 
     const hitX = event?.clientX ?? (planet.screenX || centerX);
     const hitY = event?.clientY ?? (planet.screenY || centerY);
-    const mult = planetClickMultiplier[planet.id] ?? 1;
-    const gain = Math.max(1, Math.floor(game.clickPower * (planet.clickMulti || 1) * mult));
+    const clickOreCost = 10;
+    if (game.ore < clickOreCost) {
+        const now = performance.now();
+        if (now - lastOreShortageHintAt > 1200) {
+            lastOreShortageHintAt = now;
+            showStoryEvent(
+                '⛏️ 矿石不足',
+                '每次点击都会消耗矿石，当前矿石不足。<br>请先建造自动工厂生产矿石。',
+                '继续发展'
+            );
+        }
+        return;
+    }
 
-    game.ore += gain;
-    game.totalEarned += gain;
+    game.ore -= clickOreCost;
     game.totalClicks = (game.totalClicks || 0) + 1;
 
-    const oreTarget = getOreTargetPosition();
-    createParticle(hitX, hitY, oreTarget.x, oreTarget.y);
-    createHitEffect(planet, hitX, hitY, gain);
-    triggerScreenShake(Math.min(9, 3 + gain / 120), 90);
+    createHitEffect(planet, hitX, hitY, -clickOreCost);
+    triggerScreenShake(3, 90);
 
     if (planet.id === 'earth') {
         const st = planetClickStats.earth;
@@ -539,8 +579,10 @@ function handlePlanetMineClick(planet, event) {
         const st = planetClickStats.mars;
         st.clicks++;
         const marsBattleWon = !!window.game?.marsBattleWon;
+        const marsClicks = Math.max(0, Number(window.game?.marsClickCount) || 0);
+        const marsBattleUnlockClicks = 5;
 
-        if (!st.rebellionShown) {
+        if (!st.rebellionShown && marsClicks >= marsBattleUnlockClicks) {
             st.rebellionShown = true;
             planetClickMultiplier.mars = 0.05;
             playEarthToMarsAttackAnimation(true);
@@ -559,7 +601,7 @@ function handlePlanetMineClick(planet, event) {
         if (!marsBattleWon) {
             planetClickMultiplier.mars = 0.05;
             playEarthToMarsAttackAnimation(false);
-            if (typeof window.openMarsBattle === 'function' && st.clicks % 4 === 0) {
+            if (marsClicks >= marsBattleUnlockClicks && typeof window.openMarsBattle === 'function' && st.clicks % 4 === 0) {
                 window.openMarsBattle();
             }
         } else if (!st.peaceShown) {
@@ -584,26 +626,36 @@ function handlePlanetMineClick(planet, event) {
                 '水星发现高活性微生物群，已对前线采矿构成威胁。请派机器人军团清剿。',
                 '继续点击'
             );
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof checkStageProgress === 'function') checkStageProgress();
+            return;
         }
 
         if (st.firstHintShown && !st.counterAttackShown && mercuryClicks >= 6) {
             st.counterAttackShown = true;
+            let previewRobotCount = 0;
+            if (typeof window.getBuildingCount === 'function') {
+                previewRobotCount = Math.max(0, Number(window.getBuildingCount('robotLegion')) || 0);
+            }
             showStoryEvent(
                 '⚠️ 紧急战报',
-                '水星微生物群开始反攻地球前线据点！',
-                '准备防御'
+                `水星微生物群开始反攻地球前线据点！<br>当前有效机器人军团：${previewRobotCount}/3`,
+                '准备防御',
+                () => {
+                    let robotCount = 0;
+                    if (typeof window.getBuildingCount === 'function') {
+                        robotCount = Math.max(0, Number(window.getBuildingCount('robotLegion')) || 0);
+                    }
+
+                    if (robotCount < 3 && !st.gameOverShown) {
+                        st.gameOverShown = true;
+                        showEarthDestroyedEvent();
+                    }
+                }
             );
-
-            let robotCount = 0;
-            if (typeof window.getBuildingCount === 'function') {
-                robotCount = Math.max(0, Number(window.getBuildingCount('robotLegion')) || 0);
-            }
-
-            if (robotCount < 3 && !st.gameOverShown) {
-                st.gameOverShown = true;
-                showEarthDestroyedEvent();
-                return;
-            }
+            if (typeof updateUI === 'function') updateUI();
+            if (typeof checkStageProgress === 'function') checkStageProgress();
+            return;
         }
 
         if (st.counterAttackShown && !st.gameOverShown && !st.conqueredShown && mercuryClicks >= 10) {
@@ -723,16 +775,23 @@ function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
     const total = assignments.length;
     if (!total) return;
 
-    const slotR = Math.max(13, Math.min(22, earthR * 0.20));
-    const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-    const spreadR = earthR * 0.78;
+    const slotR = Math.max(15, Math.min(24, earthR * 0.215));
+    const spreadR = earthR * 0.9;
+    const isCollapsedEarth = !!window.game?.earthPermanentThreeSlots;
+    const activeRegionNames = isCollapsedEarth
+        ? ['东亚平原', '欧洲草原', '美洲草原']
+        : earthSlotRegionNames;
+    const activeAnchorOffsets = isCollapsedEarth
+        ? [earthSlotAnchorOffsets[0], earthSlotAnchorOffsets[2], earthSlotAnchorOffsets[1]]
+        : earthSlotAnchorOffsets;
 
     for (let index = 0; index < total; index++) {
-        const t = (index + 0.5) / total;
-        const radial = Math.sqrt(t) * spreadR;
-        const angle = index * goldenAngle;
-        const x = ex + Math.cos(angle) * radial;
-        const y = ey + Math.sin(angle) * radial * 0.86;
+        const anchor = activeAnchorOffsets[index] || {
+            x: Math.cos((index / Math.max(1, total)) * Math.PI * 2) * 0.45,
+            y: Math.sin((index / Math.max(1, total)) * Math.PI * 2) * 0.45
+        };
+        const x = ex + anchor.x * spreadR;
+        const y = ey + anchor.y * spreadR;
         const slotType = assignments[index] || null;
 
         slotHotspots.push({ planetId: 'earth', index, x, y, r: slotR, slotType });
@@ -741,19 +800,27 @@ function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
         ctx.beginPath();
         ctx.arc(x, y, slotR, 0, Math.PI * 2);
         if (slotType === 'autoFactory') {
-            ctx.fillStyle = 'rgba(34, 197, 94, 0.95)';
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.98)';
         } else if (slotType === 'robotLegion') {
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.95)';
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.98)';
         } else if (slotType === 'energyStation') {
-            ctx.fillStyle = 'rgba(251, 191, 36, 0.96)';
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.99)';
         } else if (slotType === 'researchCenter') {
-            ctx.fillStyle = 'rgba(168, 85, 247, 0.96)';
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.99)';
         } else {
-            ctx.fillStyle = 'rgba(148, 163, 184, 0.52)';
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.84)';
         }
+        ctx.shadowColor = slotType ? 'rgba(255,255,255,0.28)' : 'rgba(56,189,248,0.48)';
+        ctx.shadowBlur = slotType ? 6 : 10;
         ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = slotType ? 'rgba(255,255,255,0.75)' : 'rgba(148,163,184,0.6)';
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = Math.max(2.2, slotR * 0.16);
+        ctx.strokeStyle = slotType ? 'rgba(255,255,255,0.96)' : 'rgba(125,211,252,0.96)';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(2, slotR - 2.4), 0, Math.PI * 2);
+        ctx.lineWidth = 1.3;
+        ctx.strokeStyle = slotType ? 'rgba(15,23,42,0.72)' : 'rgba(15,23,42,0.88)';
         ctx.stroke();
 
         const icon = slotType === 'autoFactory'
@@ -765,11 +832,36 @@ function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
                     : slotType === 'researchCenter'
                         ? '🔬'
                         : '+';
-        ctx.fillStyle = slotType ? '#ffffff' : 'rgba(226,232,240,0.85)';
-        ctx.font = `${Math.max(12, slotR * 1.05)}px sans-serif`;
+        ctx.fillStyle = slotType ? '#ffffff' : 'rgba(224,242,254,0.98)';
+        ctx.font = `${Math.max(13, slotR * 1.1)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.68)';
+        ctx.shadowBlur = 3;
         ctx.fillText(icon, x, y + 0.5);
+        ctx.shadowBlur = 0;
+
+        const regionName = activeRegionNames[index] || `地表区域${index + 1}`;
+        const labelFontSize = Math.max(10, Math.min(13, slotR * 0.6));
+        const labelX = x;
+        const labelY = y + slotR + labelFontSize + 2;
+        ctx.font = `700 ${labelFontSize}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const textW = ctx.measureText(regionName).width;
+        const padX = 6;
+        const labelW = textW + padX * 2;
+        const labelH = labelFontSize + 6;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+        ctx.fillRect(labelX - labelW / 2, labelY - labelH / 2, labelW, labelH);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = 'rgba(125, 211, 252, 0.78)';
+        ctx.strokeRect(labelX - labelW / 2, labelY - labelH / 2, labelW, labelH);
+        ctx.fillStyle = 'rgba(224, 242, 254, 0.98)';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.66)';
+        ctx.shadowBlur = 2;
+        ctx.fillText(regionName, labelX, labelY);
+        ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
@@ -784,8 +876,8 @@ function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
     if (!assignments.length) return;
 
     const total = assignments.length;
-    const baseSlotR = Math.max(10, Math.min(19, meta.drawR * 0.62 + 4));
-    const slotR = total <= 2 ? baseSlotR : Math.max(9, Math.min(16, baseSlotR * 0.92));
+    const baseSlotR = Math.max(11, Math.min(20, meta.drawR * 0.66 + 4));
+    const slotR = total <= 2 ? baseSlotR : Math.max(10, Math.min(17, baseSlotR * 0.94));
     const ringDist = Math.max(meta.drawR * 1.1, slotR * (total <= 2 ? 1.4 : 2.0));
     const startAngle = -Math.PI / 2;
 
@@ -803,19 +895,27 @@ function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
         ctx.beginPath();
         ctx.arc(x, y, slotR, 0, Math.PI * 2);
         if (slotType === 'autoFactory') {
-            ctx.fillStyle = 'rgba(34, 197, 94, 0.95)';
+            ctx.fillStyle = 'rgba(34, 197, 94, 0.98)';
         } else if (slotType === 'robotLegion') {
-            ctx.fillStyle = 'rgba(59, 130, 246, 0.95)';
+            ctx.fillStyle = 'rgba(59, 130, 246, 0.98)';
         } else if (slotType === 'energyStation') {
-            ctx.fillStyle = 'rgba(251, 191, 36, 0.96)';
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.99)';
         } else if (slotType === 'researchCenter') {
-            ctx.fillStyle = 'rgba(168, 85, 247, 0.96)';
+            ctx.fillStyle = 'rgba(168, 85, 247, 0.99)';
         } else {
-            ctx.fillStyle = 'rgba(148, 163, 184, 0.52)';
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.84)';
         }
+        ctx.shadowColor = slotType ? 'rgba(255,255,255,0.28)' : 'rgba(56,189,248,0.48)';
+        ctx.shadowBlur = slotType ? 6 : 10;
         ctx.fill();
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = slotType ? 'rgba(255,255,255,0.78)' : 'rgba(148,163,184,0.72)';
+        ctx.shadowBlur = 0;
+        ctx.lineWidth = Math.max(2.2, slotR * 0.16);
+        ctx.strokeStyle = slotType ? 'rgba(255,255,255,0.96)' : 'rgba(125,211,252,0.96)';
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, Math.max(2, slotR - 2.3), 0, Math.PI * 2);
+        ctx.lineWidth = 1.25;
+        ctx.strokeStyle = slotType ? 'rgba(15,23,42,0.72)' : 'rgba(15,23,42,0.88)';
         ctx.stroke();
 
         const icon = slotType === 'autoFactory'
@@ -827,11 +927,14 @@ function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
                     : slotType === 'researchCenter'
                         ? '🔬'
                         : '+';
-        ctx.fillStyle = slotType ? '#ffffff' : 'rgba(226,232,240,0.9)';
-        ctx.font = `${Math.max(12, slotR * 1.02)}px sans-serif`;
+        ctx.fillStyle = slotType ? '#ffffff' : 'rgba(224,242,254,0.98)';
+        ctx.font = `${Math.max(13, slotR * 1.08)}px sans-serif`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.68)';
+        ctx.shadowBlur = 3;
         ctx.fillText(icon, x, y + 0.5);
+        ctx.shadowBlur = 0;
         ctx.restore();
     }
 }
@@ -1258,10 +1361,12 @@ function drawSolarSystem() {
         ag.addColorStop(0,'transparent'); ag.addColorStop(0.6,'rgba(90,180,255,0.12)'); ag.addColorStop(1,'transparent');
         ctx.beginPath(); ctx.arc(ex,ey,earthR*1.4,0,Math.PI*2); ctx.fillStyle=ag; ctx.fill();
         sDrawGlow(ex,ey,earthR,earthR*2.2,'#58b7ff',0.22);
-        if(earthImgLoaded){
+        const useSplitEarth = !!window.game?.earthCatastropheTriggered;
+        const earthTexture = useSplitEarth && earthSplitImgLoaded ? earthSplitImg : (earthImgLoaded ? earthImg : null);
+        if(earthTexture){
             ctx.save();
             ctx.beginPath(); ctx.arc(ex,ey,earthR,0,Math.PI*2); ctx.clip();
-            ctx.drawImage(earthImg, ex-earthR, ey-earthR, earthR*2, earthR*2);
+            ctx.drawImage(earthTexture, ex-earthR, ey-earthR, earthR*2, earthR*2);
             ctx.restore();
         } else {
             sDrawBall(ex,ey,earthR,'#7ae0ff','#1a7ac0','#09305a');
