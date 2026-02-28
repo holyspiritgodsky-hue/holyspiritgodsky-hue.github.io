@@ -15,7 +15,7 @@ function ensureMoonEvacuationLine() {
     renderUpgradeCategory('energy');
 }
 
-function playEarthSplitCinematic() {
+function playEarthSplitCinematic(onComplete = null) {
     const flash = document.createElement('div');
     flash.style.cssText = `
         position: fixed;
@@ -51,7 +51,14 @@ function playEarthSplitCinematic() {
     setTimeout(() => {
         document.body.appendChild(modal);
         const btn = modal.querySelector('button');
-        if (btn) btn.onclick = () => modal.remove();
+        if (btn) {
+            btn.onclick = () => {
+                modal.remove();
+                if (typeof onComplete === 'function') {
+                    onComplete();
+                }
+            };
+        }
     }, 220);
 }
 
@@ -74,7 +81,21 @@ function triggerEarthCatastrophe(forceCinematic = false) {
     game.energy = Math.max(0, Math.floor(game.energy * 0.25));
     game.tech = Math.max(0, Math.floor(game.tech * 0.6));
     if (fromCondemnationPath || forceCinematic) {
-        playEarthSplitCinematic();
+        const afterCinematic = forceCinematic
+            ? () => {
+                if (typeof window.showStoryEvent === 'function') {
+                    window.showStoryEvent(
+                        '📡 月球“阿耳忒弥斯-庚辰”联合基地——最后的全球广播',
+                        '警告：地壳稳定性传感器已离线。<br><br>' +
+                        '播报员（声音颤抖）：“……这里是月球统一指挥部。正如你们在观测窗看到的……地球，我们的母星，在三分钟前由于富士山深层地核武器的链式反应，已经……彻底崩裂。<br><br>' +
+                        '大气层正在迅速逃逸，由于地心熔岩直接暴露，全球海洋已蒸发 60% 以上。我们监测到地磁场已完全消失。月球轨道正在受不规则引力波影响发生偏移。<br><br>' +
+                        '幸存的公民们，请放弃一切幻想。地球已成炼狱，人类文明的倒计时……现在开始。所有动力系统立刻转向维持基地生命支持，我们要……寻找新的家园了。”',
+                        '转入生存模式'
+                    );
+                }
+            }
+            : null;
+        playEarthSplitCinematic(afterCinematic);
     }
     updateProduction();
     updateUI();
