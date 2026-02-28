@@ -1227,9 +1227,7 @@
         /* 国家特定背景图片 */
         .country-usa { background-image: url('https://flagcdn.com/w640/us.png'); }
         .country-china { background-image: url('https://flagcdn.com/w640/cn.png'); }
-        .country-russia { background-image: url('https://flagcdn.com/w640/ru.png'); }
-        .country-germany { background-image: url('https://flagcdn.com/w640/de.png'); }
-        .country-japan { background-image: url('https://flagcdn.com/w640/jp.png'); }
+        .country-eu { background-image: url('https://flagcdn.com/w640/eu.png'); }
         .tag-event { background: rgba(168,85,247,0.2); color: var(--accent-purple); border: 1px solid rgba(168,85,247,0.4); }
         .tag-balanced { background: rgba(16,185,129,0.2); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.4); }
     </style>
@@ -1382,50 +1380,30 @@
                 <span class="country-flag">🇺🇸</span>
                 <div class="country-name">美国</div>
                 <div class="country-stats">
-                    <span>💎 初始矿石 <b class="highlight">500</b></span>
+                    <span>💎 初始矿石 <b class="highlight">400</b></span>
                     <span>⚡ 能源 <b class="highlight">50</b></span>
                     <span>👊 点击力 <b class="highlight">60</b></span>
-                    <span class="country-tag tag-vip">★ VIP 优势</span>
+                    <span class="country-tag tag-vip">VIP:守护地球，暴打火星，称霸星际，走向银河</span>
                 </div>
             </div>
             <div class="country-card country-china" onclick="selectCountry('china')">
                 <span class="country-flag">🇨🇳</span>
                 <div class="country-name">中国</div>
                 <div class="country-stats">
-                    <span>💎 初始矿石 <b class="highlight">200</b></span>
+                    <span>💎 初始矿石 <b class="highlight">100</b></span>
                     <span>⚡ 能源 <b class="highlight">80</b></span>
                     <span>👊 点击力 <b class="highlight">80</b></span>
-                    <span class="country-tag tag-event">独有事件链</span>
+                    <span class="country-tag tag-event">工业：能源工厂发电×2</span>
                 </div>
             </div>
-            <div class="country-card country-russia" onclick="selectCountry('russia')">
-                <span class="country-flag">🇷🇺</span>
-                <div class="country-name">俄罗斯</div>
-                <div class="country-stats">
-                    <span>💎 初始矿石 <b class="highlight">400</b></span>
-                    <span>⚡ 能源 <b class="highlight">60</b></span>
-                    <span>👊 点击力 <b class="highlight">60</b></span>
-                    <span class="country-tag tag-balanced">均衡发展</span>
-                </div>
-            </div>
-            <div class="country-card country-germany" onclick="selectCountry('germany')">
-                <span class="country-flag">🇩🇪</span>
-                <div class="country-name">德国</div>
-                <div class="country-stats">
-                    <span>💎 初始矿石 <b class="highlight">250</b></span>
-                    <span>⚡ 能源 <b class="highlight">70</b></span>
-                    <span>👊 点击力 <b class="highlight">60</b></span>
-                    <span class="country-tag tag-balanced">工业强国</span>
-                </div>
-            </div>
-            <div class="country-card country-japan" onclick="selectCountry('japan')">
-                <span class="country-flag">🇯🇵</span>
-                <div class="country-name">日本</div>
+            <div class="country-card country-eu" onclick="selectCountry('eu')">
+                <span class="country-flag">🇪🇺</span>
+                <div class="country-name">欧盟</div>
                 <div class="country-stats">
                     <span>💎 初始矿石 <b class="highlight">200</b></span>
-                    <span>⚡ 能源 <b class="highlight">100</b></span>
+                    <span>⚡ 能源 <b class="highlight">70</b></span>
                     <span>👊 点击力 <b class="highlight">60</b></span>
-                    <span class="country-tag tag-event">独有事件链</span>
+                    <span class="country-tag tag-balanced">艺术（如果体会不到，那说明你很粗俗）</span>
                 </div>
             </div>
         </div>
@@ -1438,6 +1416,7 @@
             <div class="top-status-row">
                 <div class="civilization-level" id="gameDate">📅 2025年1月</div>
                 <div class="civilization-level" id="civLevel">🌍 行星文明</div>
+                <div class="civilization-level" id="countryTrait">🏳️ 未选择国家</div>
             </div>
             <div class="resources-compact">
                 <div class="resource-compact">
@@ -1512,8 +1491,8 @@
             <a class="mvp-feedback-btn" href="https://gameart.top" target="_blank" rel="noopener noreferrer">🏠 首页</a>
             <button class="mvp-feedback-btn" onclick="resetGame()">🔄 重新开始</button>
             <button class="mvp-feedback-btn" onclick="testTechLevel()">🧪 测试科技等级</button>
-            <a class="mvp-feedback-btn" href="mailto:258775554@qq.com">💬 反馈邮箱</a>
-            <a class="mvp-feedback-btn" href="tel:15221056162">📞 反馈电话</a>
+            <button class="mvp-feedback-btn" onclick="openFeedbackEmail()">💬 反馈邮箱</button>
+            <a class="mvp-feedback-btn" href="feedback.html" target="_blank" rel="noopener noreferrer">📋 反馈留言板</a>
         </div>
     </div>
 
@@ -1528,6 +1507,7 @@
 
     <script src="battle.js"></script>
     <script src="scene.js"></script>
+    <script src="events.js"></script>
     <script>
         // 游戏状态
         const game = {
@@ -1564,6 +1544,39 @@
             marsClickCount: 0,
             jupiterClickCount: 0,
             saturnClickCount: 0,
+            country: null,
+            countryName: '',
+            countryTrait: '',
+            energyFactoryMult: 1,
+            diplomacyShield: false,
+            marsDiplomacyResolved: false,
+            nuclearEventResolved: false,
+            earthDoomed: false,
+            earthCatastropheTriggered: false,
+            condemnationPendingCollapse: false,
+            condemnationBaseClicks: 0,
+            earthCollapseThreeSlotsPending: false,
+            earthPermanentThreeSlots: false,
+            chinaInvasionWarningShown: false,
+            chinaInvasionFactoryBuilt: false,
+            chinaInvasionStartMonth: 0,
+            chinaWarDeclared: false,
+            chinaWarFrontlineWarningShown: false,
+            chinaWarResolved: false,
+            euInvasionWarningShown: false,
+            euInvasionFactoryBuilt: false,
+            euInvasionStartMonth: 0,
+            euWarDeclared: false,
+            euWarFrontlineWarningShown: false,
+            euWarResolved: false,
+            postWarRetaliationPending: false,
+            postWarRetaliationStartMonth: 0,
+            crisisSignal1Shown: false,
+            aiSingularitySignalShown: false,
+            crisisSignal2Shown: false,
+            terminalProducerSignalShown: false,
+            nuclearEventTriggered: false,
+            moonEvacuationReady: false,
             upgrades: { mining: [], energy: [], tech: [], special: [] }
         };
         window.game = game;  // 供 scene.js 访问
@@ -1597,8 +1610,8 @@
         const upgradesConfig = {
             // 采矿设施：槽位建造（地球10格、月球1格、火星6格）
             mining: [
-                { id: 'mf1', name: '自动工厂', icon: '🏭', baseProduction: 4, baseCost: 120, costMult: 1.35, costType: 'ore', buildingKey: 'autoFactory' },
-                { id: 'mr1', name: '机器人军团', icon: '🤖', clickBonusMult: 1.35, baseCost: 180, costMult: 1.4, costType: 'ore', buildingKey: 'robotLegion' }
+                { id: 'mf1', name: '自动工厂', icon: '🏭', baseProduction: 3, baseCost: 45, costMult: 1.24, costType: 'ore', buildingKey: 'autoFactory' },
+                { id: 'mr1', name: '机器人军团', icon: '🤖', clickBonusMult: 1, baseCost: 90, costMult: 1.4, costType: 'ore', buildingKey: 'robotLegion' }
             ],
             // 能源设施：消耗矿石，产出能源
             energy: [
@@ -1657,27 +1670,39 @@
             marsRobots: 2,
             totalRobots: 6
         };
+        const marsBattleUnlockClicks = 5;
         const outerConquestTargets = {
             jupiter: 8,
             saturn: 10
         };
-        const earthConquestMessages = [
-            '恭喜征服了非洲沙漠',
-            '恭喜征服了南极',
-            '恭喜征服了海底',
-            '恭喜征服了地心'
+        const earthConquestTaskNames = [
+            '征服非洲沙漠',
+            '征服南极',
+            '征服海底',
+            '征服地心'
         ];
+        const chinaForeignEarthSlots = new Set([1, 2, 3]);
+        const euForeignEarthSlots = new Set([0, 1, 3]);
+
+        function isChinaForeignEarthSlot(slotIndex) {
+            return chinaForeignEarthSlots.has(Number(slotIndex));
+        }
+
+        function isEuForeignEarthSlot(slotIndex) {
+            return euForeignEarthSlots.has(Number(slotIndex));
+        }
 
         function getPlanetTotalSlots(planetId) {
             const baseTotal = planetSlotRules[planetId]?.total || 0;
             if (planetId !== 'earth') return baseTotal;
+            if (game.earthPermanentThreeSlots) return 3;
             const unlockedExtra = Math.max(0, Math.min(4, Math.floor(Number(game.earthConquestLevel) || 0)));
             return Math.min(baseTotal, 4 + unlockedExtra);
         }
 
         function getDefaultPlanetSlots() {
             return {
-                earth: { autoFactory: 1, robotLegion: 1 },
+                earth: { autoFactory: 1, robotLegion: 0 },
                 moon: { autoFactory: 0, robotLegion: 0 },
                 venus: { autoFactory: 0, robotLegion: 0 },
                 mercury: { autoFactory: 0, robotLegion: 0 },
@@ -1689,7 +1714,7 @@
 
         function getDefaultSlotLayout() {
             return {
-                earth: ['autoFactory', 'robotLegion', null, null, null, null, null, null],
+                earth: ['autoFactory', null, null, null, null, null, null, null],
                 moon: [null],
                 venus: [null],
                 mercury: [null],
@@ -1697,6 +1722,15 @@
                 jupiter: [null],
                 saturn: [null]
             };
+        }
+
+        function applyEarthThreeSlotLock() {
+            if (!game.slotLayout) return;
+            const source = Array.isArray(game.slotLayout.earth) ? game.slotLayout.earth : [];
+            const trimmed = source.slice(0, 3);
+            while (trimmed.length < 3) trimmed.push(null);
+            game.slotLayout.earth = trimmed;
+            syncMiningLevelsWithSlots();
         }
 
         function normalizePlanetSlots(rawSlots = null) {
@@ -1868,8 +1902,33 @@
             return null;
         }
 
+        function syncEnergyLevelsWithSlots() {
+            const energyUpgrades = Array.isArray(game.upgrades?.energy) ? game.upgrades.energy : [];
+            if (!energyUpgrades.length) return;
+
+            const stationCount = getBuildingCount('energyStation');
+            let totalLevels = energyUpgrades.reduce((sum, item) => sum + Math.max(0, Number(item.level) || 0), 0);
+
+            if (totalLevels > stationCount) {
+                let extra = totalLevels - stationCount;
+                const reversed = [...energyUpgrades].reverse();
+                while (extra > 0) {
+                    const target = reversed.find(item => (item.level || 0) > 0);
+                    if (!target) break;
+                    target.level -= 1;
+                    extra -= 1;
+                }
+            } else if (totalLevels < stationCount) {
+                const basePlant = energyUpgrades.find(item => item.id === 'e1') || energyUpgrades[0];
+                if (basePlant) {
+                    basePlant.level += stationCount - totalLevels;
+                }
+            }
+        }
+
         function syncMiningLevelsWithSlots() {
             recountPlanetSlotsFromLayout();
+            syncEnergyLevelsWithSlots();
             const autoFactory = game.upgrades.mining.find(item => item.id === 'mf1');
             const robotLegion = game.upgrades.mining.find(item => item.id === 'mr1');
             if (autoFactory) autoFactory.level = getBuildingCount('autoFactory');
@@ -1883,8 +1942,38 @@
             const firstEmpty = assignments.findIndex(item => !item);
             if (firstEmpty < 0) return null;
             game.slotLayout[nextPlanet][firstEmpty] = buildingKey;
+            trackChinaTerritoryFactoryBuild(nextPlanet, firstEmpty, buildingKey);
+            trackEuTerritoryFactoryBuild(nextPlanet, firstEmpty, buildingKey);
             syncMiningLevelsWithSlots();
             return nextPlanet;
+        }
+
+        function trackChinaTerritoryFactoryBuild(planetId, slotIndex, buildingKey) {
+            if (game.country !== 'china') return;
+            if (planetId !== 'earth') return;
+            if (buildingKey !== 'autoFactory' && buildingKey !== 'robotLegion' && buildingKey !== 'energyStation') return;
+            if (!isChinaForeignEarthSlot(slotIndex)) return;
+            if (game.chinaInvasionFactoryBuilt) return;
+
+            game.chinaInvasionFactoryBuilt = true;
+            game.chinaInvasionStartMonth = Math.max(0, Number(game.calendarMonthsElapsed) || 0);
+            game.chinaWarDeclared = false;
+            game.chinaWarFrontlineWarningShown = false;
+            game.chinaWarResolved = false;
+        }
+
+        function trackEuTerritoryFactoryBuild(planetId, slotIndex, buildingKey) {
+            if (game.country !== 'eu') return;
+            if (planetId !== 'earth') return;
+            if (buildingKey !== 'autoFactory' && buildingKey !== 'robotLegion' && buildingKey !== 'energyStation') return;
+            if (!isEuForeignEarthSlot(slotIndex)) return;
+            if (game.euInvasionFactoryBuilt) return;
+
+            game.euInvasionFactoryBuilt = true;
+            game.euInvasionStartMonth = Math.max(0, Number(game.calendarMonthsElapsed) || 0);
+            game.euWarDeclared = false;
+            game.euWarFrontlineWarningShown = false;
+            game.euWarResolved = false;
         }
 
         function getMiningUpgradeByBuildingKey(buildingKey) {
@@ -1915,6 +2004,8 @@
 
             game.ore -= cost;
             game.slotLayout[planetId][slotIndex] = buildingKey;
+            trackChinaTerritoryFactoryBuild(planetId, slotIndex, buildingKey);
+            trackEuTerritoryFactoryBuild(planetId, slotIndex, buildingKey);
             syncMiningLevelsWithSlots();
             updateProduction();
             renderUpgrades();
@@ -1965,6 +2056,8 @@
             game.ore -= cost;
             energyUpgrade.level += 1;
             game.slotLayout[planetId][slotIndex] = 'energyStation';
+            trackChinaTerritoryFactoryBuild(planetId, slotIndex, 'energyStation');
+            trackEuTerritoryFactoryBuild(planetId, slotIndex, 'energyStation');
             syncMiningLevelsWithSlots();
             updateProduction();
             renderUpgrades();
@@ -2039,6 +2132,7 @@
             const moonClicks = Math.max(0, Number(game.moonClickCount) || 0);
             const venusClicks = Math.max(0, Number(game.venusClickCount) || 0);
             const mercuryClicks = Math.max(0, Number(game.mercuryClickCount) || 0);
+            const marsClicks = Math.max(0, Number(game.marsClickCount) || 0);
 
             const canStartMarsBattle = game.currentStage === 2
                 && researchCenterCount >= 1
@@ -2048,8 +2142,28 @@
                 && moonRobotCount >= 1
                 && venusClicks >= 5
                 && mercuryClicks >= 10
+                && marsClicks >= marsBattleUnlockClicks
                 && solarBridgeUnlocked
                 && !game.marsBattleWon;
+
+            if (canStartMarsBattle && game.diplomacyShield && !game.marsDiplomacyResolved) {
+                game.marsDiplomacyResolved = true;
+                game.marsBattleWon = true;
+                game.marsBattlePhase = 0;
+                if (window.BattleSystem && typeof window.BattleSystem.setVisible === 'function') {
+                    window.BattleSystem.setVisible(false);
+                }
+                if (typeof window.showStoryEvent === 'function') {
+                    window.showStoryEvent(
+                        '🤝 外交停火达成',
+                        '美国外交网络成功斡旋，日本核危机与火星冲突均被压制为低烈度对抗。<br>你以外交手段跨过了战争节点。',
+                        '继续扩张'
+                    );
+                }
+                updateUI();
+                checkStageProgress();
+                return;
+            }
 
             if (window.BattleSystem && typeof window.BattleSystem.setVisible === 'function') {
                 window.BattleSystem.setVisible(canStartMarsBattle);
@@ -2150,7 +2264,7 @@
                     if (category === 'mining' && upgrade.buildingKey === 'autoFactory') {
                         prodText = `每座 💎 +${formatNumber(upgrade.baseProduction)}/秒`;
                     } else if (category === 'mining' && upgrade.buildingKey === 'robotLegion') {
-                        prodText = `每座 点击 +${Math.round((upgrade.clickBonusMult - 1) * 100)}%`;
+                        prodText = '没人愿意打仗，除了机器人';
                     } else if (upgrade.outputType === 'ore') {
                         const production = upgrade.baseProduction * upgrade.level;
                         prodText = production > 0 ? `💎 +${formatNumber(production)}/秒` : '';
@@ -2236,6 +2350,8 @@
                     }
                     game.slotLayout[energyPlanet][emptyIndex] = 'energyStation';
                     upgrade.level++;
+                    trackChinaTerritoryFactoryBuild(energyPlanet, emptyIndex, 'energyStation');
+                    trackEuTerritoryFactoryBuild(energyPlanet, emptyIndex, 'energyStation');
                     syncMiningLevelsWithSlots();
                 } else {
                     upgrade.level++;
@@ -2345,16 +2461,17 @@
             game.robotOverCap = 0;
             game.robotPenalty = 1;
 
-            const robotBonus = 1 + robotLegionCount * ((robotLegionUpgrade?.clickBonusMult || 1.35) - 1);
+            const robotBonus = 1 + robotLegionCount * ((robotLegionUpgrade?.clickBonusMult || 1) - 1);
             const elevator = game.upgrades.special.find(u => u.id === 'sp1');
             const flatClickBonus = (elevator?.level || 0) * (elevator?.baseProduction || 0);
             const rawClickPower = game.baseClickPower * robotBonus + flatClickBonus;
             game.clickPower = Math.max(1, Math.floor(rawClickPower));
 
             // 1. 计算能源产量（能源设施）
+            const energyFactoryMult = Number(game.energyFactoryMult) > 0 ? Number(game.energyFactoryMult) : 1;
             game.upgrades.energy.forEach(upgrade => {
                 if (upgrade.outputType === 'energy') {
-                    game.energyPerSec += upgrade.baseProduction * upgrade.level;
+                    game.energyPerSec += upgrade.baseProduction * upgrade.level * energyFactoryMult;
                 }
             });
 
@@ -2413,6 +2530,12 @@
             if (gameDateEl) {
                 gameDateEl.textContent = getCalendarText();
             }
+            const countryTraitEl = document.getElementById('countryTrait');
+            if (countryTraitEl) {
+                const name = game.countryName || '未选择国家';
+                const trait = game.countryTrait || '无';
+                countryTraitEl.textContent = `🏳️ ${name}｜特性：${trait}`;
+            }
             document.getElementById('oreVal').textContent = formatNumber(game.ore);
             document.getElementById('energyVal').textContent = formatNumber(game.energy);
             document.getElementById('techVal').textContent = formatNumber(game.tech);
@@ -2440,7 +2563,8 @@
             const moonClicks = Math.max(0, Number(game.moonClickCount) || 0);
             const venusClicks = Math.max(0, Number(game.venusClickCount) || 0);
             const mercuryClicks = Math.max(0, Number(game.mercuryClickCount) || 0);
-            let stage3TaskStep = 10;
+            const marsClicks = Math.max(0, Number(game.marsClickCount) || 0);
+            let stage3TaskStep = 11;
             if (researchCenterCount < 1) {
                 stage3TaskStep = 1;
             } else if (energyStationCount < 2) {
@@ -2457,10 +2581,12 @@
                 stage3TaskStep = 7;
             } else if (!solarBridgeUnlocked) {
                 stage3TaskStep = 8;
-            } else if (!game.marsBattleWon) {
+            } else if (marsClicks < marsBattleUnlockClicks) {
                 stage3TaskStep = 9;
-            } else if (!interstellarBridgeUnlocked) {
+            } else if (!game.marsBattleWon) {
                 stage3TaskStep = 10;
+            } else if (!interstellarBridgeUnlocked) {
+                stage3TaskStep = 11;
             }
 
             if (nextStage) {
@@ -2480,10 +2606,11 @@
             if (hasConquestGoal) {
                 const clickTarget = earthConquestMilestones[conquestLevel] || 5;
                 const clicks = Math.max(0, Number(game.earthClickCount) || 0);
+                const conquestName = earthConquestTaskNames[conquestLevel] || '征服地球';
                 const progress = Math.min(100, (clicks / clickTarget) * 100);
                 document.getElementById('progressBar').style.width = progress + '%';
                 document.getElementById('progressPercent').textContent = `${Math.min(clicks, clickTarget)} / ${clickTarget}`;
-                document.getElementById('progressTitle').textContent = `🎯 点击地球${clickTarget}次`;
+                document.getElementById('progressTitle').textContent = `🎯 ${conquestName}（点击地球${clickTarget}次）`;
                 return;
             }
 
@@ -2492,10 +2619,11 @@
                     const nextConquestIndex = Math.max(0, Math.min(earthConquestMilestones.length - 1, Number(game.earthConquestLevel) || 0));
                     const clickTarget = earthConquestMilestones[nextConquestIndex] || 5;
                     const clicks = Math.max(0, Number(game.earthClickCount) || 0);
+                    const conquestName = earthConquestTaskNames[nextConquestIndex] || '征服地球';
                     const progress = Math.min(100, (clicks / clickTarget) * 100);
                     document.getElementById('progressBar').style.width = progress + '%';
                     document.getElementById('progressPercent').textContent = `${Math.min(clicks, clickTarget)} / ${clickTarget}`;
-                    document.getElementById('progressTitle').textContent = `🎯 点击地球${clickTarget}次`;
+                    document.getElementById('progressTitle').textContent = `🎯 ${conquestName}（点击地球${clickTarget}次）`;
                 } else if (nextStage.id === 3) {
                     if (stage3TaskStep === 1) {
                         const target = 1;
@@ -2546,11 +2674,17 @@
                         document.getElementById('progressPercent').textContent = `${done} / ${target}`;
                         document.getElementById('progressTitle').textContent = '🎯 研究太阳系引力桥科技，人类向太阳系殖民';
                     } else if (stage3TaskStep === 9) {
+                        const target = marsBattleUnlockClicks;
+                        const progress = Math.min(100, (marsClicks / target) * 100);
+                        document.getElementById('progressBar').style.width = progress + '%';
+                        document.getElementById('progressPercent').textContent = `${Math.min(marsClicks, target)} / ${target}`;
+                        document.getElementById('progressTitle').textContent = `🎯 侦察火星前线（点击火星${target}次）`;
+                    } else if (stage3TaskStep === 10) {
                         const done = game.marsBattleWon ? 1 : 0;
                         document.getElementById('progressBar').style.width = `${done * 100}%`;
                         document.getElementById('progressPercent').textContent = `${done} / 1`;
                         document.getElementById('progressTitle').textContent = '🎯 火星战争：点击战斗按钮并获胜';
-                    } else if (stage3TaskStep === 10) {
+                    } else if (stage3TaskStep === 11) {
                         const target = 1;
                         const done = interstellarBridgeUnlocked ? 1 : 0;
                         document.getElementById('progressBar').style.width = `${done * 100}%`;
@@ -2599,7 +2733,6 @@
                 const needClicks = earthConquestMilestones[nextLevel];
                 if (game.earthClickCount < needClicks) break;
                 game.earthConquestLevel = nextLevel + 1;
-                showEarthConquestMilestone(earthConquestMessages[nextLevel]);
                 changed = true;
             }
             if (changed) {
@@ -2668,6 +2801,42 @@
             modal.querySelector('button').onclick = () => modal.remove();
         }
 
+        function showDecisionEvent(title, description, actions = []) {
+            const modal = document.createElement('div');
+            modal.className = 'milestone-overlay';
+            const actionButtons = actions.map((action, index) => {
+                const style = action.danger
+                    ? 'background: rgba(239,68,68,0.18); border:1px solid rgba(248,113,113,0.6); color:#fecaca;'
+                    : 'background: rgba(0,217,255,0.18); border:1px solid rgba(103,232,249,0.6); color:#cffafe;';
+                return `<button class="milestone-cta" data-action-index="${index}" style="${style}">${action.label}</button>`;
+            }).join('');
+
+            modal.innerHTML = `
+                <div class="milestone-box" style="max-width:620px;">
+                    <div class="milestone-emoji">⚠️</div>
+                    <div class="milestone-heading">${title}</div>
+                    <div class="milestone-description" style="line-height:1.6;">${description}</div>
+                    <div style="display:flex;flex-direction:column;gap:0.6rem;margin-top:1rem;">${actionButtons}</div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.querySelectorAll('button[data-action-index]').forEach(btn => {
+                btn.onclick = () => {
+                    const index = Number(btn.getAttribute('data-action-index'));
+                    const selected = actions[index];
+                    if (selected && typeof selected.onClick === 'function') {
+                        selected.onClick();
+                    }
+                    modal.remove();
+                    updateUI();
+                    checkStageProgress();
+                };
+            });
+        }
+
+        // Narrative/warline event functions moved to events.js for safer modularization.
+
         function switchToTab(tabName) {
             renderUpgradeCategory(tabName);
             document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
@@ -2693,6 +2862,13 @@
             game.tech += game.techPerSec / 5;
             game.totalEarned += game.orePerSec / 5;
             game.calendarMonthsElapsed += 0.2;
+            checkNarrativePacing();
+            checkCondemnationCollapse();
+            checkChinaTerritoryWarline();
+            checkEuTerritoryWarline();
+            checkPostWarRetaliation();
+            checkGlobalCrisis();
+            checkMoonEvacuationPreparation();
             
             updateUI();
             checkStageProgress();
@@ -2723,9 +2899,17 @@
             if (!saved) return false;
 
             const savedGame = JSON.parse(saved);
+            const countryMap = {
+                germany: 'eu',
+                russia: 'eu',
+                japan: 'eu'
+            };
+            if (savedGame.country && countryMap[savedGame.country]) {
+                savedGame.country = countryMap[savedGame.country];
+            }
             Object.assign(game, savedGame);
             game.upgrades = buildUpgradesState(savedGame.upgrades);
-            game.startYear = Number(game.startYear) || 2025;
+            game.startYear = Number(game.startYear) || 2026;
             game.calendarMonthsElapsed = Math.max(0, Number(game.calendarMonthsElapsed) || 0);
             game.baseClickPower = Number(game.baseClickPower) > 0 ? Number(game.baseClickPower) : (Number(game.clickPower) > 0 ? Number(game.clickPower) : 100);
             game.earthClickCount = Math.max(0, Number(game.earthClickCount) || 0);
@@ -2738,8 +2922,50 @@
             game.saturnClickCount = Math.max(0, Number(game.saturnClickCount) || 0);
             game.marsBattleWon = !!game.marsBattleWon;
             game.marsBattlePhase = Math.max(0, Math.min(1, Number(game.marsBattlePhase) || 0));
+            const cfg = countryConfigs[game.country] || null;
+            if (cfg) {
+                game.countryName = cfg.name;
+                game.countryTrait = game.countryTrait || cfg.traitName || '';
+                game.energyFactoryMult = Number(game.energyFactoryMult) > 0 ? Number(game.energyFactoryMult) : (Number(cfg.energyFactoryMult) || 1);
+                game.diplomacyShield = typeof game.diplomacyShield === 'boolean' ? game.diplomacyShield : !!cfg.diplomacyShield;
+            } else {
+                game.energyFactoryMult = Number(game.energyFactoryMult) > 0 ? Number(game.energyFactoryMult) : 1;
+                game.diplomacyShield = !!game.diplomacyShield;
+                game.countryTrait = game.countryTrait || '';
+            }
+            game.marsDiplomacyResolved = !!game.marsDiplomacyResolved;
+            game.nuclearEventResolved = !!game.nuclearEventResolved;
+            game.earthDoomed = !!game.earthDoomed;
+            game.earthCatastropheTriggered = !!game.earthCatastropheTriggered;
+            game.condemnationPendingCollapse = !!game.condemnationPendingCollapse;
+            game.condemnationBaseClicks = Math.max(0, Number(game.condemnationBaseClicks) || 0);
+            game.earthCollapseThreeSlotsPending = !!game.earthCollapseThreeSlotsPending;
+            game.earthPermanentThreeSlots = !!game.earthPermanentThreeSlots;
+            game.chinaInvasionWarningShown = !!game.chinaInvasionWarningShown;
+            game.chinaInvasionFactoryBuilt = !!game.chinaInvasionFactoryBuilt;
+            game.chinaInvasionStartMonth = Math.max(0, Number(game.chinaInvasionStartMonth) || 0);
+            game.chinaWarDeclared = !!game.chinaWarDeclared;
+            game.chinaWarFrontlineWarningShown = !!game.chinaWarFrontlineWarningShown;
+            game.chinaWarResolved = !!game.chinaWarResolved;
+            game.euInvasionWarningShown = !!game.euInvasionWarningShown;
+            game.euInvasionFactoryBuilt = !!game.euInvasionFactoryBuilt;
+            game.euInvasionStartMonth = Math.max(0, Number(game.euInvasionStartMonth) || 0);
+            game.euWarDeclared = !!game.euWarDeclared;
+            game.euWarFrontlineWarningShown = !!game.euWarFrontlineWarningShown;
+            game.euWarResolved = !!game.euWarResolved;
+            game.postWarRetaliationPending = !!game.postWarRetaliationPending;
+            game.postWarRetaliationStartMonth = Math.max(0, Number(game.postWarRetaliationStartMonth) || 0);
+            game.crisisSignal1Shown = !!game.crisisSignal1Shown;
+            game.aiSingularitySignalShown = !!game.aiSingularitySignalShown;
+            game.crisisSignal2Shown = !!game.crisisSignal2Shown;
+            game.terminalProducerSignalShown = !!game.terminalProducerSignalShown;
+            game.nuclearEventTriggered = !!game.nuclearEventTriggered;
+            game.moonEvacuationReady = !!game.moonEvacuationReady;
             game.planetSlots = normalizePlanetSlots(savedGame.planetSlots);
             game.slotLayout = normalizeSlotLayout(savedGame.slotLayout, game.planetSlots, game.upgrades);
+            if (game.earthPermanentThreeSlots) {
+                applyEarthThreeSlotLock();
+            }
             syncMiningLevelsWithSlots();
 
             const offlineTime = (Date.now() - game.lastSaveTime) / 1000;
@@ -2796,6 +3022,44 @@
             const rule = planetSlotRules[planetId];
             if (!rule || !isSlotPlanetUnlocked(planetId)) return;
 
+            if (
+                game.country === 'china'
+                && planetId === 'earth'
+                && isChinaForeignEarthSlot(slotIndex)
+                && !game.chinaInvasionWarningShown
+            ) {
+                game.chinaInvasionWarningShown = true;
+                if (typeof window.showStoryEvent === 'function') {
+                    window.showStoryEvent(
+                        '⚠️ 外交警告',
+                        '强行在别国领土修建工厂是入侵行为。',
+                        '我知道了'
+                    );
+                } else {
+                    alert('强行在别国领土修建工厂是入侵行为。');
+                }
+                return;
+            }
+
+            if (
+                game.country === 'eu'
+                && planetId === 'earth'
+                && isEuForeignEarthSlot(slotIndex)
+                && !game.euInvasionWarningShown
+            ) {
+                game.euInvasionWarningShown = true;
+                if (typeof window.showStoryEvent === 'function') {
+                    window.showStoryEvent(
+                        '⚠️ 外交警告',
+                        '强行在别国领土修建工厂是入侵行为。',
+                        '我知道了'
+                    );
+                } else {
+                    alert('强行在别国领土修建工厂是入侵行为。');
+                }
+                return;
+            }
+
             const assignments = getPlanetSlotAssignments(planetId);
             const slotType = assignments[slotIndex] || null;
 
@@ -2814,7 +3078,7 @@
                     const upgrade = getMiningUpgradeByBuildingKey(option.key);
                     const effectText = option.key === 'autoFactory'
                         ? `每秒 +${formatNumber(upgrade?.baseProduction || 0)} 矿石`
-                        : `点击收益 +${Math.round(((upgrade?.clickBonusMult || 1) - 1) * 100)}%`;
+                        : '没人愿意打仗，除了机器人';
                     const button = document.createElement('button');
                     button.className = 'slot-build-btn';
                     button.textContent = `${option.label}（💎 ${formatNumber(cost)}） · ${effectText}`;
@@ -2884,21 +3148,29 @@
 
         // ===== 国家配置 =====
         const countryConfigs = {
-            usa:     { name: '美国',   flag: '🇺🇸', ore: 400,  energy: 50,  clickPower: 60  },
-            china:   { name: '中国',   flag: '🇨🇳', ore: 200,  energy: 80,  clickPower: 80  },
-            russia:  { name: '俄罗斯', flag: '🇷🇺', ore: 500,  energy: 60,  clickPower: 60  },
-            germany: { name: '德国',   flag: '🇩🇪', ore: 250,  energy: 70,  clickPower: 60  },
-            japan:   { name: '日本',   flag: '🇯🇵', ore: 150,  energy: 100, clickPower: 60  }
+            usa:   { name: '美国', flag: '🇺🇸', ore: 400, energy: 50, clickPower: 60, traitName: '守护地球，暴打火星，称霸星际，走向银河', energyFactoryMult: 1, diplomacyShield: true },
+            china: { name: '中国', flag: '🇨🇳', ore: 100, energy: 80, clickPower: 80, traitName: '工业（能源工厂发电×2）', energyFactoryMult: 2, diplomacyShield: false },
+            eu:    { name: '欧盟', flag: '🇪🇺', ore: 200, energy: 70, clickPower: 60, traitName: '艺术（如果体会不到，那说明你很粗俗）', energyFactoryMult: 1, diplomacyShield: false }
         };
 
         function selectCountry(id) {
+            if (id === 'usa') {
+                const msg = '美国阵营为VIP专属，需要充值后解锁。';
+                if (typeof window.showStoryEvent === 'function') {
+                    window.showStoryEvent('💎 VIP专属', msg, '我知道了');
+                } else {
+                    alert(msg);
+                }
+                return;
+            }
             const cfg = countryConfigs[id];
+            if (!cfg) return;
             game.ore = cfg.ore;
             game.energy = cfg.energy;
             game.totalEarned = 0;  // 初始礼包不计入总收益，避免立刻触发阶段推进
             game.baseClickPower = cfg.clickPower;
             game.clickPower = cfg.clickPower;
-            game.startYear = 2025;
+            game.startYear = 2026;
             game.calendarMonthsElapsed = 0;
             game.earthClickCount = 0;
             game.earthConquestLevel = 0;
@@ -2910,9 +3182,43 @@
             game.saturnClickCount = 0;
             game.country = id;
             game.countryName = cfg.name;
+            game.countryTrait = cfg.traitName || '';
+            game.energyFactoryMult = Number(cfg.energyFactoryMult) > 0 ? Number(cfg.energyFactoryMult) : 1;
+            game.diplomacyShield = !!cfg.diplomacyShield;
+            game.marsDiplomacyResolved = false;
+            game.nuclearEventResolved = false;
+            game.earthDoomed = false;
+            game.earthCatastropheTriggered = false;
+            game.condemnationPendingCollapse = false;
+            game.condemnationBaseClicks = 0;
+            game.earthCollapseThreeSlotsPending = false;
+            game.earthPermanentThreeSlots = false;
+            game.chinaInvasionWarningShown = false;
+            game.chinaInvasionFactoryBuilt = false;
+            game.chinaInvasionStartMonth = 0;
+            game.chinaWarDeclared = false;
+            game.chinaWarFrontlineWarningShown = false;
+            game.chinaWarResolved = false;
+            game.euInvasionWarningShown = false;
+            game.euInvasionFactoryBuilt = false;
+            game.euInvasionStartMonth = 0;
+            game.euWarDeclared = false;
+            game.euWarFrontlineWarningShown = false;
+            game.euWarResolved = false;
+            game.postWarRetaliationPending = false;
+            game.postWarRetaliationStartMonth = 0;
+            game.crisisSignal1Shown = false;
+            game.crisisSignal2Shown = false;
+            game.nuclearEventTriggered = false;
+            game.moonEvacuationReady = false;
             game.planetSlots = normalizePlanetSlots();
             game.slotLayout = normalizeSlotLayout();
+            if (id === 'eu' && Array.isArray(game.slotLayout?.earth) && game.slotLayout.earth.length > 2) {
+                game.slotLayout.earth = game.slotLayout.earth.map(slot => slot === 'autoFactory' ? null : slot);
+                game.slotLayout.earth[2] = 'autoFactory';
+            }
             syncMiningLevelsWithSlots();
+            updateProduction();
 
             // 淡出选国界面，淡入游戏
             const screen = document.getElementById('countryScreen');
@@ -2979,6 +3285,46 @@
                 tip.style.opacity = '0';
                 setTimeout(() => tip.remove(), 500);
             }, 2000);
+        }
+
+        function openFeedbackEmail() {
+            const email = '258775554@qq.com';
+            const onCopied = () => {
+                if (typeof window.showStoryEvent === 'function') {
+                    window.showStoryEvent(
+                        '💌 反馈邮箱',
+                        `邮箱地址已复制：${email}`,
+                        '我知道了'
+                    );
+                } else {
+                    alert(`邮箱地址已复制：${email}`);
+                }
+            };
+
+            if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+                navigator.clipboard.writeText(email).then(onCopied).catch(() => {
+                    if (typeof window.showStoryEvent === 'function') {
+                        window.showStoryEvent(
+                            '💌 反馈邮箱',
+                            `请手动复制邮箱：${email}`,
+                            '我知道了'
+                        );
+                    } else {
+                        alert(`请手动复制邮箱：${email}`);
+                    }
+                });
+                return;
+            }
+
+            if (typeof window.showStoryEvent === 'function') {
+                window.showStoryEvent(
+                    '💌 反馈邮箱',
+                    `请手动复制邮箱：${email}`,
+                    '我知道了'
+                );
+            } else {
+                alert(`请手动复制邮箱：${email}`);
+            }
         }
 
         // 颜色工具函数
@@ -3080,6 +3426,20 @@
                     }
                 },
                 onLose: () => {
+                    if (game.diplomacyShield) {
+                        game.marsBattlePhase = 0;
+                        if (typeof window.showStoryEvent === 'function') {
+                            window.showStoryEvent(
+                                '🕊️ 紧急外交止损',
+                                '外交系统介入，战线被压制，地球避免毁灭。<br>你失去了战场主动，但保住了文明延续。',
+                                '继续扩张'
+                            );
+                        }
+                        updateUI();
+                        checkStageProgress();
+                        return;
+                    }
+
                     const phase = Number(game.marsBattlePhase) || 0;
                     if (phase <= 0) {
                         game.marsBattlePhase = 1;
@@ -3154,6 +3514,37 @@
         window.closeRightPanel = closeRightPanel;
         window.openMarsBattle = () => {
             if (game.marsBattleWon) {
+                return;
+            }
+            const moonBridge = game.upgrades?.tech?.find(item => item.id === 't1');
+            const solarBridge = game.upgrades?.tech?.find(item => item.id === 't2');
+            const moonBridgeUnlocked = !!moonBridge?.unlocked;
+            const solarBridgeUnlocked = !!solarBridge?.unlocked;
+            const researchCenterCount = getResearchCenterCount();
+            const energyStationCount = getBuildingCount('energyStation');
+            const moonRobotCount = getPlanetSlotAssignments('moon').filter(item => item === 'robotLegion').length;
+            const moonClicks = Math.max(0, Number(game.moonClickCount) || 0);
+            const venusClicks = Math.max(0, Number(game.venusClickCount) || 0);
+            const mercuryClicks = Math.max(0, Number(game.mercuryClickCount) || 0);
+            const marsClicks = Math.max(0, Number(game.marsClickCount) || 0);
+            const canStartMarsBattle = game.currentStage === 2
+                && researchCenterCount >= 1
+                && energyStationCount >= 2
+                && moonBridgeUnlocked
+                && moonClicks >= 5
+                && moonRobotCount >= 1
+                && venusClicks >= 5
+                && mercuryClicks >= 10
+                && marsClicks >= marsBattleUnlockClicks
+                && solarBridgeUnlocked;
+            if (!canStartMarsBattle) {
+                if (typeof window.showStoryEvent === 'function') {
+                    window.showStoryEvent(
+                        '🛰️ 前线情报不足',
+                        `请先完成任务：点击火星 ${marsBattleUnlockClicks} 次，再发起火星战争。`,
+                        '继续侦察'
+                    );
+                }
                 return;
             }
             if (window.BattleSystem && typeof window.BattleSystem.startBattle === 'function') {
