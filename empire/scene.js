@@ -1187,24 +1187,15 @@ function getCanvasPointerPosition(event) {
     const source = event?.touches?.[0] || event?.changedTouches?.[0] || event;
     const clientX = source?.clientX ?? 0;
     const clientY = source?.clientY ?? 0;
-
-    const vv = window.visualViewport;
-    if (vv) {
-        const scaleX = canvas.width / Math.max(1, rect.width);
-        const scaleY = canvas.height / Math.max(1, rect.height);
-        const x = (clientX - rect.left) * scaleX;
-        const y = (clientY - rect.top) * scaleY;
-        return {
-            x: Math.max(0, Math.min(canvas.width, x)),
-            y: Math.max(0, Math.min(canvas.height, y))
-        };
-    }
-
-    const scaleX = canvas.width / Math.max(1, rect.width);
-    const scaleY = canvas.height / Math.max(1, rect.height);
+    const logicalW = lastViewportW || canvas.clientWidth || rect.width || window.innerWidth;
+    const logicalH = lastViewportH || canvas.clientHeight || rect.height || window.innerHeight;
+    const scaleX = logicalW / Math.max(1, rect.width);
+    const scaleY = logicalH / Math.max(1, rect.height);
+    const x = (clientX - rect.left) * scaleX;
+    const y = (clientY - rect.top) * scaleY;
     return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
+        x: Math.max(0, Math.min(logicalW, x)),
+        y: Math.max(0, Math.min(logicalH, y))
     };
 }
 
@@ -1218,7 +1209,7 @@ function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
     const total = assignments.length;
     if (!total) return;
 
-    const mobileSlotScale = isCoarsePointer ? 0.84 : 1;
+    const mobileSlotScale = isCoarsePointer ? 0.68 : 1;
     const slotR = Math.max(13, Math.min(24, earthR * 0.215 * mobileSlotScale));
     const spreadR = earthR * 0.9;
     const isCollapsedEarth = !!window.game?.earthPermanentThreeSlots;
@@ -1286,7 +1277,10 @@ function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
         ctx.shadowBlur = 0;
 
         const regionName = activeRegionNames[index] || `地表区域${index + 1}`;
-        const labelFontSize = Math.max(10, Math.min(13, slotR * 0.6));
+        const labelFontSize = Math.max(
+            isCoarsePointer ? 8 : 10,
+            Math.min(isCoarsePointer ? 11 : 13, slotR * (isCoarsePointer ? 0.48 : 0.6))
+        );
         const labelX = x;
         const labelY = y + slotR + labelFontSize + 2;
         ctx.font = `700 ${labelFontSize}px sans-serif`;
@@ -1320,7 +1314,7 @@ function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
     if (!assignments.length) return;
 
     const total = assignments.length;
-    const mobileSlotScale = isCoarsePointer ? 0.88 : 1;
+    const mobileSlotScale = isCoarsePointer ? 0.72 : 1;
     const baseSlotR = Math.max(11, Math.min(20, meta.drawR * 0.66 + 4));
     const slotRBase = total <= 2 ? baseSlotR : Math.max(10, Math.min(17, baseSlotR * 0.94));
     const slotR = Math.max(9, slotRBase * mobileSlotScale);
