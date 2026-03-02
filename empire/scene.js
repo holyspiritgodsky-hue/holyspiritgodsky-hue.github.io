@@ -17,6 +17,7 @@ let shakeMag = 0;
 let lastViewportW = 0;
 let lastViewportH = 0;
 let resizeRaf = 0;
+let canvasDpr = 1;
 const planetClickMultiplier = {
     earth: 1,
     moon: 1,
@@ -701,7 +702,10 @@ let shimA=0;
 function getOreTargetPosition() {
     const oreValue = document.getElementById('oreVal');
     const anchor = oreValue?.closest('.resource-compact') || oreValue;
-    if (!anchor) return { x: canvas.width * 0.5, y: 44 };
+    if (!anchor) {
+        const fallbackW = lastViewportW || canvas.clientWidth || window.innerWidth || 360;
+        return { x: fallbackW * 0.5, y: 44 };
+    }
     const rect = anchor.getBoundingClientRect();
     return { x: rect.left + rect.width * 0.5, y: rect.top + rect.height * 0.5 };
 }
@@ -1214,7 +1218,8 @@ function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
     const total = assignments.length;
     if (!total) return;
 
-    const slotR = Math.max(15, Math.min(24, earthR * 0.215));
+    const mobileSlotScale = isCoarsePointer ? 0.84 : 1;
+    const slotR = Math.max(13, Math.min(24, earthR * 0.215 * mobileSlotScale));
     const spreadR = earthR * 0.9;
     const isCollapsedEarth = !!window.game?.earthPermanentThreeSlots;
     const activeRegionNames = isCollapsedEarth
@@ -1315,8 +1320,10 @@ function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
     if (!assignments.length) return;
 
     const total = assignments.length;
+    const mobileSlotScale = isCoarsePointer ? 0.88 : 1;
     const baseSlotR = Math.max(11, Math.min(20, meta.drawR * 0.66 + 4));
-    const slotR = total <= 2 ? baseSlotR : Math.max(10, Math.min(17, baseSlotR * 0.94));
+    const slotRBase = total <= 2 ? baseSlotR : Math.max(10, Math.min(17, baseSlotR * 0.94));
+    const slotR = Math.max(9, slotRBase * mobileSlotScale);
     const ringDist = Math.max(meta.drawR * 1.1, slotR * (total <= 2 ? 1.4 : 2.0));
     const startAngle = -Math.PI / 2;
 
@@ -1430,12 +1437,15 @@ function resizeCanvas() {
     lastViewportW = width;
     lastViewportH = height;
 
+    canvasDpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+
     canvas.style.width = width + 'px';
     canvas.style.height = height + 'px';
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = Math.round(width * canvasDpr);
+    canvas.height = Math.round(height * canvasDpr);
+    ctx.setTransform(canvasDpr, 0, 0, canvasDpr, 0, 0);
 
-    centerX = canvas.width / 2;
+    centerX = width / 2;
 
     const topBar = document.querySelector('.top-bar');
     const topBarRect = topBar ? topBar.getBoundingClientRect() : null;
@@ -1452,9 +1462,9 @@ function resizeCanvas() {
         bottomPanelHeight = Math.max(84, Math.round(canvas.height - rect.top + 10));
     }
 
-    const availableH = canvas.height - uiTopHeight - bottomPanelHeight;
+    const availableH = height - uiTopHeight - bottomPanelHeight;
     centerY = uiTopHeight + availableH / 2;
-    const availableW = canvas.width * 0.9;
+    const availableW = width * 0.9;
     scale = Math.min(availableW, availableH) / (450 * 2 + 80);
 }
 
@@ -1490,7 +1500,9 @@ function drawSolarSystem() {
     if(sceneP < 1) sceneP = Math.min(1, (now - sceneT0) / SCENE_DUR);
     const tp = sceneEase(sceneP);
     const A = TECH_LEVELS[sceneFrom], B = TECH_LEVELS[sceneTgt];
-    const W = canvas.width, H = canvas.height, M = Math.min(W,H);
+    const W = lastViewportW || canvas.clientWidth || window.innerWidth;
+    const H = lastViewportH || canvas.clientHeight || window.innerHeight;
+    const M = Math.min(W, H);
     const cx2 = W/2, cy2 = H/2;
     // 安全绘图区：yf=0 贴顶栏底，yf=1 贴底部面板顶
     const dTop = UI_TOP, dH = H - UI_TOP - UI_BOT;
