@@ -146,6 +146,83 @@ const SMALL_STARS = Array.from({length:220}, ()=>(
     ts:Math.random()*0.008+0.001,
     ba:Math.random()*0.35+0.30,
 }));
+
+const earthResidentLines = [
+    '开工啦',
+    'oh my god!',
+    '别内卷',
+    '向月球出发',
+    '能源不够了',
+    '为什么打不过欧盟？',
+    'AI别卷我们啦',
+    '机器人别卷我们啦'
+];
+
+const earthResidentPinnedLines = [
+    '为什么朋友们都说难度很难?我明明设计的很简单啊。',
+    '这破游戏干嘛的，怎么第一关这么容易死？'
+];
+
+const earthResidents = Array.from({ length: 8 }, (_, idx) => ({
+    angle: (idx / 8) * Math.PI * 2 + (Math.random() - 0.5) * 0.22,
+    radiusFactor: 0.22 + Math.random() * 0.62,
+    driftSpeed: 0.2 + Math.random() * 0.5,
+    bobSpeed: 0.6 + Math.random() * 0.8,
+    bobPhase: Math.random() * Math.PI * 2,
+    suitHue: 190 + Math.random() * 85,
+    pinnedSpeech: earthResidentPinnedLines[idx] || null,
+    speechText: '',
+    speechUntil: 0,
+    nextSpeechAt: performance.now() + 600 + Math.random() * 4000
+}));
+
+earthResidents.push({
+    angle: Math.PI,
+    radiusFactor: 0.34,
+    driftSpeed: 0.04,
+    bobSpeed: 0.7,
+    bobPhase: Math.random() * Math.PI * 2,
+    suitHue: 0,
+    style: 'red',
+    pinnedSpeech: 'universe in my hand',
+    fixedAngle: Math.PI,
+    fixedRadiusFactor: 0.34,
+    speechText: '',
+    speechUntil: 0,
+    nextSpeechAt: performance.now() + 1000
+});
+
+const mainDifficultySpeaker = earthResidents.find(r => r.pinnedSpeech === earthResidentPinnedLines[0]);
+if (mainDifficultySpeaker) {
+    mainDifficultySpeaker.fixedAngle = -Math.PI / 2;
+    mainDifficultySpeaker.fixedRadiusFactor = 0.30;
+    mainDifficultySpeaker.driftSpeed = 0.03;
+}
+
+const earlyDeathSpeaker = earthResidents.find(r => r.pinnedSpeech === earthResidentPinnedLines[1]);
+if (earlyDeathSpeaker) {
+    earlyDeathSpeaker.boatMode = 'withPilot';
+    earlyDeathSpeaker.fixedAngle = Math.PI * 0.21;
+    earlyDeathSpeaker.fixedRadiusFactor = 0.60;
+    earlyDeathSpeaker.driftSpeed = 0.05;
+}
+
+const seaBoatResidents = earthResidents
+    .filter(r => r !== mainDifficultySpeaker && r !== earlyDeathSpeaker && !r.pinnedSpeech)
+    .slice(0, 2);
+if (seaBoatResidents[0]) {
+    seaBoatResidents[0].boatMode = 'withPilot';
+    seaBoatResidents[0].fixedAngle = Math.PI * 0.14;
+    seaBoatResidents[0].fixedRadiusFactor = 0.62;
+    seaBoatResidents[0].driftSpeed = 0.05;
+}
+if (seaBoatResidents[1]) {
+    seaBoatResidents[1].boatMode = 'boatOnly';
+    seaBoatResidents[1].fixedAngle = Math.PI * 0.27;
+    seaBoatResidents[1].fixedRadiusFactor = 0.68;
+    seaBoatResidents[1].driftSpeed = 0.06;
+}
+
 function drawStars(vis){
     const visFactor = 0.55 + 0.45 * vis;
     for(const s of STARS){
@@ -168,6 +245,367 @@ function drawStars(vis){
     }
 }
 
+function drawRoundedBubble(x, y, w, h, r) {
+    const radius = Math.max(2, Math.min(r, Math.min(w, h) * 0.5));
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.lineTo(x + w - radius, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+    ctx.lineTo(x + w, y + h - radius);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+    ctx.lineTo(x + radius, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+    ctx.lineTo(x, y + radius);
+    ctx.quadraticCurveTo(x, y, x + radius, y);
+    ctx.closePath();
+}
+
+function wrapBubbleText(text, maxWidth) {
+    const rows = [];
+    let current = '';
+    for (const ch of String(text || '')) {
+        const trial = current + ch;
+        if (current && ctx.measureText(trial).width > maxWidth) {
+            rows.push(current);
+            current = ch;
+        } else {
+            current = trial;
+        }
+    }
+    if (current) rows.push(current);
+    return rows.length ? rows : [''];
+}
+
+function drawEarthCoreMinePit(ex, ey, earthR, now) {
+    if (earthR < 18) return;
+
+    const pulse = 0.98 + Math.sin(now * 0.0022) * 0.03;
+    const pitOuterR = earthR * 0.20 * pulse;
+    const pitInnerR = earthR * 0.10 * pulse;
+    const pitX = ex;
+    const pitY = ey + earthR * 0.01;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(ex, ey, earthR * 0.99, 0, Math.PI * 2);
+    ctx.clip();
+
+    const rim = ctx.createRadialGradient(pitX, pitY, pitInnerR * 0.65, pitX, pitY, pitOuterR * 1.28);
+    rim.addColorStop(0, 'rgba(10, 10, 14, 0.92)');
+    rim.addColorStop(0.45, 'rgba(28, 18, 14, 0.82)');
+    rim.addColorStop(0.72, 'rgba(95, 58, 34, 0.55)');
+    rim.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.beginPath();
+    ctx.arc(pitX, pitY, pitOuterR * 1.32, 0, Math.PI * 2);
+    ctx.fillStyle = rim;
+    ctx.fill();
+
+    const inner = ctx.createRadialGradient(
+        pitX - pitInnerR * 0.15,
+        pitY - pitInnerR * 0.2,
+        pitInnerR * 0.08,
+        pitX,
+        pitY,
+        pitInnerR * 1.28
+    );
+    inner.addColorStop(0, 'rgba(255, 171, 97, 0.24)');
+    inner.addColorStop(0.25, 'rgba(93, 47, 24, 0.68)');
+    inner.addColorStop(1, 'rgba(8, 8, 12, 0.97)');
+    ctx.beginPath();
+    ctx.arc(pitX, pitY, pitInnerR * 1.34, 0, Math.PI * 2);
+    ctx.fillStyle = inner;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.arc(pitX, pitY, pitOuterR, 0, Math.PI * 2);
+    ctx.lineWidth = Math.max(1.2, earthR * 0.012);
+    ctx.strokeStyle = 'rgba(255, 205, 150, 0.36)';
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function drawStarlinkEffect(ex, ey, earthR, now) {
+    if (earthR < 18) return;
+
+    const orbitR = earthR * 1.2;
+    const satCount = 3;
+    const spin = now * 0.00035;
+    const arcStart = -Math.PI * 0.94;
+    const arcEnd = -Math.PI * 0.06;
+    const arcSpan = arcEnd - arcStart;
+
+    ctx.save();
+
+    for (let i = 0; i < satCount; i++) {
+        const phase = (i / satCount) * Math.PI * 2;
+        const t = ((spin * (1 + i * 0.06) + phase) % (Math.PI * 2)) / (Math.PI * 2);
+        const angle = arcStart + t * arcSpan;
+        const x = ex + Math.cos(angle) * orbitR * 0.96;
+        const y = ey + Math.sin(angle) * orbitR * 0.54 - earthR * 0.08;
+
+        const satW = Math.max(2.8, earthR * 0.043);
+        const satH = satW * 0.56;
+        const panelW = satW * 0.82;
+        const panelH = satH * 0.42;
+        const panelGap = satW * 0.10;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(angle + Math.PI / 2);
+
+        const panelGrad = ctx.createLinearGradient(-panelW, 0, panelW, 0);
+        panelGrad.addColorStop(0, 'rgba(59, 130, 246, 0.92)');
+        panelGrad.addColorStop(1, 'rgba(125, 211, 252, 0.92)');
+        ctx.fillStyle = panelGrad;
+        ctx.fillRect(-satW * 0.5 - panelGap - panelW, -panelH * 0.5, panelW, panelH);
+        ctx.fillRect(satW * 0.5 + panelGap, -panelH * 0.5, panelW, panelH);
+
+        const bodyGrad = ctx.createLinearGradient(-satW * 0.5, -satH * 0.5, satW * 0.5, satH * 0.5);
+        bodyGrad.addColorStop(0, 'rgba(248, 250, 252, 0.96)');
+        bodyGrad.addColorStop(1, 'rgba(148, 163, 184, 0.96)');
+        ctx.fillStyle = bodyGrad;
+        ctx.fillRect(-satW * 0.5, -satH * 0.5, satW, satH);
+
+        ctx.strokeStyle = 'rgba(226, 232, 240, 0.9)';
+        ctx.lineWidth = Math.max(0.8, satH * 0.18);
+        ctx.strokeRect(-satW * 0.5, -satH * 0.5, satW, satH);
+
+        ctx.fillStyle = 'rgba(226, 232, 240, 0.95)';
+        ctx.fillRect(-satW * 0.17, satH * 0.1, satW * 0.34, satH * 0.44);
+
+        ctx.strokeStyle = 'rgba(226, 232, 240, 0.92)';
+        ctx.lineWidth = Math.max(0.8, satH * 0.18);
+        ctx.beginPath();
+        ctx.moveTo(-satW * 0.5 - panelGap, 0);
+        ctx.lineTo(satW * 0.5 + panelGap, 0);
+        ctx.stroke();
+
+        const dishR = Math.max(0.9, satH * 0.32);
+        ctx.beginPath();
+        ctx.arc(0, satH * 0.88, dishR, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(241, 245, 249, 0.95)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.9)';
+        ctx.lineWidth = Math.max(0.7, satH * 0.14);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    ctx.restore();
+}
+
+function drawEarthResidents(ex, ey, earthR, now) {
+    if (earthR < 26) return;
+
+    const personSize = Math.max(1.2, Math.min(3.6, earthR * 0.0135));
+    const bubbleFontSize = Math.max(8, Math.min(12, earthR * 0.042));
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(ex, ey, earthR * 0.995, 0, Math.PI * 2);
+    ctx.clip();
+
+    for (const resident of earthResidents) {
+        const drift = Math.sin(now * 0.001 * resident.driftSpeed + resident.bobPhase) * 0.08;
+        const bob = Math.sin(now * 0.0015 * resident.bobSpeed + resident.bobPhase) * personSize * 0.35;
+        const baseAngle = Number.isFinite(resident.fixedAngle) ? resident.fixedAngle : resident.angle;
+        const baseRadiusFactor = Number.isFinite(resident.fixedRadiusFactor) ? resident.fixedRadiusFactor : resident.radiusFactor;
+        const angle = baseAngle + drift;
+        const radial = earthR * baseRadiusFactor;
+        const x = ex + Math.cos(angle) * radial;
+        const y = ey + Math.sin(angle) * radial + bob;
+
+        if (resident.boatMode) {
+            const boatW = personSize * 3.35;
+            const boatH = personSize * 1.12;
+            const tilt = Math.sin(now * 0.0012 + resident.bobPhase) * 0.07;
+
+            ctx.save();
+            ctx.translate(x, y + personSize * 0.75);
+            ctx.rotate(tilt);
+
+            ctx.beginPath();
+            ctx.ellipse(0, boatH * 0.64, boatW * 0.58, boatH * 0.28, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(125, 211, 252, 0.28)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(-boatW * 0.50, -boatH * 0.03);
+            ctx.quadraticCurveTo(-boatW * 0.10, boatH * 0.92, boatW * 0.44, boatH * 0.12);
+            ctx.lineTo(boatW * 0.50, -boatH * 0.03);
+            ctx.lineTo(boatW * 0.34, -boatH * 0.44);
+            ctx.lineTo(-boatW * 0.30, -boatH * 0.44);
+            ctx.closePath();
+            const hullGrad = ctx.createLinearGradient(0, -boatH * 0.45, 0, boatH * 0.9);
+            hullGrad.addColorStop(0, 'rgba(224, 155, 88, 0.98)');
+            hullGrad.addColorStop(1, 'rgba(124, 66, 28, 0.98)');
+            ctx.fillStyle = hullGrad;
+            ctx.fill();
+            ctx.lineWidth = Math.max(1, personSize * 0.18);
+            ctx.strokeStyle = 'rgba(255, 229, 191, 0.78)';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-boatW * 0.26, -boatH * 0.30);
+            ctx.lineTo(boatW * 0.30, -boatH * 0.30);
+            ctx.strokeStyle = 'rgba(255, 243, 224, 0.75)';
+            ctx.lineWidth = Math.max(1, personSize * 0.12);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-boatW * 0.02, -boatH * 0.28);
+            ctx.lineTo(-boatW * 0.02, -boatH * 1.30);
+            ctx.strokeStyle = 'rgba(229, 231, 235, 0.95)';
+            ctx.lineWidth = Math.max(1, personSize * 0.16);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-boatW * 0.02, -boatH * 1.20);
+            ctx.lineTo(-boatW * 0.02, -boatH * 0.58);
+            ctx.lineTo(boatW * 0.36, -boatH * 0.88);
+            ctx.closePath();
+            const sailGrad = ctx.createLinearGradient(0, -boatH * 1.2, boatW * 0.36, -boatH * 0.58);
+            sailGrad.addColorStop(0, 'rgba(248, 250, 252, 0.96)');
+            sailGrad.addColorStop(1, 'rgba(219, 234, 254, 0.90)');
+            ctx.fillStyle = sailGrad;
+            ctx.fill();
+            ctx.lineWidth = Math.max(1, personSize * 0.1);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.88)';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(boatW * 0.10, -boatH * 0.44);
+            ctx.lineTo(boatW * 0.19, -boatH * 0.90);
+            ctx.strokeStyle = 'rgba(255,255,255,0.72)';
+            ctx.lineWidth = Math.max(1, personSize * 0.1);
+            ctx.stroke();
+
+            if (resident.boatMode === 'withPilot') {
+                ctx.beginPath();
+                ctx.arc(-boatW * 0.23, -boatH * 0.78, personSize * 0.34, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(245, 250, 255, 0.97)';
+                ctx.fill();
+                ctx.beginPath();
+                ctx.moveTo(-boatW * 0.23, -boatH * 0.56);
+                ctx.lineTo(-boatW * 0.23, -boatH * 0.10);
+                ctx.strokeStyle = 'rgba(230, 244, 255, 0.95)';
+                ctx.lineWidth = Math.max(1, personSize * 0.18);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        } else {
+
+            const isRedResident = resident.style === 'red';
+            const suitTop = isRedResident
+                ? 'rgba(252, 165, 165, 0.98)'
+                : `hsla(${resident.suitHue}, 88%, 72%, 0.98)`;
+            const suitBottom = isRedResident
+                ? 'rgba(185, 28, 28, 0.98)'
+                : `hsla(${resident.suitHue}, 82%, 48%, 0.98)`;
+
+            ctx.beginPath();
+            ctx.ellipse(x, y + personSize * 0.65, personSize * 0.95, personSize * 1.15, 0, 0, Math.PI * 2);
+            const suitGrad = ctx.createLinearGradient(x, y - personSize * 0.4, x, y + personSize * 1.9);
+            suitGrad.addColorStop(0, suitTop);
+            suitGrad.addColorStop(1, suitBottom);
+            ctx.fillStyle = suitGrad;
+            ctx.fill();
+
+            ctx.lineWidth = Math.max(1, personSize * 0.26);
+            ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x - personSize * 0.88, y + personSize * 0.68);
+            ctx.lineTo(x + personSize * 0.88, y + personSize * 0.68);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x - personSize * 0.2, y + personSize * 1.7);
+            ctx.lineTo(x - personSize * 0.66, y + personSize * 2.3);
+            ctx.moveTo(x + personSize * 0.2, y + personSize * 1.7);
+            ctx.lineTo(x + personSize * 0.66, y + personSize * 2.3);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(x, y - personSize * 0.72, personSize * 0.6, 0, Math.PI * 2);
+            const helmet = ctx.createRadialGradient(
+                x - personSize * 0.22,
+                y - personSize * 0.96,
+                personSize * 0.06,
+                x,
+                y - personSize * 0.72,
+                personSize * 0.62
+            );
+            helmet.addColorStop(0, 'rgba(245, 250, 255, 0.98)');
+            helmet.addColorStop(1, isRedResident ? 'rgba(254, 202, 202, 0.95)' : 'rgba(184, 216, 255, 0.95)');
+            ctx.fillStyle = helmet;
+            ctx.fill();
+            ctx.lineWidth = Math.max(1, personSize * 0.2);
+            ctx.strokeStyle = isRedResident ? 'rgba(153, 27, 27, 0.62)' : 'rgba(30, 64, 175, 0.58)';
+            ctx.stroke();
+        }
+
+        if (now >= resident.nextSpeechAt) {
+            if (resident.pinnedSpeech) {
+                resident.speechText = resident.pinnedSpeech;
+                resident.speechUntil = now + 3200 + Math.random() * 1800;
+                resident.nextSpeechAt = now + 6200 + Math.random() * 4800;
+            } else {
+                resident.speechText = earthResidentLines[(Math.random() * earthResidentLines.length) | 0];
+                resident.speechUntil = now + 1800 + Math.random() * 1500;
+                resident.nextSpeechAt = now + 4200 + Math.random() * 6800;
+            }
+        }
+
+        if (resident.speechText && now < resident.speechUntil) {
+            ctx.font = `700 ${bubbleFontSize}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const text = resident.speechText;
+            const maxBubbleTextW = Math.max(90, Math.min(230, earthR * 0.85));
+            const lines = wrapBubbleText(text, maxBubbleTextW);
+            const textW = lines.reduce((max, line) => Math.max(max, ctx.measureText(line).width), 0);
+            const padX = 6;
+            const padY = 4;
+            const bubbleW = textW + padX * 2;
+            const lineHeight = bubbleFontSize + 2;
+            const bubbleH = lines.length * lineHeight + padY * 2;
+            const bubbleX = x - bubbleW * 0.5;
+            const bubbleY = y - personSize * 4.4 - bubbleH;
+
+            drawRoundedBubble(bubbleX, bubbleY, bubbleW, bubbleH, 6);
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.fill();
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = 'rgba(191, 219, 254, 0.85)';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x - 2, bubbleY + bubbleH);
+            ctx.lineTo(x + 2, bubbleY + bubbleH);
+            ctx.lineTo(x, bubbleY + bubbleH + 4);
+            ctx.closePath();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(191, 219, 254, 0.85)';
+            ctx.stroke();
+
+            ctx.fillStyle = 'rgba(241, 245, 249, 0.98)';
+            lines.forEach((line, idx) => {
+                const yOffset = bubbleY + padY + lineHeight * (idx + 0.5);
+                ctx.fillText(line, x, yOffset);
+            });
+        }
+    }
+
+    ctx.restore();
+}
+
 // UI 安全区常量：yf=0 对应顶栏底部，yf=1 对应右侧抽屉不影响时的底部安全线
 const UI_TOP = 160;   // 顶栏高度 px
 const UI_BOT = 80;    // 底部安全留白 px
@@ -177,7 +615,7 @@ const UI_BOT = 80;    // 底部安全留白 px
 // rf: 相对 min(W,H) 的半径比例
 const TECH_LEVELS = [
   // ── Level 0: 行星文明，巨大地球充满视野 ──
-  { starVis:0.10, fogR:0.22, fogAlpha:0.95,
+        { starVis:0.84, fogR:0.18, fogAlpha:0.36,
     earth:{xf:0.5, yf:0.50, rf:0.42},
         moon:{dxf:0.16,dyf:-0.06,rf:0.10},
         centauri:{xf:0.64,yf:0.50,rf:0.0,alpha:0},
@@ -312,6 +750,7 @@ function createHitEffect(planet, hitX, hitY, gain) {
     });
     if (hitEffects.length > 40) hitEffects.shift();
 }
+
 
 function showStoryEvent(title, contentHtml, buttonText = '继续', onConfirm = null) {
     if (storyEventOpen) return;
@@ -1378,6 +1817,72 @@ function drawSolarSystem() {
                 }
             }
         }
+
+        if (earthR > 16) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(ex, ey, earthR, 0, Math.PI * 2);
+            ctx.clip();
+
+            const cloudShift = Math.sin(shimA * 1.35) * earthR * 0.08;
+            const cloudShift2 = Math.cos(shimA * 1.12 + 1.4) * earthR * 0.07;
+
+            const cloudA = ctx.createLinearGradient(
+                ex - earthR * 0.8 + cloudShift,
+                ey - earthR * 0.25,
+                ex + earthR * 0.9 + cloudShift,
+                ey + earthR * 0.15
+            );
+            cloudA.addColorStop(0, 'rgba(255,255,255,0)');
+            cloudA.addColorStop(0.35, 'rgba(255,255,255,0.12)');
+            cloudA.addColorStop(0.7, 'rgba(255,255,255,0.04)');
+            cloudA.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = cloudA;
+            ctx.fillRect(ex - earthR, ey - earthR, earthR * 2, earthR * 2);
+
+            const cloudB = ctx.createLinearGradient(
+                ex - earthR * 0.95 + cloudShift2,
+                ey + earthR * 0.08,
+                ex + earthR * 0.92 + cloudShift2,
+                ey + earthR * 0.44
+            );
+            cloudB.addColorStop(0, 'rgba(255,255,255,0)');
+            cloudB.addColorStop(0.45, 'rgba(226,244,255,0.10)');
+            cloudB.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = cloudB;
+            ctx.fillRect(ex - earthR, ey - earthR, earthR * 2, earthR * 2);
+
+            const polarGlow = ctx.createRadialGradient(
+                ex - earthR * 0.24,
+                ey - earthR * 0.62,
+                0,
+                ex - earthR * 0.24,
+                ey - earthR * 0.62,
+                earthR * 0.95
+            );
+            polarGlow.addColorStop(0, 'rgba(167,243,208,0.12)');
+            polarGlow.addColorStop(1, 'rgba(167,243,208,0)');
+            ctx.fillStyle = polarGlow;
+            ctx.fillRect(ex - earthR, ey - earthR, earthR * 2, earthR * 2);
+            ctx.restore();
+        }
+
+        const starlinkBuilt = !!window.game?.upgrades?.special?.some(
+            item => item.id === 'sp1' && (Number(item.level) || 0) > 0
+        );
+        if (starlinkBuilt) {
+            drawStarlinkEffect(ex, ey, earthR, now);
+        }
+
+        const coreMineBuilt = !!window.game?.upgrades?.special?.some(
+            item => item.id === 'sp6' && (Number(item.level) || 0) > 0
+        );
+        if (coreMineBuilt) {
+            drawEarthCoreMinePit(ex, ey, earthR, now);
+        }
+
+        drawEarthResidents(ex, ey, earthR, now);
+
         const tg2=ctx.createRadialGradient(ex+earthR*0.4,ey-earthR*0.1,0,ex,ey,earthR*1.02);
         tg2.addColorStop(0,'transparent'); tg2.addColorStop(0.6,'transparent'); tg2.addColorStop(1,'rgba(0,0,12,0.10)');
         ctx.globalAlpha=1; ctx.beginPath(); ctx.arc(ex,ey,earthR,0,Math.PI*2); ctx.fillStyle=tg2; ctx.fill();
