@@ -1628,7 +1628,8 @@
                 { id: 't4', name: '银河系引力桥', icon: '🌌', techLevel: 4, baseCost: 8000, desc: '银河文明巅峰，征服星辰大海', costType: 'tech', unlocked: false }
             ],
             special: [
-                { id: 'sp1', name: '星链', icon: '🛰️', baseProduction: 32, baseCost: 380, costMult: 1.13, costType: 'ore', bonus: 'click' },
+                { id: 'sp1', name: '星链', icon: '🛰️', baseProduction: 5, baseCost: 380, costMult: 1.13, costType: 'ore', bonus: 'energyFlat' },
+                { id: 'sp6', name: '地心超级矿井', icon: '⛏️', baseProduction: 5, baseCost: 1200, costMult: 1.13, costType: 'ore', bonus: 'oreFlat' },
                 { id: 'sp2', name: '太空光伏大陆', icon: '☀️', baseProduction: 90, baseCost: 6800, costMult: 1.16, costType: 'ore', bonus: 'energyFlat' },
                 { id: 'sp3', name: '戴森球', icon: '🌟', baseProduction: 260, baseCost: 42000, costMult: 1.18, costType: 'energy', bonus: 'energyFlat' },
                 { id: 'sp4', name: '月面氦-3反应堆群', icon: '🌕', baseProduction: 520, baseCost: 165000, costMult: 1.21, costType: 'ore', bonus: 'energyFlat' },
@@ -2176,10 +2177,13 @@
                 const savedList = Array.isArray(savedUpgrades?.[category]) ? savedUpgrades[category] : [];
                 upgradesConfig[category].forEach(config => {
                     const savedItem = savedList.find(item => item.id === config.id) || {};
+                    const isSingleBuild = category === 'special';
                     const item = {
                         ...config,
                         category,
-                        level: Math.max(0, Number(savedItem.level) || 0)
+                        level: isSingleBuild
+                            ? Math.max(0, Math.min(1, Number(savedItem.level) || 0))
+                            : Math.max(0, Number(savedItem.level) || 0)
                     };
                     if (category === 'tech') {
                         item.unlocked = !!savedItem.unlocked;
@@ -2250,11 +2254,13 @@
                     }
                     container.appendChild(card);
                 } else {
+                    const isSingleBuild = category === 'special';
                     const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult || 1.12, upgrade.level));
                     const costType = upgrade.costType || 'ore';
                     const canAfford = costType === 'ore' ? game.ore >= cost : game.energy >= cost;
                     const slotStats = (category === 'mining' || category === 'energy') ? getUnlockedSlotStats() : null;
                     const hasSlot = (category === 'mining' || category === 'energy') ? slotStats.used < slotStats.total : true;
+                    const alreadyBuilt = isSingleBuild && upgrade.level > 0;
                     const nextPlanet = category === 'mining' ? getNextPlacementPlanet(upgrade.buildingKey) : null;
 
                     let costIcon = costType === 'ore' ? '💎' : '⚡';
@@ -2278,6 +2284,9 @@
                     } else if (upgrade.bonus === 'energyFlat') {
                         const production = upgrade.baseProduction * upgrade.level;
                         prodText = production > 0 ? `⚡ +${formatNumber(production)}/秒` : '';
+                    } else if (upgrade.bonus === 'oreFlat') {
+                        const production = upgrade.baseProduction * upgrade.level;
+                        prodText = production > 0 ? `💎 +${formatNumber(production)}/秒` : '';
                     } else if (upgrade.bonus === 'techBoost') {
                         const techMult = Math.pow(upgrade.techBoostValue || 1, upgrade.level || 0);
                         prodText = upgrade.level > 0 ? `科研 ×${techMult.toFixed(2)}` : '';
@@ -2286,15 +2295,15 @@
                     }
 
                     const card = document.createElement('div');
-                    card.className = `upgrade-card ${canAfford && hasSlot ? '' : 'disabled'}`;
+                    card.className = `upgrade-card ${canAfford && hasSlot && !alreadyBuilt ? '' : 'disabled'}`;
                     card.innerHTML = `
                         <div class="upgrade-card-header">
                             <span class="upgrade-name">${upgrade.icon} ${upgrade.name}</span>
-                            <span class="upgrade-level-badge">Lv.${upgrade.level}</span>
+                            <span class="upgrade-level-badge">${isSingleBuild ? (alreadyBuilt ? '✓ 已建成' : '未建成') : `Lv.${upgrade.level}`}</span>
                         </div>
                         ${(category === 'mining' || category === 'energy') ? `<div style="font-size:0.72rem;color:#94a3b8;margin:0.35rem 0;">${hasSlot ? (category === 'mining' ? `下一个部署星球：${planetSlotRules[nextPlanet]?.name || '—'}` : `可用槽位：${slotStats.total - slotStats.used}`) : '当前可用槽位已满，请先解锁更高文明层级'}</div>` : ''}
                         <div class="upgrade-stats">
-                            <span class="upgrade-cost-label">${costIcon} ${formatNumber(cost)} ${costName}</span>
+                            <span class="upgrade-cost-label">${alreadyBuilt ? '已完成' : `${costIcon} ${formatNumber(cost)} ${costName}`}</span>
                             <span class="upgrade-prod-label">${prodText}</span>
                         </div>
                     `;
@@ -2314,6 +2323,9 @@
 
         // 购买升级
         function buyUpgrade(upgrade) {
+            if (upgrade.category === 'special' && (upgrade.level || 0) >= 1) {
+                return;
+            }
             const cost = Math.floor(upgrade.baseCost * Math.pow(upgrade.costMult || 1.12, upgrade.level));
             const costType = upgrade.costType || 'ore';
             
@@ -2462,10 +2474,20 @@
             game.robotPenalty = 1;
 
             const robotBonus = 1 + robotLegionCount * ((robotLegionUpgrade?.clickBonusMult || 1) - 1);
-            const elevator = game.upgrades.special.find(u => u.id === 'sp1');
-            const flatClickBonus = (elevator?.level || 0) * (elevator?.baseProduction || 0);
+            const flatClickBonus = game.upgrades.special.reduce((sum, upgrade) => {
+                if (upgrade.bonus === 'click' && upgrade.level > 0) {
+                    return sum + upgrade.baseProduction * upgrade.level;
+                }
+                return sum;
+            }, 0);
             const rawClickPower = game.baseClickPower * robotBonus + flatClickBonus;
             game.clickPower = Math.max(1, Math.floor(rawClickPower));
+
+            game.upgrades.special.forEach(upgrade => {
+                if (upgrade.bonus === 'oreFlat' && upgrade.level > 0) {
+                    game.orePerSec += upgrade.baseProduction * upgrade.level;
+                }
+            });
 
             // 1. 计算能源产量（能源设施）
             const energyFactoryMult = Number(game.energyFactoryMult) > 0 ? Number(game.energyFactoryMult) : 1;
