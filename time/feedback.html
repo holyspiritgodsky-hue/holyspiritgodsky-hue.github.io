@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>反馈留言板</title>
+    <style>
+        :root {
+            --bg-1: #050816;
+            --bg-2: #0b132d;
+            --card: rgba(10, 18, 42, 0.86);
+            --line: rgba(0, 217, 255, 0.26);
+            --text: #e6f2ff;
+            --muted: #8ea9c9;
+            --accent: #00d9ff;
+            --accent2: #7c5cff;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: "Microsoft YaHei UI", "Segoe UI", system-ui, sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(1200px 800px at 15% -10%, rgba(124,92,255,0.22), transparent 55%),
+                radial-gradient(900px 700px at 95% 10%, rgba(0,217,255,0.2), transparent 50%),
+                linear-gradient(180deg, var(--bg-2), var(--bg-1));
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 880px;
+            margin: 0 auto;
+            padding: 24px 16px 44px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .title {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+        }
+
+        .back-btn,
+        .submit-btn,
+        .clear-btn {
+            border: 1px solid var(--line);
+            background: rgba(0, 217, 255, 0.12);
+            color: var(--text);
+            border-radius: 10px;
+            padding: 9px 14px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .back-btn:hover,
+        .submit-btn:hover,
+        .clear-btn:hover {
+            transform: translateY(-1px);
+            border-color: rgba(0, 217, 255, 0.56);
+            box-shadow: 0 4px 16px rgba(0, 217, 255, 0.18);
+        }
+
+        .panel {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 14px;
+            backdrop-filter: blur(4px);
+        }
+
+        .hint {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .status-line {
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .status-line.ok {
+            color: #86efac;
+        }
+
+        .status-line.warn {
+            color: #fcd34d;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        label {
+            color: var(--muted);
+            font-size: 13px;
+            align-self: center;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid rgba(142, 169, 201, 0.35);
+            background: rgba(3, 8, 24, 0.72);
+            color: var(--text);
+            padding: 10px 12px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: rgba(0, 217, 255, 0.6);
+            box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 110px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+
+        .clear-btn {
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.5);
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--muted);
+            font-size: 14px;
+            padding: 16px 8px;
+        }
+
+        .item {
+            border: 1px solid rgba(142, 169, 201, 0.24);
+            border-radius: 12px;
+            padding: 12px;
+            background: rgba(3, 8, 24, 0.58);
+            margin-bottom: 8px;
+        }
+
+        .item-head {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 6px;
+        }
+
+        .item-name {
+            font-weight: 700;
+            color: #c9ecff;
+        }
+
+        .item-time {
+            color: var(--muted);
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .item-msg {
+            white-space: pre-wrap;
+            line-height: 1.5;
+            word-break: break-word;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="topbar">
+            <h1 class="title">📋 反馈留言板</h1>
+            <button class="back-btn" onclick="window.location.href='index.html'">返回游戏</button>
+        </div>
+
+        <div class="panel">
+            <p class="hint">留下你的建议、Bug、想要的新剧情。这里是公网留言板，发布后所有玩家都能看到。</p>
+            <div id="status" class="status-line">正在连接留言服务...</div>
+        </div>
+
+        <div class="panel">
+            <div class="form-row">
+                <label for="nickname">昵称</label>
+                <input id="nickname" maxlength="24" placeholder="例如：火星总督" />
+            </div>
+            <div class="form-row">
+                <label for="message">留言内容</label>
+                <textarea id="message" maxlength="600" placeholder="写下你的反馈..."></textarea>
+            </div>
+            <div class="actions">
+                <button class="submit-btn" id="submitBtn">发布留言</button>
+                <button class="clear-btn" id="clearBtn">清空输入框</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div id="list"></div>
+        </div>
+    </div>
+
+    <script>
+        const BOARD_CONFIG = {
+            supabaseUrl: 'https://bhtmxxqietyumvtsyxvd.supabase.co',
+            supabaseAnonKey: 'sb_publishable_56OIHPNYIj9kEDq4nZzx3g_iBjrpjJB',
+            tableName: 'feedback_messages'
+        };
+
+        function escapeHtml(input) {
+            return String(input)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function setStatus(text, type = '') {
+            const status = document.getElementById('status');
+            if (!status) return;
+            status.textContent = text;
+            status.className = `status-line${type ? ` ${type}` : ''}`;
+        }
+
+        function isSupabaseConfigured() {
+            const url = String(BOARD_CONFIG.supabaseUrl || '').trim();
+            const key = String(BOARD_CONFIG.supabaseAnonKey || '').trim();
+            if (!url || !key) return false;
+            if (url.includes('YOUR_SUPABASE_URL') || key.includes('YOUR_SUPABASE_ANON_KEY')) return false;
+            return /^https:\/\/.+/i.test(url);
+        }
+
+        function formatDate(ts) {
+            const d = new Date(ts);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const h = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `${y}-${m}-${day} ${h}:${min}`;
+        }
+
+        function renderMessages(messages = []) {
+            const list = document.getElementById('list');
+
+            if (!messages.length) {
+                list.innerHTML = '<div class="empty">暂时还没有留言，来写第一条吧。</div>';
+                return;
+            }
+
+            list.innerHTML = messages.map(item => {
+                const name = escapeHtml(item.name || '匿名玩家');
+                const msg = escapeHtml(item.message || '');
+                const time = formatDate(item.created_at || item.createdAt || Date.now());
+                return `
+                    <article class="item">
+                        <div class="item-head">
+                            <div class="item-name">${name}</div>
+                            <div class="item-time">${time}</div>
+                        </div>
+                        <div class="item-msg">${msg}</div>
+                    </article>
+                `;
+            }).join('');
+        }
+
+        async function fetchMessagesRemote() {
+            const endpoint = `${BOARD_CONFIG.supabaseUrl}/rest/v1/${encodeURIComponent(BOARD_CONFIG.tableName)}?select=id,name,message,created_at&order=created_at.desc&limit=200`;
+            const response = await fetch(endpoint, {
+                method: 'GET',
+                headers: {
+                    apikey: BOARD_CONFIG.supabaseAnonKey,
+                    Authorization: `Bearer ${BOARD_CONFIG.supabaseAnonKey}`
+                }
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || `HTTP ${response.status}`);
+            }
+            const data = await response.json();
+            return Array.isArray(data) ? data : [];
+        }
+
+        async function createMessageRemote(name, message) {
+            const endpoint = `${BOARD_CONFIG.supabaseUrl}/rest/v1/${encodeURIComponent(BOARD_CONFIG.tableName)}`;
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Prefer: 'return=representation',
+                    apikey: BOARD_CONFIG.supabaseAnonKey,
+                    Authorization: `Bearer ${BOARD_CONFIG.supabaseAnonKey}`
+                },
+                body: JSON.stringify({ name, message })
+            });
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(errText || `HTTP ${response.status}`);
+            }
+            return response.json();
+        }
+
+        async function refreshBoard() {
+            if (!isSupabaseConfigured()) {
+                renderMessages([]);
+                setStatus('未配置 Supabase：请先在 feedback.html 顶部填入 supabaseUrl 和 supabaseAnonKey。', 'warn');
+                return;
+            }
+            setStatus('留言服务连接成功，正在同步最新内容...', 'ok');
+            try {
+                const messages = await fetchMessagesRemote();
+                renderMessages(messages);
+                setStatus(`公网留言板已连接，共 ${messages.length} 条留言。`, 'ok');
+            } catch (error) {
+                renderMessages([]);
+                setStatus(`留言加载失败：${error.message}`, 'warn');
+            }
+        }
+
+        async function submitMessage() {
+            const nicknameEl = document.getElementById('nickname');
+            const messageEl = document.getElementById('message');
+            const name = (nicknameEl.value || '').trim() || '匿名玩家';
+            const message = (messageEl.value || '').trim();
+
+            if (!message) {
+                alert('请先输入留言内容');
+                return;
+            }
+
+            if (!isSupabaseConfigured()) {
+                alert('请先配置 Supabase，再发布公网留言。');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '发布中...';
+            try {
+                await createMessageRemote(name.slice(0, 24), message.slice(0, 600));
+                messageEl.value = '';
+                await refreshBoard();
+            } catch (error) {
+                alert(`发布失败：${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '发布留言';
+            }
+        }
+
+        function clearBoard() {
+            const nicknameEl = document.getElementById('nickname');
+            const messageEl = document.getElementById('message');
+            nicknameEl.value = '';
+            messageEl.value = '';
+        }
+
+        document.getElementById('submitBtn').addEventListener('click', submitMessage);
+        document.getElementById('clearBtn').addEventListener('click', clearBoard);
+
+        refreshBoard();
+    </script>
+</body>
+</html>
