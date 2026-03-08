@@ -80,11 +80,8 @@ const earthWalker = {
     initialized: false
 };
 const earthWorkZones = [
-    { id: 'company_slum', label: '贫民窟公司', role: 'company', x: -0.67, y: -0.40, w: 0.28, h: 0.24, color: 'rgba(191, 219, 254, 0.24)', border: '#93c5fd', tier: 'slum' },
-    { id: 'school', label: '学校', role: 'school', x: -0.32, y: -0.42, w: 0.30, h: 0.24, color: 'rgba(56, 189, 248, 0.24)', border: '#7dd3fc', upgrade_requirements: { rank: 'intern', money: 1000, holdSeconds: 3 } },
     { id: 'factory', label: '工厂', role: 'factory', x: 0.30, y: 0.20, w: 0.34, h: 0.26, color: 'rgba(251, 191, 36, 0.25)', border: '#fde68a' },
     { id: 'lab', label: '实验室', role: 'lab', x: -0.64, y: 0.20, w: 0.34, h: 0.26, color: 'rgba(167, 139, 250, 0.26)', border: '#c4b5fd' },
-    { id: 'company_cbd', label: 'CBD总部', role: 'company', x: 0.34, y: -0.52, w: 0.30, h: 0.26, color: 'rgba(34, 197, 94, 0.24)', border: '#86efac', tier: 'cbd' },
     { id: 'command_tower', label: '黑洞指挥塔', role: 'tower', x: 0.56, y: -0.02, w: 0.22, h: 0.34, color: 'rgba(251, 113, 133, 0.24)', border: '#fda4af' }
 ];
 const earthPreludeZones = [
@@ -129,21 +126,641 @@ const isCoarsePointer = typeof window.matchMedia === 'function'
 const earthImg = new Image();
 const earthSplitImg = new Image();
 const moonImg = new Image();
+const worldMapImg = new Image();
 let earthImgLoaded = false;
 let earthSplitImgLoaded = false;
 let moonImgLoaded = false;
+let worldMapImgLoaded = false;
 earthImg.onload = () => { earthImgLoaded = true; };
 earthSplitImg.onload = () => { earthSplitImgLoaded = true; };
 moonImg.onload = () => { moonImgLoaded = true; };
+worldMapImg.onload = () => { worldMapImgLoaded = true; };
 earthImg.src = 'img/earth.jpg';
 earthSplitImg.src = 'img/earth2.jpg';
 moonImg.src = 'img/moon.jpg';
+worldMapImg.src = 'img/1.jpg';
 
 // 视图层级偶停：0 = 当前科技等级画面，+1 = 退回一个等级的画面
 let viewOffset = 0.0;
 let viewOffsetTgt = 0.0;
 let rollbackLockUntil = 0;
 let lastObservedTechLevel = 0;
+const SCENE_RENDER_MODE_NORMAL = 'normal';
+const SCENE_RENDER_MODE_LEVEL05 = 'level0_5';
+let currentSceneRenderMode = SCENE_RENDER_MODE_NORMAL;
+let level05MapRect = null;
+let level05EndTurnRect = null;
+const LEVEL05_FACTION_ORDER = ['us', 'ru', 'cn', 'eu'];
+const LEVEL05_FACTION_COLOR = {
+    us: 'rgba(59,130,246,0.40)',
+    ru: 'rgba(239,68,68,0.40)',
+    cn: 'rgba(245,158,11,0.40)',
+    eu: 'rgba(168,85,247,0.40)',
+    none: 'rgba(15,23,42,0.10)'
+};
+const LEVEL05_FACTION_FLAG = {
+    us: '🇺🇸',
+    ru: '🇷🇺',
+    cn: '🇨🇳',
+    eu: '🇪🇺'
+};
+const LEVEL05_REGION_LAYOUT = [
+    { id: 'na_w', x: 0.16, y: 0.36, r: 0.060, owner: 'us', adj: ['na_e', 'pac'] },
+    { id: 'na_e', x: 0.28, y: 0.34, r: 0.058, owner: 'us', adj: ['na_w', 'atl', 'eu_w'] },
+    { id: 'pac', x: 0.36, y: 0.52, r: 0.052, owner: 'us', adj: ['na_w', 'cn_s', 'sea'] },
+    { id: 'atl', x: 0.43, y: 0.36, r: 0.048, owner: 'eu', adj: ['na_e', 'eu_w', 'af_n'] },
+    { id: 'eu_w', x: 0.50, y: 0.30, r: 0.052, owner: 'eu', adj: ['atl', 'eu_e', 'ru_w', 'af_n'] },
+    { id: 'eu_e', x: 0.57, y: 0.30, r: 0.050, owner: 'eu', adj: ['eu_w', 'ru_w', 'ru_e', 'me'] },
+    { id: 'ru_w', x: 0.62, y: 0.24, r: 0.055, owner: 'ru', adj: ['eu_w', 'eu_e', 'ru_e'] },
+    { id: 'ru_e', x: 0.74, y: 0.24, r: 0.058, owner: 'ru', adj: ['ru_w', 'cn_n', 'cn_s'] },
+    { id: 'cn_n', x: 0.72, y: 0.40, r: 0.054, owner: 'cn', adj: ['ru_e', 'cn_s', 'me'] },
+    { id: 'cn_s', x: 0.73, y: 0.51, r: 0.056, owner: 'cn', adj: ['cn_n', 'sea', 'pac', 'ru_e'] },
+    { id: 'me', x: 0.62, y: 0.43, r: 0.050, owner: 'ru', adj: ['eu_e', 'cn_n', 'af_n', 'af_s'] },
+    { id: 'af_n', x: 0.54, y: 0.46, r: 0.050, owner: 'eu', adj: ['atl', 'eu_w', 'me', 'af_s'] },
+    { id: 'af_s', x: 0.55, y: 0.60, r: 0.052, owner: 'cn', adj: ['af_n', 'me', 'sea'] },
+    { id: 'sea', x: 0.66, y: 0.62, r: 0.050, owner: 'cn', adj: ['cn_s', 'af_s', 'pac'] }
+];
+const LEVEL05_START_OWNER = {
+    na_e: 'us',
+    ru_w: 'ru',
+    cn_n: 'cn',
+    eu_w: 'eu'
+};
+
+function isLevel05RenderMode() {
+    return currentSceneRenderMode === SCENE_RENDER_MODE_LEVEL05;
+}
+
+function getFactionPowerScale(faction) {
+    if (faction === 'us') return 1.06;
+    if (faction === 'ru') return 1.02;
+    if (faction === 'cn') return 1.08;
+    if (faction === 'eu') return 1.00;
+    return 1;
+}
+
+function ensureLevel05WarState() {
+    if (!window.game) return null;
+    if (!window.game.level05War || !window.game.level05War.regions) {
+        const regions = {};
+        LEVEL05_REGION_LAYOUT.forEach(item => {
+            const owner = LEVEL05_START_OWNER[item.id] || 'none';
+            regions[item.id] = {
+                owner,
+                control: owner === 'none' ? (18 + Math.random() * 14) : (72 + Math.random() * 20),
+                supply: owner === 'none' ? (24 + Math.random() * 18) : (65 + Math.random() * 28),
+                troops: owner === 'none' ? 0 : (9 + ((Math.random() * 4) | 0)),
+                ap: owner === 'none' ? 0 : 2
+            };
+        });
+        window.game.level05War = {
+            playerFaction: 'cn',
+            turn: 1,
+            phase: 'player',
+            selectedRegionId: null,
+            lastActionAt: 0,
+            hoverRegionId: null,
+            hoverEndTurn: false,
+            attackFx: [],
+            regions
+        };
+    }
+    const war = window.game.level05War;
+    war.phase = war.phase === 'ai' ? 'ai' : 'player';
+    war.turn = Math.max(1, Number(war.turn) || 1);
+    war.selectedRegionId = typeof war.selectedRegionId === 'string' ? war.selectedRegionId : null;
+    war.hoverEndTurn = !!war.hoverEndTurn;
+    war.attackFx = Array.isArray(war.attackFx) ? war.attackFx : [];
+    LEVEL05_REGION_LAYOUT.forEach(item => {
+        const s = war.regions[item.id];
+        if (!s) return;
+        s.owner = ['us', 'ru', 'cn', 'eu', 'none'].includes(s.owner) ? s.owner : (LEVEL05_START_OWNER[item.id] || 'none');
+        s.control = Math.max(1, Math.min(100, Number(s.control) || 60));
+        s.supply = Math.max(1, Math.min(100, Number(s.supply) || 60));
+        const troopsFloor = s.owner === 'none' ? 0 : 1;
+        s.troops = Math.max(troopsFloor, Math.min(40, Math.floor(Number(s.troops) || 0)));
+        s.ap = Math.max(0, Math.min(4, Math.floor(Number(s.ap) || 0)));
+    });
+
+    return war;
+}
+
+function refreshLevel05TurnAp(war) {
+    if (!war) return;
+    LEVEL05_REGION_LAYOUT.forEach(item => {
+        const s = war.regions[item.id];
+        if (!s) return;
+        if (s.owner === 'none') s.ap = 0;
+        else s.ap = s.owner === war.playerFaction ? 2 : 1;
+    });
+}
+
+function getLevel05FactionRegionCount(war, faction) {
+    if (!war || !faction) return 0;
+    let count = 0;
+    LEVEL05_REGION_LAYOUT.forEach(item => {
+        const s = war.regions[item.id];
+        if (s && s.owner === faction) count++;
+    });
+    return count;
+}
+
+function getLevel05FactionName(faction) {
+    if (faction === 'cn') return '中国';
+    if (faction === 'us') return '美国';
+    if (faction === 'ru') return '俄罗斯';
+    if (faction === 'eu') return '欧盟';
+    return '该国家';
+}
+
+function triggerLevel05NationDefeat(war, faction) {
+    if (!war || war.gameOverShown) return;
+    war.gameOverShown = true;
+    war.phase = 'gameover';
+    const nationName = getLevel05FactionName(faction);
+    showStoryEvent(
+        '⚠️ 国家灭亡',
+        `${nationName} 已失去全部战区，战役失败。`,
+        '重开',
+        () => {
+            try {
+                localStorage.removeItem('spaceEmpireV5');
+                sessionStorage.setItem('resetFlag', 'true');
+            } catch (_) {}
+            location.reload(true);
+        }
+    );
+}
+
+function checkLevel05Elimination(war) {
+    if (!war) return;
+    if (getLevel05FactionRegionCount(war, war.playerFaction) <= 0) {
+        triggerLevel05NationDefeat(war, war.playerFaction);
+    }
+}
+
+function getLevel05RegionScreenPos(def) {
+    if (!def || !level05MapRect) return null;
+    return {
+        x: level05MapRect.x + def.x * level05MapRect.w,
+        y: level05MapRect.y + def.y * level05MapRect.h,
+        r: Math.max(16, Math.min(level05MapRect.w, level05MapRect.h) * def.r)
+    };
+}
+
+function getLevel05RegionByPoint(x, y) {
+    if (!level05MapRect) return null;
+    const rect = level05MapRect;
+    for (let i = LEVEL05_REGION_LAYOUT.length - 1; i >= 0; i--) {
+        const def = LEVEL05_REGION_LAYOUT[i];
+        const px = rect.x + def.x * rect.w;
+        const py = rect.y + def.y * rect.h;
+        const rr = Math.max(16, Math.min(rect.w, rect.h) * def.r);
+        const dx = x - px;
+        const dy = y - py;
+        if (dx * dx + dy * dy <= rr * rr) return def;
+    }
+    return null;
+}
+
+function resolveLevel05Attack(war, attackerFaction, fromDef, toDef) {
+    if (!war || !fromDef || !toDef) return false;
+    const fromState = war.regions[fromDef.id];
+    const toState = war.regions[toDef.id];
+    if (!fromState || !toState) return false;
+    if (fromState.owner !== attackerFaction || toState.owner === attackerFaction) return false;
+    if (!Array.isArray(fromDef.adj) || !fromDef.adj.includes(toDef.id)) return false;
+    if ((Number(fromState.troops) || 0) < 2) return false;
+    if ((Number(fromState.ap) || 0) <= 0) return false;
+
+    const committed = Math.max(2, Math.min(8, Math.floor((Number(fromState.troops) || 0) * 0.55)));
+    fromState.troops = Math.max(1, (Number(fromState.troops) || 0) - committed);
+    fromState.ap = Math.max(0, (Number(fromState.ap) || 0) - 1);
+
+    const attPower = getFactionPowerScale(attackerFaction)
+        * (0.72 + fromState.control / 140)
+        * (0.75 + fromState.supply / 160)
+        * (0.75 + committed / 10);
+    const defPower = getFactionPowerScale(toState.owner) * (0.62 + toState.control / 150) * (0.78 + toState.supply / 170);
+    const swing = attPower - defPower;
+    const damage = Math.max(6, Math.min(26, 13 + swing * 14 + (Math.random() - 0.5) * 5));
+    const recoil = Math.max(2, Math.min(9, 4 + defPower * 2.4 + Math.random() * 2.2));
+
+    toState.control -= damage;
+    fromState.control = Math.max(24, fromState.control - recoil);
+    fromState.supply = Math.max(18, fromState.supply - (3 + Math.random() * 2));
+    toState.troops = Math.max(1, (Number(toState.troops) || 0) - Math.max(1, Math.round(committed * (0.35 + Math.random() * 0.25))));
+
+    const fromPos = getLevel05RegionScreenPos(fromDef);
+    const toPos = getLevel05RegionScreenPos(toDef);
+    if (fromPos && toPos) {
+        war.attackFx.push({
+            fromX: fromPos.x,
+            fromY: fromPos.y,
+            toX: toPos.x,
+            toY: toPos.y,
+            attacker: attackerFaction,
+            startAt: performance.now(),
+            duration: 460,
+            committed
+        });
+        if (war.attackFx.length > 14) war.attackFx.splice(0, war.attackFx.length - 14);
+    }
+
+    if (toState.control <= 0) {
+        toState.owner = attackerFaction;
+        toState.control = 34 + Math.random() * 18;
+        toState.supply = 42 + Math.random() * 20;
+        toState.troops = Math.max(2, Math.floor(committed * 0.6));
+        if (window.game && attackerFaction === war.playerFaction) {
+            window.game.ore = Math.max(0, Number(window.game.ore) || 0) + 180;
+            window.game.tech = Math.max(0, Number(window.game.tech) || 0) + 70;
+            if (typeof window.updateUI === 'function') window.updateUI();
+        }
+    }
+    return true;
+}
+
+function resolveLevel05Move(war, faction, fromDef, toDef) {
+    if (!war || !fromDef || !toDef) return false;
+    const fromState = war.regions[fromDef.id];
+    const toState = war.regions[toDef.id];
+    if (!fromState || !toState) return false;
+    if (fromState.owner !== faction || toState.owner !== faction) return false;
+    if (!Array.isArray(fromDef.adj) || !fromDef.adj.includes(toDef.id)) return false;
+    if ((Number(fromState.ap) || 0) <= 0) return false;
+    if ((Number(fromState.troops) || 0) < 2) return false;
+
+    const moved = Math.max(1, Math.min(7, Math.floor((Number(fromState.troops) || 0) * 0.45)));
+    fromState.troops = Math.max(1, (Number(fromState.troops) || 0) - moved);
+    toState.troops = Math.max(1, Math.min(40, (Number(toState.troops) || 0) + moved));
+    fromState.ap = Math.max(0, (Number(fromState.ap) || 0) - 1);
+
+    const fromPos = getLevel05RegionScreenPos(fromDef);
+    const toPos = getLevel05RegionScreenPos(toDef);
+    if (fromPos && toPos) {
+        war.attackFx.push({
+            fromX: fromPos.x,
+            fromY: fromPos.y,
+            toX: toPos.x,
+            toY: toPos.y,
+            attacker: faction,
+            startAt: performance.now(),
+            duration: 380,
+            committed: moved,
+            moveOnly: true
+        });
+        if (war.attackFx.length > 14) war.attackFx.splice(0, war.attackFx.length - 14);
+    }
+    return true;
+}
+
+function runLevel05AiTurn(war, faction) {
+    if (!war || faction === war.playerFaction) return;
+    for (let step = 0; step < 2; step++) {
+        const candidates = [];
+        LEVEL05_REGION_LAYOUT.forEach(def => {
+            const state = war.regions[def.id];
+            if (!state || state.owner !== faction) return;
+            if ((Number(state.ap) || 0) <= 0 || (Number(state.troops) || 0) < 2) return;
+            (def.adj || []).forEach(adjId => {
+                const targetDef = LEVEL05_REGION_LAYOUT.find(r => r.id === adjId);
+                const targetState = targetDef ? war.regions[targetDef.id] : null;
+                if (!targetDef || !targetState || targetState.owner === faction) return;
+                const value = (100 - targetState.control) + (targetState.owner === war.playerFaction ? 16 : 0) + Math.random() * 12;
+                candidates.push({ fromDef: def, toDef: targetDef, score: value });
+            });
+        });
+        if (!candidates.length) break;
+        candidates.sort((a, b) => b.score - a.score);
+        resolveLevel05Attack(war, faction, candidates[0].fromDef, candidates[0].toDef);
+    }
+}
+
+function finishLevel05Round(war) {
+    if (!war) return;
+    war.turn = Math.max(1, Number(war.turn) || 1) + 1;
+    LEVEL05_FACTION_ORDER.forEach(f => runLevel05AiTurn(war, f));
+    Object.keys(war.regions).forEach(id => {
+        const state = war.regions[id];
+        state.control = Math.max(8, Math.min(100, state.control + 1.5 + Math.random() * 2.2));
+        state.supply = Math.max(10, Math.min(100, state.supply + 2.2 + Math.random() * 3));
+        if (state.owner === 'none') {
+            state.troops = 0;
+        } else {
+            state.troops = Math.max(1, Math.min(22, (Number(state.troops) || 0) + 1 + (Math.random() < 0.35 ? 1 : 0)));
+        }
+    });
+    refreshLevel05TurnAp(war);
+    war.phase = 'player';
+    war.selectedRegionId = null;
+    checkLevel05Elimination(war);
+}
+
+function tryEndLevel05PlayerTurn(war) {
+    if (!war || war.phase !== 'player') return;
+    war.phase = 'ai';
+    finishLevel05Round(war);
+}
+
+function handleLevel05MapClick(x, y) {
+    const war = ensureLevel05WarState();
+    if (!war) return;
+    if (war.phase === 'gameover') return;
+
+    if (level05EndTurnRect) {
+        const b = level05EndTurnRect;
+        const hitPad = 14;
+        if (x >= b.x - hitPad && x <= b.x + b.w + hitPad && y >= b.y - hitPad && y <= b.y + b.h + hitPad) {
+            tryEndLevel05PlayerTurn(war);
+            return;
+        }
+    }
+
+    const now = performance.now();
+    if (now - (war.lastActionAt || 0) < 120) return;
+    war.lastActionAt = now;
+
+    if (war.phase !== 'player') return;
+
+    const hit = getLevel05RegionByPoint(x, y);
+    if (!hit) {
+        war.selectedRegionId = null;
+        return;
+    }
+
+    const hitState = war.regions[hit.id];
+    if (!hitState) return;
+    if (!war.selectedRegionId) {
+        war.selectedRegionId = hitState.owner === war.playerFaction ? hit.id : null;
+        return;
+    }
+
+    const fromDef = LEVEL05_REGION_LAYOUT.find(r => r.id === war.selectedRegionId);
+    const fromState = fromDef ? war.regions[fromDef.id] : null;
+    if (!fromDef || !fromState || fromState.owner !== war.playerFaction) {
+        war.selectedRegionId = null;
+        return;
+    }
+
+    if (hit.id === fromDef.id) {
+        war.selectedRegionId = null;
+        return;
+    }
+
+    if (hitState.owner === war.playerFaction) {
+        war.selectedRegionId = hit.id;
+        return;
+    }
+
+    const attacked = resolveLevel05Attack(war, war.playerFaction, fromDef, hit);
+    if (attacked) {
+        war.selectedRegionId = fromDef.id;
+        checkLevel05Elimination(war);
+        return;
+    }
+
+    const moved = resolveLevel05Move(war, war.playerFaction, fromDef, hit);
+    if (moved) {
+        war.selectedRegionId = hit.id;
+    }
+}
+
+function drawFactionFlagBadge(faction, x, y, size) {
+    const w = Math.max(14, size * 0.95);
+    const h = Math.max(10, size * 0.62);
+    const left = x - w * 0.5;
+    const top = y - h * 0.5;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(left, top, w, h, 2);
+    ctx.clip();
+
+    function drawStar(cx, cy, outerR, innerR, points = 5) {
+        ctx.beginPath();
+        for (let i = 0; i < points * 2; i++) {
+            const ang = -Math.PI / 2 + (i * Math.PI) / points;
+            const rr = i % 2 === 0 ? outerR : innerR;
+            const px = cx + Math.cos(ang) * rr;
+            const py = cy + Math.sin(ang) * rr;
+            if (i === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    if (faction === 'ru') {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(left, top, w, h / 3);
+        ctx.fillStyle = '#2563eb';
+        ctx.fillRect(left, top + h / 3, w, h / 3);
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(left, top + (h * 2) / 3, w, h / 3);
+    } else if (faction === 'cn') {
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(left, top, w, h);
+        ctx.fillStyle = '#facc15';
+        drawStar(
+            left + w * 0.28,
+            top + h * 0.36,
+            Math.max(2, h * 0.18),
+            Math.max(1, h * 0.075),
+            5
+        );
+    } else if (faction === 'eu') {
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(left, top, w, h);
+        ctx.fillStyle = '#facc15';
+        for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2;
+            const sx = left + w * 0.5 + Math.cos(a) * w * 0.17;
+            const sy = top + h * 0.5 + Math.sin(a) * h * 0.22;
+            ctx.beginPath();
+            ctx.arc(sx, sy, Math.max(1, h * 0.04), 0, Math.PI * 2);
+            ctx.fill();
+        }
+    } else {
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(left, top, w, h);
+        ctx.fillStyle = '#ffffff';
+        for (let i = 1; i <= 3; i++) {
+            ctx.fillRect(left, top + (h * i) / 7, w, Math.max(1, h * 0.08));
+        }
+        ctx.fillStyle = '#1d4ed8';
+        ctx.fillRect(left, top, w * 0.42, h * 0.56);
+    }
+
+    ctx.restore();
+    ctx.save();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+    ctx.strokeRect(left, top, w, h);
+    ctx.restore();
+}
+
+function drawLevel05WarOverlay(panelX, panelY, panelW, panelH) {
+    const war = ensureLevel05WarState();
+    if (!war) return;
+    level05MapRect = { x: panelX, y: panelY, w: panelW, h: panelH };
+    if ((Number(war.turn) || 0) <= 1) {
+        refreshLevel05TurnAp(war);
+    }
+
+    const btnW = Math.max(150, Math.min(210, panelW * 0.23));
+    const btnH = Math.max(44, Math.min(58, panelH * 0.10));
+    const btnX = panelX + (panelW - btnW) * 0.5;
+    let btnY = panelY + panelH - btnH - 12;
+    const panelEl = document.querySelector('.bottom-panel');
+    if (panelEl && !panelEl.classList.contains('is-collapsed')) {
+        const rect = panelEl.getBoundingClientRect();
+        btnY = Math.min(btnY, rect.top - btnH - 10);
+    }
+    level05EndTurnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
+    const btnHovered = war.phase === 'player' && !!war.hoverEndTurn;
+
+    ctx.save();
+    const selectedDef = LEVEL05_REGION_LAYOUT.find(r => r.id === war.selectedRegionId) || null;
+    if (selectedDef) {
+        const fromPos = getLevel05RegionScreenPos(selectedDef);
+        (selectedDef.adj || []).forEach(adjId => {
+            const adjDef = LEVEL05_REGION_LAYOUT.find(r => r.id === adjId);
+            const adjPos = getLevel05RegionScreenPos(adjDef);
+            if (!fromPos || !adjPos) return;
+            const adjState = war.regions[adjId];
+            const isEnemy = !!adjState && adjState.owner !== war.playerFaction;
+            ctx.save();
+            ctx.lineWidth = isEnemy ? 2.4 : 1.3;
+            ctx.setLineDash(isEnemy ? [8, 6] : []);
+            ctx.strokeStyle = isEnemy ? 'rgba(248,113,113,0.95)' : 'rgba(125,211,252,0.45)';
+            ctx.beginPath();
+            ctx.moveTo(fromPos.x, fromPos.y);
+            ctx.lineTo(adjPos.x, adjPos.y);
+            ctx.stroke();
+            ctx.restore();
+        });
+    }
+
+    LEVEL05_REGION_LAYOUT.forEach(def => {
+        const state = war.regions[def.id];
+        if (!state) return;
+        const px = panelX + def.x * panelW;
+        const py = panelY + def.y * panelH;
+        const rr = Math.max(16, Math.min(panelW, panelH) * def.r);
+        const factionColor = LEVEL05_FACTION_COLOR[state.owner] || 'rgba(148,163,184,0.38)';
+        const selected = war.selectedRegionId === def.id;
+        const hovered = war.hoverRegionId === def.id;
+        const canAct = (Number(state.ap) || 0) > 0 && state.owner === war.playerFaction;
+        const isNeutral = state.owner === 'none';
+
+        ctx.beginPath();
+        ctx.arc(px, py, rr, 0, Math.PI * 2);
+        ctx.fillStyle = factionColor;
+        ctx.fill();
+
+        ctx.lineWidth = selected ? 3.2 : (hovered ? 2.4 : 1.4);
+        if (isNeutral) {
+            ctx.setLineDash([7, 6]);
+            ctx.strokeStyle = selected ? 'rgba(255,255,255,0.86)' : 'rgba(148,163,184,0.72)';
+        } else {
+            ctx.setLineDash([]);
+            ctx.strokeStyle = selected ? 'rgba(255,255,255,0.95)' : (hovered ? 'rgba(255,255,255,0.82)' : 'rgba(226,232,240,0.65)');
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        if (!isNeutral) {
+            drawFactionFlagBadge(state.owner, px, py - rr * 0.04, rr * 0.95);
+        } else {
+            ctx.fillStyle = 'rgba(203,213,225,0.8)';
+            ctx.font = `${Math.max(10, rr * 0.46)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('□', px, py - rr * 0.05);
+        }
+
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
+        ctx.font = `700 ${Math.max(9, rr * 0.34)}px sans-serif`;
+        ctx.fillText(`${Math.max(0, Math.floor(state.troops || 0))}`, px, py + rr * 0.52);
+
+        if (canAct) {
+            ctx.fillStyle = 'rgba(255,255,255,0.88)';
+            ctx.font = `700 ${Math.max(8, rr * 0.26)}px sans-serif`;
+            ctx.fillText(`AP${Math.max(0, Math.floor(state.ap || 0))}`, px, py - rr * 0.62);
+        }
+
+        const p = Math.max(0, Math.min(1, state.control / 100));
+        ctx.beginPath();
+        ctx.arc(px, py, rr + 4, -Math.PI * 0.5, -Math.PI * 0.5 + Math.PI * 2 * p, false);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'rgba(250,250,250,0.9)';
+        ctx.stroke();
+    });
+
+    const now = performance.now();
+    war.attackFx = (war.attackFx || []).filter(fx => now - fx.startAt <= fx.duration);
+    war.attackFx.forEach(fx => {
+        const p = Math.max(0, Math.min(1, (now - fx.startAt) / fx.duration));
+        const x = fx.fromX + (fx.toX - fx.fromX) * p;
+        const y = fx.fromY + (fx.toY - fx.fromY) * p;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+        ctx.lineWidth = 1.3;
+        ctx.beginPath();
+        ctx.moveTo(fx.fromX, fx.fromY);
+        ctx.lineTo(x, y);
+        ctx.stroke();
+        ctx.fillStyle = LEVEL05_FACTION_COLOR[fx.attacker] || 'rgba(255,255,255,0.65)';
+        ctx.beginPath();
+        ctx.arc(x, y, 3 + fx.committed * 0.16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    });
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.roundRect(btnX, btnY, btnW, btnH, 8);
+    const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH);
+    if (war.phase === 'player') {
+        if (btnHovered) {
+            btnGrad.addColorStop(0, 'rgba(110, 231, 183, 0.99)');
+            btnGrad.addColorStop(1, 'rgba(16, 185, 129, 0.99)');
+        } else {
+            btnGrad.addColorStop(0, 'rgba(52, 211, 153, 0.96)');
+            btnGrad.addColorStop(1, 'rgba(5, 150, 105, 0.96)');
+        }
+    } else {
+        btnGrad.addColorStop(0, 'rgba(148, 163, 184, 0.88)');
+        btnGrad.addColorStop(1, 'rgba(100, 116, 139, 0.88)');
+    }
+    ctx.fillStyle = btnGrad;
+    ctx.fill();
+    const gloss = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH * 0.55);
+    gloss.addColorStop(0, 'rgba(255,255,255,0.20)');
+    gloss.addColorStop(1, 'rgba(255,255,255,0.00)');
+    ctx.fillStyle = gloss;
+    ctx.fill();
+    ctx.lineWidth = btnHovered ? 2.2 : 1.4;
+    ctx.strokeStyle = btnHovered ? 'rgba(220,252,231,0.98)' : 'rgba(255,255,255,0.72)';
+    ctx.stroke();
+    ctx.shadowColor = btnHovered ? 'rgba(16,185,129,0.65)' : 'rgba(0,0,0,0.35)';
+    ctx.shadowBlur = btnHovered ? 16 : 8;
+    ctx.fillStyle = 'rgba(255,255,255,0.96)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = btnHovered ? '700 16px sans-serif' : '700 15px sans-serif';
+    ctx.fillText('结束回合', btnX + btnW * 0.5, btnY + btnH * 0.52);
+    ctx.restore();
+
+    ctx.fillStyle = 'rgba(255,255,255,0.90)';
+    ctx.font = '700 13px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    const phaseText = war.phase === 'player' ? '玩家回合' : 'AI回合';
+    ctx.fillText(`回合 ${Math.max(1, Number(war.turn) || 1)}  ${phaseText}`, panelX + 10, panelY + 8);
+    ctx.restore();
+}
 
 function isRollbackLocked() {
     return performance.now() < rollbackLockUntil;
@@ -157,18 +774,13 @@ function lockRollback(ms = 1200) {
 window.addEventListener('wheel', (e) => {
     if(e.target && e.target.closest && e.target.closest('button,input,select,.tab-button,.upgrade-card')) return;
     e.preventDefault();
-    const maxOff = getSceneLevelFromGame();
-    if(maxOff === 0) return; // 等级 0 时无法回退
+    const maxOff = getSceneLevelFromGame() + 0.5;
     const delta = e.deltaY > 0 ? -0.25 : 0.25; // 上滚+，下滚-
     if (delta > 0 && isRollbackLocked()) return;
     viewOffsetTgt = Math.max(0, Math.min(maxOff, viewOffsetTgt + delta));
 }, { passive: false });
 
-// 双击还原到当前等级
-window.addEventListener('dblclick', (e) => {
-    if(e.target && e.target.closest && e.target.closest('button,input,select,.tab-button,.upgrade-card')) return;
-    viewOffsetTgt = 0.0;
-});
+// 已禁用双击回到当前等级，避免连点时误触发视角回跳
 
 // 触摸捏合缩放
 let _pinchDist = null;
@@ -179,7 +791,7 @@ window.addEventListener('touchmove', (e) => {
     const dx=e.touches[0].clientX-e.touches[1].clientX, dy=e.touches[0].clientY-e.touches[1].clientY;
     const d=Math.sqrt(dx*dx+dy*dy);
     if(_pinchDist!==null){
-        const maxOff = getSceneLevelFromGame();
+        const maxOff = getSceneLevelFromGame() + 0.5;
         const delta = (d - _pinchDist) / 120 * 0.25; // 张开 = 拉近
         if (delta > 0 && isRollbackLocked()) {
             _pinchDist = d;
@@ -670,6 +1282,78 @@ function drawEarthResidents(ex, ey, earthR, now) {
     ctx.restore();
 }
 
+function drawEarthWorldMapUnfold(ex, ey, earthR, renderLv, now) {
+    const unfold = Math.max(0, Math.min(1, (renderLv - 0.06) / 0.44));
+    if (unfold <= 0 || earthR < 24) return;
+
+    const W = lastViewportW || canvas.clientWidth || window.innerWidth;
+    const H = lastViewportH || canvas.clientHeight || window.innerHeight;
+    // Fullscreen map mode: ignore safe UI bounds and cover the whole viewport.
+    const safeTop = 0;
+    const safeBottom = H;
+    const safeH = H;
+    const safeCenterY = H * 0.5;
+
+    const startW = earthR * 1.25;
+    const startH = earthR * 0.88;
+    const startX = ex - startW * 0.5;
+    const startY = ey - startH * 0.5;
+
+    const maxW = W;
+    const maxH = safeH;
+    const targetW = maxW;
+    const targetH = maxH;
+
+    const panelW = startW + (targetW - startW) * unfold;
+    const panelH = startH + (targetH - startH) * unfold;
+    const panelX = startX + ((W - panelW) * 0.5 - startX) * unfold;
+    const panelY = startY + ((safeCenterY - panelH * 0.5) - startY) * unfold;
+    const cornerBase = Math.max(10, Math.min(24, panelH * 0.06));
+    const corner = cornerBase * (1 - unfold);
+    const inset = Math.max(0, Math.round(4 * (1 - unfold)));
+
+    ctx.save();
+    ctx.globalAlpha = 0.15 + unfold * 0.85;
+
+    // Fade in a fullscreen mask so the L1 Earth never bleeds through when map opens.
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, Math.min(1, Math.pow(unfold, 1.25)));
+    ctx.fillStyle = 'rgba(2, 10, 28, 1)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.roundRect(panelX, panelY, panelW, panelH, corner);
+    ctx.fillStyle = 'rgba(4, 16, 38, 1)';
+    ctx.fill();
+
+    if (worldMapImgLoaded) {
+        ctx.save();
+        const innerX = panelX + inset;
+        const innerY = panelY + inset;
+        const innerW = panelW - inset * 2;
+        const innerH = panelH - inset * 2;
+        ctx.beginPath();
+        ctx.roundRect(innerX, innerY, innerW, innerH, Math.max(0, corner - inset));
+        ctx.clip();
+
+        // Cover draw: always fill panel, crop overflow from image ratio mismatch.
+        const imgW = Math.max(1, worldMapImg.width || 1);
+        const imgH = Math.max(1, worldMapImg.height || 1);
+        const coverScale = Math.max(innerW / imgW, innerH / imgH);
+        const drawW = imgW * coverScale;
+        const drawH = imgH * coverScale;
+        const drawX = innerX + (innerW - drawW) * 0.5;
+        const drawY = innerY + (innerH - drawH) * 0.5;
+        ctx.drawImage(worldMapImg, drawX, drawY, drawW, drawH);
+        ctx.restore();
+    }
+
+    drawLevel05WarOverlay(panelX + inset, panelY + inset, panelW - inset * 2, panelH - inset * 2);
+
+    ctx.restore();
+}
+
 // UI 安全区常量：yf=0 对应顶栏底部，yf=1 对应右侧抽屉不影响时的底部安全线
 const UI_TOP = 160;   // 顶栏高度 px
 const UI_BOT = 80;    // 底部安全留白 px
@@ -749,18 +1433,7 @@ function getSceneLevelFromGame(){
     if (Number.isFinite(debugLevel)) {
         return Math.max(0, Math.min(5, Math.floor(debugLevel)));
     }
-    const selectedLevel = Math.max(
-        0,
-        Math.min(
-            5,
-            Math.floor(
-                Number.isFinite(Number(window.game?.selectedTechOptionLevel))
-                    ? Number(window.game?.selectedTechOptionLevel)
-                    : (Number(window.game?.techLevel) || 0)
-            )
-        )
-    );
-    return selectedLevel;
+    return Math.max(0, Math.min(5, Math.floor(Number(window.game?.techLevel) || 0)));
 }
 function triggerSceneTransition(newLv){
     const target = Math.max(0, Math.min(5, Number(newLv) || 0));
@@ -776,9 +1449,18 @@ function triggerSceneTransition(newLv){
     sceneP = 0;
 }
 
-function forceSceneTransitionTo(newLv) {
-    triggerSceneTransition(newLv);
-    lastObservedTechLevel = Math.max(0, Math.min(5, Number(newLv) || 0));
+function forceSceneTransitionTo(newLv, immediate = false) {
+    const target = Math.max(0, Math.min(5, Number(newLv) || 0));
+    if (immediate) {
+        sceneFrom = target;
+        sceneTgt = target;
+        sceneP = 1;
+        sceneT0 = performance.now();
+        lastObservedTechLevel = target;
+        return;
+    }
+    triggerSceneTransition(target);
+    lastObservedTechLevel = target;
 }
 
 // ── 绘制辅助函数 ──────────────────────────────────────────────
@@ -968,16 +1650,16 @@ function clearFleetSelection() {
 function issueFleetAttack(targetType) {
     if (!selectedShipUnitIds.size) return;
     if (targetType === 'blackhole') {
-        const rank = String(window.game?.rank || 'intern');
+        const techLevel = Number(window.game?.techLevel) || 0;
         const inTower = !!window.game?.inCommandTower;
-        if (rank !== 'chair' || !inTower) {
+        if (techLevel < 4 || !inTower) {
             const now = performance.now();
             if (now >= nextBlackholeAttackHintAt) {
                 nextBlackholeAttackHintAt = now + 1500;
                 if (typeof window.showStoryEvent === 'function') {
                     window.showStoryEvent(
                         '🕳️ 黑洞进攻未解锁',
-                        '进入黑洞需要满足两个条件：<br>1) 先在学校晋升到【星盟主席】（80万金钱 + 2800研究点，并停留4秒）<br>2) 角色站在【黑洞指挥塔】区域内后再下达进攻',
+                        '进入黑洞需要满足两个条件：<br>1) 科技等级达到 Lv.4<br>2) 单位位于【黑洞指挥塔】区域内后再下达进攻',
                         '我知道了'
                     );
                 }
@@ -1473,7 +2155,7 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
         }
         earthWalker.nextLabHintAt = now + 4500;
     } else if (!isPreludeMode && inTower && now >= earthWalker.nextTowerHintAt) {
-        spawnGainPopup('想进黑洞: 先去学校晋升', '#fb7185', px, py - playerSize * 1.55, now);
+        spawnGainPopup('黑洞条件: 科技Lv.4', '#fb7185', px, py - playerSize * 1.55, now);
         earthWalker.nextTowerHintAt = now + 2200;
     }
 
@@ -1487,7 +2169,6 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
     if (!isPreludeMode && inPortal) {
         if (!earthWalker.holePromptShown) {
             earthWalker.holePromptShown = true;
-            enterHolePage();
         }
         if (holeUnlocked && now >= earthWalker.nextPortalHintAt) {
             spawnGainPopup('实验室: 按 H 进入黑洞区域', '#a78bfa', px, py - playerSize * 1.95, now, { duration: 1800, rise: 8, jitter: 4 });
@@ -1502,7 +2183,7 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
     }
 
     if (!isPreludeMode && inSchool) {
-        // 学校承接实验室功能：工具购买不能挤占主席晋升门槛资金
+        // 工具购买不能挤占主席晋升门槛资金
         const promotionReserve = g.rank === 'engineer' ? CHAIR_PROMOTION_COST_MONEY : 0;
         if (!g.jetpackOwned && g.totalMoney >= 50000 && (g.totalMoney - 50000) >= promotionReserve) {
             g.totalMoney = Math.max(0, Number(g.totalMoney) - 50000);
@@ -1783,16 +2464,6 @@ function shouldCaptureWalkerHotkeys(target) {
 window.addEventListener('keydown', (event) => {
     if (!shouldCaptureWalkerHotkeys(event.target)) return;
     const key = event.key;
-    const holeUnlocked = Math.max(
-        0,
-        Number(window.game?.currentStage) || 0,
-        Number(window.game?.techLevel) || 0,
-        Number(window.game?.oreTechUnlockLevel) || 0
-    ) >= HOLE_UNLOCK_LEVEL;
-    if ((key === 'h' || key === 'H') && window.game?.inHolePortal && holeUnlocked) {
-        enterHolePage();
-        return;
-    }
     if (key === 'ArrowUp' || key === 'w' || key === 'W') earthWalkerKeys.up = true;
     if (key === 'ArrowDown' || key === 's' || key === 'S') earthWalkerKeys.down = true;
     if (key === 'ArrowLeft' || key === 'a' || key === 'A') earthWalkerKeys.left = true;
@@ -2729,6 +3400,10 @@ canvas.addEventListener('click', (event) => {
     const pointer = getCanvasPointerPosition(event);
     const x = pointer.x;
     const y = pointer.y;
+    if (isLevel05RenderMode()) {
+        handleLevel05MapClick(x, y);
+        return;
+    }
     const earth = planets.find(p => p.id === 'earth');
     const earthSnap = getEarthRenderSnapshot(earth);
 
@@ -2761,6 +3436,7 @@ canvas.addEventListener('click', (event) => {
 });
 
 canvas.addEventListener('mousedown', (event) => {
+    if (isLevel05RenderMode()) return;
     if (event.button !== 0) return;
     const pointer = getCanvasPointerPosition(event);
     fleetSelectionBox = {
@@ -2773,6 +3449,29 @@ canvas.addEventListener('mousedown', (event) => {
 });
 
 canvas.addEventListener('mousemove', (event) => {
+    if (isLevel05RenderMode()) {
+        const war = ensureLevel05WarState();
+        if (war) {
+            const pointer = getCanvasPointerPosition(event);
+            let hoverEndTurn = false;
+            if (level05EndTurnRect && war.phase === 'player') {
+                const b = level05EndTurnRect;
+                const hitPad = 14;
+                hoverEndTurn = pointer.x >= b.x - hitPad && pointer.x <= b.x + b.w + hitPad
+                    && pointer.y >= b.y - hitPad && pointer.y <= b.y + b.h + hitPad;
+            }
+            war.hoverEndTurn = hoverEndTurn;
+            canvas.style.cursor = hoverEndTurn ? 'pointer' : 'default';
+            if (war.phase === 'player') {
+                const hit = getLevel05RegionByPoint(pointer.x, pointer.y);
+                war.hoverRegionId = hit ? hit.id : null;
+            } else {
+                war.hoverRegionId = null;
+            }
+        }
+        return;
+    }
+    canvas.style.cursor = 'default';
     if (!fleetSelectionBox || !fleetSelectionBox.active) return;
     const pointer = getCanvasPointerPosition(event);
     fleetSelectionBox.endX = pointer.x;
@@ -2802,6 +3501,10 @@ canvas.addEventListener('touchstart', (event) => {
     const pointer = getCanvasPointerPosition(event);
     const x = pointer.x;
     const y = pointer.y;
+    if (isLevel05RenderMode()) {
+        handleLevel05MapClick(x, y);
+        return;
+    }
     const earth = planets.find(p => p.id === 'earth');
     const earthSnap = getEarthRenderSnapshot(earth);
 
@@ -2924,6 +3627,10 @@ function drawSolarSystem() {
     // 计算实际渲染用的场景 rA/rB/rtp
     let rA, rB, rtp;
     let renderLv;
+    let showLevel05Map = false;
+    level05MapRect = null;
+    level05EndTurnRect = null;
+    currentSceneRenderMode = SCENE_RENDER_MODE_NORMAL;
     if(sceneP < 1 || viewOffset < 0.01){
         renderLv = sLerp(fromLv, toLv, tp);
         const lo = Math.max(0, Math.min(5, Math.floor(renderLv)));
@@ -2932,11 +3639,23 @@ function drawSolarSystem() {
         rB = TECH_LEVELS[hi];
         rtp = renderLv - lo;
     } else {
-        const effectiveLv = Math.max(0, sceneTgt - viewOffset);
-        const lo = Math.floor(effectiveLv);
-        const hi = Math.min(lo + 1, 5);
-        rA = TECH_LEVELS[lo]; rB = TECH_LEVELS[hi]; rtp = effectiveLv - lo;
-        renderLv = effectiveLv;
+        const effectiveRawLv = sceneTgt - viewOffset;
+        if (effectiveRawLv >= 0) {
+            const lo = Math.max(0, Math.min(5, Math.floor(effectiveRawLv)));
+            const hi = Math.min(lo + 1, 5);
+            rA = TECH_LEVELS[lo];
+            rB = TECH_LEVELS[hi];
+            rtp = effectiveRawLv - lo;
+            renderLv = effectiveRawLv;
+        } else {
+            // 0.5 地图模式：固定渲染地球层，不再插值到月球层
+            rA = TECH_LEVELS[0];
+            rB = TECH_LEVELS[0];
+            rtp = 0;
+            renderLv = Math.max(0, Math.min(0.5, -effectiveRawLv));
+            showLevel05Map = true;
+            currentSceneRenderMode = SCENE_RENDER_MODE_LEVEL05;
+        }
     }
 
     // 星空
@@ -3293,28 +4012,34 @@ function drawSolarSystem() {
             ctx.restore();
         }
 
-        const starlinkBuilt = !!window.game?.upgrades?.special?.some(
-            item => item.id === 'sp1' && (Number(item.level) || 0) > 0
-        );
-        if (starlinkBuilt) {
-            drawStarlinkEffect(ex, ey, earthR, now);
+        if (!showLevel05Map) {
+            const starlinkBuilt = !!window.game?.upgrades?.special?.some(
+                item => item.id === 'sp1' && (Number(item.level) || 0) > 0
+            );
+            if (starlinkBuilt) {
+                drawStarlinkEffect(ex, ey, earthR, now);
+            }
+
+            const coreMineBuilt = !!window.game?.upgrades?.special?.some(
+                item => item.id === 'sp6' && (Number(item.level) || 0) > 0
+            );
+            if (coreMineBuilt) {
+                drawEarthCoreMinePit(ex, ey, earthR, now);
+            }
+
+            const workResult = updateEarthWalkerAndOutput(now, ex, ey, earthR);
+            drawEarthWorkZonesAndWalker(ex, ey, earthR, workResult.activeZones, workResult.playerRect, workResult);
+            drawEarthResidents(ex, ey, earthR, now);
+        } else {
+            // L0.5 使用独立图层，避免地球主线逻辑影响地图模式。
+            drawEarthWorldMapUnfold(ex, ey, earthR, renderLv, now);
         }
 
-        const coreMineBuilt = !!window.game?.upgrades?.special?.some(
-            item => item.id === 'sp6' && (Number(item.level) || 0) > 0
-        );
-        if (coreMineBuilt) {
-            drawEarthCoreMinePit(ex, ey, earthR, now);
+        if (!showLevel05Map) {
+            const tg2=ctx.createRadialGradient(ex+earthR*0.4,ey-earthR*0.1,0,ex,ey,earthR*1.02);
+            tg2.addColorStop(0,'transparent'); tg2.addColorStop(0.6,'transparent'); tg2.addColorStop(1,'rgba(0,0,12,0.10)');
+            ctx.globalAlpha=1; ctx.beginPath(); ctx.arc(ex,ey,earthR,0,Math.PI*2); ctx.fillStyle=tg2; ctx.fill();
         }
-
-        const workResult = updateEarthWalkerAndOutput(now, ex, ey, earthR);
-        drawEarthWorkZonesAndWalker(ex, ey, earthR, workResult.activeZones, workResult.playerRect, workResult);
-
-        drawEarthResidents(ex, ey, earthR, now);
-
-        const tg2=ctx.createRadialGradient(ex+earthR*0.4,ey-earthR*0.1,0,ex,ey,earthR*1.02);
-        tg2.addColorStop(0,'transparent'); tg2.addColorStop(0.6,'transparent'); tg2.addColorStop(1,'rgba(0,0,12,0.10)');
-        ctx.globalAlpha=1; ctx.beginPath(); ctx.arc(ex,ey,earthR,0,Math.PI*2); ctx.fillStyle=tg2; ctx.fill();
         ctx.restore();
 
     }
@@ -3352,13 +4077,17 @@ function drawSolarSystem() {
     ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
 
     // 视图偏移提示
-    const techNames = ['🌍行星','🌙地月','☀️太阳系','🌠星际','🌌銀河','🕳️奇点'];
+    const techNames = ['🌍L1行星', '🌙L2地月', '☀️L3太阳系', '🌠L4星际', '🌌L5银河', '🕳️奇点'];
     if(viewOffset > 0.08){
-        const showLv = Math.max(0, sceneTgt - viewOffset);
-        const loLv = Math.floor(showLv), frac = showLv - loLv;
-        const label = frac < 0.15 ? techNames[loLv]
-                    : frac > 0.85 ? techNames[Math.min(loLv+1,5)]
-                    : `${techNames[loLv]} → ${techNames[Math.min(loLv+1,5)]}`;
+        const showRaw = sceneTgt - viewOffset;
+        let label = '🗺️L0.5世界地图';
+        if (showRaw >= 0) {
+            const loLv = Math.floor(showRaw);
+            const frac = showRaw - loLv;
+            label = frac < 0.15 ? techNames[loLv]
+                : frac > 0.85 ? techNames[Math.min(loLv+1,5)]
+                : `${techNames[loLv]} → ${techNames[Math.min(loLv+1,5)]}`;
+        }
         ctx.save();
         const tw = ctx.measureText(label).width + 28;
         ctx.fillStyle='rgba(0,0,0,0.5)';
