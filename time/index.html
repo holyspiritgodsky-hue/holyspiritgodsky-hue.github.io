@@ -391,6 +391,7 @@
 
         /* 顶部进度条 */
         .top-progress-bar {
+            display: none;
             position: absolute;
             bottom: 50px;
             left: 50%;
@@ -1415,7 +1416,7 @@
         <div class="top-bar">
             <div class="top-status-row">
                 <div class="civilization-level" id="gameDate">📅 2025年1月</div>
-                <div class="civilization-level" id="civLevel">🌍 行星文明</div>
+                <div class="civilization-level" id="civLevel">🌍 Lv.1 行星文明</div>
                 <div class="civilization-level" id="countryTrait">🏳️ 未选择国家</div>
             </div>
             <div class="resources-compact">
@@ -1441,17 +1442,10 @@
                     </div>
                 </div>
                 <div class="resource-compact">
-                    <span class="resource-icon-small">💵</span>
+                    <span class="resource-icon-small">🚀</span>
                     <div>
-                        <div class="resource-value-small" id="totalMoneyVal">0</div>
-                        <div class="resource-rate-small">金钱</div>
-                    </div>
-                </div>
-                <div class="resource-compact">
-                    <span class="resource-icon-small">🧠</span>
-                    <div>
-                        <div class="resource-value-small" id="researchPointsVal">0</div>
-                        <div class="resource-rate-small">研究能力</div>
+                        <div class="resource-value-small" id="civTierVal">Lv.0</div>
+                        <div class="resource-rate-small">文明等级</div>
                     </div>
                 </div>
             </div>
@@ -1527,34 +1521,17 @@
         const game = {
             ore: 0,           // 矿石（基础资源，点击和工厂产出）
             energy: 0,        // 能源（用矿石生产）
-            tech: 0,          // 科技点（用能源驱动）
+            tech: 1500,       // 科技点（调试默认值）
             ironOre: 0,
             goldOre: 0,
             uraniumOre: 0,
-            techLevel: 0,     // 科技等级 0-4
+            techLevel: 0,     // 科技等级显示为 Lv.1-Lv.5
             startYear: 2025,
             calendarMonthsElapsed: 0,
             baseClickPower: 100,
             clickPower: 100,  // 点击获得矿石
             shipsBuilt: 0,
             giantShipsBuilt: 0,
-            totalMoney: 0,
-            researchPoints: 0,
-            moneyPerStep: 1,
-            researchPerStep: 0.2,
-            currentMoneyStepGain: 0,
-            currentResearchStepGain: 0,
-            rank: 'intern',
-            rankTitle: '见习生',
-            schoolTrainingProgress: 0,
-            labPromotionProgress: 0,
-            factoryDroneProgress: 0,
-            scoutDrones: 0,
-            moonScanPoints: 0,
-            moonScouted: false,
-            autoCompanyIncomePerSec: 0,
-            jetpackOwned: false,
-            remoteWorkTerminal: false,
             orePerSec: 0,     // 矿石产量
             energyPerSec: 0,  // 能源产量
             techPerSec: 0,    // 科技产量
@@ -1658,9 +1635,9 @@
                 { id: 'e3', name: '卫星太阳能', icon: '🛰️', baseProduction: 120, baseCost: 5000, costMult: 1.14, costType: 'ore', outputType: 'energy' },
                 { id: 'e4', name: '反物质引擎', icon: '✨', baseProduction: 800, baseCost: 30000, costMult: 1.14, costType: 'ore', outputType: 'energy' }
             ],
-            // 科技系统：消耗科研值，解锁科技等级（每个只能购买一次）
+            // 科技系统：消耗科技值，解锁科技等级（每个只能购买一次）
             tech: [
-                { id: 't1', name: '地月引力桥', icon: '🌙', techLevel: 1, baseCost: 100, desc: '连接地球与月球，开启文明新纪元', costType: 'researchPoints', unlocked: false },
+                { id: 't1', name: '地月引力桥', icon: '🌙', techLevel: 1, baseCost: 100, desc: '连接地球与月球，开启文明新纪元', costType: 'tech', unlocked: false },
                 { id: 't2', name: '太阳系引力桥', icon: '☀️', techLevel: 2, baseCost: 300, desc: '掌控太阳系内行星，文明跨越式发展', costType: 'tech', unlocked: false },
                 { id: 't3', name: '星际引力桥', icon: '🌠', techLevel: 3, baseCost: 1500, desc: '穿越恒星系间的虚空，开创星际文明新纪元', costType: 'tech', unlocked: false },
                 { id: 't4', name: '银河系引力桥', icon: '🌌', techLevel: 4, baseCost: 8000, desc: '银河文明巅峰，征服星辰大海', costType: 'tech', unlocked: false }
@@ -1681,14 +1658,6 @@
             if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
             if (num < 1000000000) return (num / 1000000).toFixed(2) + 'M';
             return (num / 1000000000).toFixed(2) + 'B';
-        }
-
-        function formatStepValue(num) {
-            const value = Number(num) || 0;
-            if (value >= 1000) return formatNumber(value);
-            if (value >= 10) return value.toFixed(1).replace(/\.0$/, '');
-            if (value >= 1) return value.toFixed(2).replace(/0+$/, '').replace(/\.$/, '');
-            return value.toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
         }
 
         function getCalendarText() {
@@ -1749,7 +1718,7 @@
 
         function getDefaultPlanetSlots() {
             return {
-                earth: { autoFactory: 1, robotLegion: 0 },
+                earth: { autoFactory: 0, robotLegion: 0 },
                 moon: { autoFactory: 0, robotLegion: 0 },
                 venus: { autoFactory: 0, robotLegion: 0 },
                 mercury: { autoFactory: 0, robotLegion: 0 },
@@ -1761,7 +1730,7 @@
 
         function getDefaultSlotLayout() {
             return {
-                earth: ['autoFactory', null, null, null, null, null, null, null],
+                earth: [null, null, null, null, null, null, null, null],
                 moon: [null],
                 venus: [null],
                 mercury: [null],
@@ -2276,14 +2245,9 @@
 
             game.upgrades[category].forEach((upgrade, index) => {
                 if (category === 'tech') {
-                    const techCostType = upgrade.costType === 'researchPoints' ? 'researchPoints' : 'tech';
-                    const canAfford = techCostType === 'researchPoints'
-                        ? (game.researchPoints >= upgrade.baseCost)
-                        : (game.tech >= upgrade.baseCost);
+                    const canAfford = game.tech >= upgrade.baseCost;
                     const isLocked = index > 0 && !game.upgrades.tech[index - 1].unlocked;
                     const alreadyUnlocked = upgrade.unlocked;
-                    const costIcon = techCostType === 'researchPoints' ? '🧠' : '🔬';
-                    const costName = techCostType === 'researchPoints' ? '研究能力' : '科研值';
 
                     const card = document.createElement('div');
                     card.className = `upgrade-card ${alreadyUnlocked ? 'disabled' : canAfford && !isLocked ? '' : 'disabled'}`;
@@ -2294,7 +2258,7 @@
                         </div>
                         <div style="font-size:0.75rem;color:#94a3b8;margin:0.5rem 0;line-height:1.4;">${upgrade.desc}</div>
                         <div class="upgrade-stats">
-                            <span class="upgrade-cost-label">${costIcon} ${formatNumber(upgrade.baseCost)} ${costName}</span>
+                            <span class="upgrade-cost-label">🔬 ${formatNumber(upgrade.baseCost)} 科技</span>
                             <span style="color:#a855f7;font-size:0.75rem;">Lv.${upgrade.techLevel}</span>
                         </div>
                         ${isLocked ? '<div style="font-size:0.7rem;color:#f59e0b;margin-top:0.3rem;">需要前置科技</div>' : ''}
@@ -2433,22 +2397,15 @@
 
         // 购买科技
         function buyTech(tech) {
-            const techCostType = tech.costType === 'researchPoints' ? 'researchPoints' : 'tech';
-            const canAfford = techCostType === 'researchPoints'
-                ? (game.researchPoints >= tech.baseCost)
-                : (game.tech >= tech.baseCost);
+            const canAfford = game.tech >= tech.baseCost;
 
             if (canAfford && !tech.unlocked) {
-                if (techCostType === 'researchPoints') {
-                    game.researchPoints -= tech.baseCost;
-                } else {
-                    game.tech -= tech.baseCost;
-                }
+                game.tech -= tech.baseCost;
                 tech.unlocked = true;
                 game.techLevel = tech.techLevel;
                 
                 // 更新文明等级显示
-                const techNames = ['🌍 行星文明', '🌙 地月文明', '☀️ 太阳系文明', '🌠 星际文明', '🌌 银河文明'];
+                const techNames = ['🌍 Lv.1 行星文明', '🌙 Lv.2 地月文明', '☀️ Lv.3 太阳系文明', '🌠 Lv.4 星际文明', '🌌 Lv.5 银河文明'];
                 document.getElementById('civLevel').textContent = techNames[game.techLevel];
                 
                 // 重置用户缩放，平滑过渡到新推荐视角
@@ -2624,8 +2581,7 @@
             const oreRateEl = document.getElementById('oreRate');
             const energyRateEl = document.getElementById('energyRate');
             const techRateEl = document.getElementById('techRate');
-            const totalMoneyValEl = document.getElementById('totalMoneyVal');
-            const researchPointsValEl = document.getElementById('researchPointsVal');
+            const civTierValEl = document.getElementById('civTierVal');
 
             if (oreValEl) oreValEl.textContent = formatNumber(game.ore);
             if (energyValEl) energyValEl.textContent = formatNumber(game.energy);
@@ -2633,8 +2589,7 @@
             if (oreRateEl) oreRateEl.textContent = '+' + formatNumber(game.orePerSec) + '/秒';
             if (energyRateEl) energyRateEl.textContent = '+' + formatNumber(game.energyPerSec) + '/秒';
             if (techRateEl) techRateEl.textContent = '+' + formatNumber(game.techPerSec) + '/秒';
-            if (totalMoneyValEl) totalMoneyValEl.textContent = formatNumber(game.totalMoney || 0);
-            if (researchPointsValEl) researchPointsValEl.textContent = formatStepValue(game.researchPoints || 0);
+            if (civTierValEl) civTierValEl.textContent = 'Lv.' + ((Number(game.techLevel) || 0) + 1);
             updateLevelActionHud();
         }
 
@@ -3001,6 +2956,10 @@
                 savedGame.country = countryMap[savedGame.country];
             }
             Object.assign(game, savedGame);
+            // 清理旧版本残留字段，避免场景等级被错误覆盖
+            if (Object.prototype.hasOwnProperty.call(game, 'selectedTechOptionLevel')) {
+                delete game.selectedTechOptionLevel;
+            }
             game.upgrades = buildUpgradesState(savedGame.upgrades);
             game.startYear = Number(game.startYear) || 2026;
             game.calendarMonthsElapsed = Math.max(0, Number(game.calendarMonthsElapsed) || 0);
@@ -3010,23 +2969,6 @@
             game.uraniumOre = Math.max(0, Number(game.uraniumOre) || 0);
             game.shipsBuilt = Math.max(0, Number(game.shipsBuilt) || 0);
             game.giantShipsBuilt = Math.max(0, Number(game.giantShipsBuilt) || 0);
-            game.totalMoney = Math.max(0, Number(game.totalMoney) || 0);
-            game.researchPoints = Math.max(0, Number(game.researchPoints) || 0);
-            game.moneyPerStep = Math.max(0, Number(game.moneyPerStep) || 1);
-            game.researchPerStep = Math.max(0, Number(game.researchPerStep) || 0.2);
-            game.currentMoneyStepGain = Math.max(0, Number(game.currentMoneyStepGain) || 0);
-            game.currentResearchStepGain = Math.max(0, Number(game.currentResearchStepGain) || 0);
-            game.rank = ['intern', 'engineer', 'chair'].includes(game.rank) ? game.rank : 'intern';
-            game.rankTitle = typeof game.rankTitle === 'string' && game.rankTitle ? game.rankTitle : '见习生';
-            game.schoolTrainingProgress = Math.max(0, Number(game.schoolTrainingProgress) || 0);
-            game.labPromotionProgress = Math.max(0, Number(game.labPromotionProgress) || 0);
-            game.factoryDroneProgress = Math.max(0, Number(game.factoryDroneProgress) || 0);
-            game.scoutDrones = Math.max(0, Number(game.scoutDrones) || 0);
-            game.moonScanPoints = Math.max(0, Number(game.moonScanPoints) || 0);
-            game.moonScouted = !!game.moonScouted;
-            game.autoCompanyIncomePerSec = Math.max(0, Number(game.autoCompanyIncomePerSec) || 0);
-            game.jetpackOwned = !!game.jetpackOwned;
-            game.remoteWorkTerminal = !!game.remoteWorkTerminal;
             game.earthClickCount = Math.max(0, Number(game.earthClickCount) || 0);
             game.earthConquestLevel = Math.max(0, Math.min(4, Math.floor(Number(game.earthConquestLevel) || 0)));
             game.moonClickCount = Math.max(0, Number(game.moonClickCount) || 0);
@@ -3097,7 +3039,7 @@
                 game.tech += offlineTech;
             }
 
-            const techNames = ['🌍 行星文明', '🌙 地月文明', '☀️ 太阳系文明', '🌠 星际文明', '🌌 银河文明'];
+            const techNames = ['🌍 Lv.1 行星文明', '🌙 Lv.2 地月文明', '☀️ Lv.3 太阳系文明', '🌠 Lv.4 星际文明', '🌌 Lv.5 银河文明'];
             document.getElementById('civLevel').textContent = techNames[game.techLevel] || techNames[0];
             updateSolarOverlay();  // 恢复太阳系背景层状态
             updateProduction();
@@ -3284,6 +3226,7 @@
             if (!cfg) return;
             game.ore = cfg.ore;
             game.energy = cfg.energy;
+            game.tech = 1500;
             game.totalEarned = 0;  // 初始礼包不计入总收益，避免立刻触发阶段推进
             game.baseClickPower = cfg.clickPower;
             game.clickPower = cfg.clickPower;
@@ -3292,23 +3235,6 @@
             game.uraniumOre = 0;
             game.shipsBuilt = 0;
             game.giantShipsBuilt = 0;
-            game.totalMoney = 0;
-            game.researchPoints = 0;
-            game.moneyPerStep = 1;
-            game.researchPerStep = 0.2;
-            game.currentMoneyStepGain = 0;
-            game.currentResearchStepGain = 0;
-            game.rank = 'intern';
-            game.rankTitle = '见习生';
-            game.schoolTrainingProgress = 0;
-            game.labPromotionProgress = 0;
-            game.factoryDroneProgress = 0;
-            game.scoutDrones = 0;
-            game.moonScanPoints = 0;
-            game.moonScouted = false;
-            game.autoCompanyIncomePerSec = 0;
-            game.jetpackOwned = false;
-            game.remoteWorkTerminal = false;
             game.startYear = 2026;
             game.calendarMonthsElapsed = 0;
             game.earthClickCount = 0;
@@ -3381,16 +3307,19 @@
             location.reload(true);  // 强制从服务器重新加载
         }
 
-        // 测试科技等级（循环切换Lv0-4）
+        // 测试科技等级（循环切换Lv1-Lv5显示）
         function testTechLevel() {
             game.techLevel = (game.techLevel + 1) % 5;
             
             // 更新显示
-            const techNames = ['🌍 行星文明', '🌙 地月文明', '☀️ 太阳系文明', '🌠 星际文明', '🌌 银河文明'];
+            const techNames = ['🌍 Lv.1 行星文明', '🌙 Lv.2 地月文明', '☀️ Lv.3 太阳系文明', '🌠 Lv.4 星际文明', '🌌 Lv.5 银河文明'];
             document.getElementById('civLevel').textContent = techNames[game.techLevel];
             
             // 重置用户缩放到推荐视角
             applyUserZoom();
+            if (typeof window.forceSceneTransitionTo === 'function') {
+                window.forceSceneTransitionTo(game.techLevel);
+            }
             
             // 更新背景层
             updateSolarOverlay();
