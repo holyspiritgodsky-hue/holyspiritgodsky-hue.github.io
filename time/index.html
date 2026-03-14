@@ -1414,11 +1414,6 @@
     <div class="ui-overlay">
         <!-- 顶部栏 -->
         <div class="top-bar">
-            <div class="top-status-row">
-                <div class="civilization-level" id="gameDate">📅 2025年1月</div>
-                <div class="civilization-level" id="civLevel">🌍 Lv.1 行星文明</div>
-                <div class="civilization-level" id="countryTrait">🏳️ 未选择国家</div>
-            </div>
             <div class="resources-compact">
                 <div class="resource-compact">
                     <span class="resource-icon-small">💎</span>
@@ -1514,6 +1509,9 @@
     </div>
 
     <script src="battle.js"></script>
+    <script src="cardBattle.js"></script>
+    <script src="data/level05_geo_layout_preset.js"></script>
+    <script src="level05.js"></script>
     <script src="scene.js"></script>
     <script src="events.js"></script>
     <script>
@@ -1658,16 +1656,6 @@
             if (num < 1000000) return (num / 1000).toFixed(1) + 'K';
             if (num < 1000000000) return (num / 1000000).toFixed(2) + 'M';
             return (num / 1000000000).toFixed(2) + 'B';
-        }
-
-        function getCalendarText() {
-            const startYear = Number(game.startYear) || 2025;
-            const elapsed = Math.max(0, Number(game.calendarMonthsElapsed) || 0);
-            const monthIndex = Math.floor(elapsed);
-            const year = startYear + Math.floor(monthIndex / 12);
-            const month = (monthIndex % 12) + 1;
-            const monthText = String(month).padStart(2, '0');
-            return `📅 ${year}.${monthText}`;
         }
 
         const planetSlotRules = {
@@ -2406,7 +2394,8 @@
                 
                 // 更新文明等级显示
                 const techNames = ['🌍 Lv.1 行星文明', '🌙 Lv.2 地月文明', '☀️ Lv.3 太阳系文明', '🌠 Lv.4 星际文明', '🌌 Lv.5 银河文明'];
-                document.getElementById('civLevel').textContent = techNames[game.techLevel];
+                const civLevelEl = document.getElementById('civLevel');
+                if (civLevelEl) civLevelEl.textContent = techNames[game.techLevel];
                 
                 // 重置用户缩放，平滑过渡到新推荐视角
                 applyUserZoom();
@@ -2565,16 +2554,6 @@
 
         // 更新UI
         function updateUI() {
-            const gameDateEl = document.getElementById('gameDate');
-            if (gameDateEl) {
-                gameDateEl.textContent = getCalendarText();
-            }
-            const countryTraitEl = document.getElementById('countryTrait');
-            if (countryTraitEl) {
-                const name = game.countryName || '未选择国家';
-                const trait = game.countryTrait || '无';
-                countryTraitEl.textContent = `🏳️ ${name}｜特性：${trait}`;
-            }
             const oreValEl = document.getElementById('oreVal');
             const energyValEl = document.getElementById('energyVal');
             const techValEl = document.getElementById('techVal');
@@ -2818,7 +2797,8 @@
         // 推进阶段
         function advanceStage(stage) {
             game.currentStage = stage.id;
-            document.getElementById('civLevel').textContent = stage.name;
+            const civLevelEl = document.getElementById('civLevel');
+            if (civLevelEl) civLevelEl.textContent = stage.name;
 
             // 解锁行星
             planets.forEach(planet => {
@@ -2909,7 +2889,6 @@
             game.energy += game.energyPerSec / 5;
             game.tech += game.techPerSec / 5;
             game.totalEarned += game.orePerSec / 5;
-            game.calendarMonthsElapsed += 0.2;
             checkNarrativePacing();
             checkCondemnationCollapse();
             checkChinaTerritoryWarline();
@@ -2925,6 +2904,11 @@
         // 渲染循环 - 限制帧率到30FPS以降低CPU占用
         let lastFrameTime = 0;
         function gameLoop(timestamp) {
+            const cardBattleActive = !!(window.CardBattle && typeof window.CardBattle.isActive === 'function' && window.CardBattle.isActive());
+            if (cardBattleActive) {
+                requestAnimationFrame(gameLoop);
+                return;
+            }
             // 限制到30FPS (约33ms一帧)
             if (timestamp - lastFrameTime >= 33) {
                 drawSolarSystem();
@@ -3040,7 +3024,8 @@
             }
 
             const techNames = ['🌍 Lv.1 行星文明', '🌙 Lv.2 地月文明', '☀️ Lv.3 太阳系文明', '🌠 Lv.4 星际文明', '🌌 Lv.5 银河文明'];
-            document.getElementById('civLevel').textContent = techNames[game.techLevel] || techNames[0];
+            const civLevelEl = document.getElementById('civLevel');
+            if (civLevelEl) civLevelEl.textContent = techNames[game.techLevel] || techNames[0];
             updateSolarOverlay();  // 恢复太阳系背景层状态
             updateProduction();
             return true;
@@ -3313,7 +3298,8 @@
             
             // 更新显示
             const techNames = ['🌍 Lv.1 行星文明', '🌙 Lv.2 地月文明', '☀️ Lv.3 太阳系文明', '🌠 Lv.4 星际文明', '🌌 Lv.5 银河文明'];
-            document.getElementById('civLevel').textContent = techNames[game.techLevel];
+            const civLevelEl = document.getElementById('civLevel');
+            if (civLevelEl) civLevelEl.textContent = techNames[game.techLevel];
             
             // 重置用户缩放到推荐视角
             applyUserZoom();
