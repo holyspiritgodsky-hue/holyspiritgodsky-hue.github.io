@@ -74,6 +74,14 @@ font-weight:bold;
 transition:0.2s;
 }
 
+.hero-actions{
+display:flex;
+justify-content:center;
+align-items:center;
+gap:16px;
+flex-wrap:wrap;
+}
+
 .button:hover{
 transform:scale(1.05);
 }
@@ -161,6 +169,27 @@ margin:auto;
 background:#0f1420;
 }
 
+.mini-video-section{
+text-align:center;
+padding:10px 20px 20px 20px;
+}
+
+.mini-video-box{
+display:inline-block;
+width:min(240px, 72vw);
+background:#11182a;
+border-radius:10px;
+padding:8px;
+border:1px solid rgba(255,255,255,0.08);
+}
+
+.mini-video-box video{
+width:100%;
+height:auto;
+display:block;
+border-radius:6px;
+}
+
 .comments-section h2{
 font-size:32px;
 margin-bottom:20px;
@@ -205,9 +234,15 @@ margin-top:20px;
 每个游戏，都是一个独立世界。
 </p>
 
+<div class="hero-actions">
 <a href="/empire" class="button">
 进入太阳系探索 →
 </a>
+
+<a href="https://www.gameart.top/time" class="button">
+回到地球逆转时空 →
+</a>
+</div>
 
 </div>
 
@@ -276,6 +311,17 @@ GameArt 是一个新型游戏平台。<br><br>
 
 </div>
 
+</div>
+
+
+
+<div class="mini-video-section" id="video">
+<div class="mini-video-box">
+<video controls playsinline preload="metadata">
+<source src="gameArt.top.mp4" type="video/mp4">
+你的浏览器不支持视频播放。
+</video>
+</div>
 </div>
 
 
