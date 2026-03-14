@@ -68,24 +68,25 @@ const earthWalker = {
     pendingMoneyGain: 0,
     pendingResearchGain: 0,
     lastSettledMonth: -1,
-    nextNotEnoughHintAt: 0,
     nextFactoryHintAt: 0,
     nextTowerHintAt: 0,
     nextLabHintAt: 0,
     nextPortalHintAt: 0,
     holePromptShown: false,
+    immortalLv: 1,
+    nextImmortalPopupAt: 0,
     speed: 150,
     sizeRatio: 0.24,
     lastUpdateAt: performance.now(),
     initialized: false
 };
 const earthWorkZones = [
-    { id: 'factory', label: '工厂', role: 'factory', x: 0.30, y: 0.20, w: 0.34, h: 0.26, color: 'rgba(251, 191, 36, 0.25)', border: '#fde68a' },
-    { id: 'lab', label: '实验室', role: 'lab', x: -0.64, y: 0.20, w: 0.34, h: 0.26, color: 'rgba(167, 139, 250, 0.26)', border: '#c4b5fd' },
-    { id: 'command_tower', label: '黑洞指挥塔', role: 'tower', x: 0.56, y: -0.02, w: 0.22, h: 0.34, color: 'rgba(251, 113, 133, 0.24)', border: '#fda4af' }
+    { id: 'factory', label: '作战中心', role: 'factory', x: -0.64, y: 0.20, w: 0.34, h: 0.26, color: 'rgba(251, 191, 36, 0.25)', border: '#fde68a' },
+    { id: 'lab', label: '实验室', role: 'lab', x: 0.34, y: -0.52, w: 0.34, h: 0.26, color: 'rgba(167, 139, 250, 0.26)', border: '#c4b5fd' },
+    { id: 'command_tower', label: '永生研究所', role: 'tower', x: 0.56, y: -0.02, w: 0.22, h: 0.34, color: 'rgba(251, 113, 133, 0.24)', border: '#fda4af' }
 ];
 const earthPreludeZones = [
-    { id: 'time_machine', label: '时空机器', role: 'time_machine', x: 0.18, y: -0.08, w: 0.30, h: 0.28, color: 'rgba(244, 244, 245, 0.18)', border: '#e5e7eb' }
+    { id: 'time_machine', label: '时空机器', role: 'time_machine', x: 0.34, y: -0.52, w: 0.30, h: 0.28, color: 'rgba(244, 244, 245, 0.18)', border: '#e5e7eb' }
 ];
 const SCHOOL_TUITION_COST = 1000;
 const SCHOOL_PROMOTION_HOLD_SECONDS = 3;
@@ -127,6 +128,28 @@ const earthImg = new Image();
 const earthSplitImg = new Image();
 const moonImg = new Image();
 const worldMapImg = new Image();
+const earthZoneImgs = {
+    factory: new Image(),
+    lab: new Image(),
+    tower: new Image()
+};
+const earthZoneImgLoaded = {
+    factory: false,
+    lab: false,
+    tower: false
+};
+const slotBuildingImgs = {
+    autoFactory: new Image(),
+    robotLegion: new Image(),
+    energyStation: new Image(),
+    researchCenter: new Image()
+};
+const slotBuildingImgLoaded = {
+    autoFactory: false,
+    robotLegion: false,
+    energyStation: false,
+    researchCenter: false
+};
 let earthImgLoaded = false;
 let earthSplitImgLoaded = false;
 let moonImgLoaded = false;
@@ -135,631 +158,45 @@ earthImg.onload = () => { earthImgLoaded = true; };
 earthSplitImg.onload = () => { earthSplitImgLoaded = true; };
 moonImg.onload = () => { moonImgLoaded = true; };
 worldMapImg.onload = () => { worldMapImgLoaded = true; };
+Object.keys(earthZoneImgs).forEach(key => {
+    earthZoneImgs[key].onload = () => { earthZoneImgLoaded[key] = true; };
+});
+Object.keys(slotBuildingImgs).forEach(key => {
+    slotBuildingImgs[key].onload = () => { slotBuildingImgLoaded[key] = true; };
+});
 earthImg.src = 'img/earth.jpg';
 earthSplitImg.src = 'img/earth2.jpg';
 moonImg.src = 'img/moon.jpg';
-worldMapImg.src = 'img/1.jpg';
+worldMapImg.src = 'img/world_equirect_2000.png';
+earthZoneImgs.factory.src = 'img/factory.png';
+earthZoneImgs.lab.src = 'img/nukler.png';
+earthZoneImgs.tower.src = 'img/by.png';
+slotBuildingImgs.autoFactory.src = 'https://picsum.photos/seed/earth-factory/220/220';
+slotBuildingImgs.robotLegion.src = 'https://picsum.photos/seed/earth-robot/220/220';
+slotBuildingImgs.energyStation.src = 'https://picsum.photos/seed/earth-energy/220/220';
+slotBuildingImgs.researchCenter.src = 'https://picsum.photos/seed/earth-research/220/220';
 
 // 视图层级偶停：0 = 当前科技等级画面，+1 = 退回一个等级的画面
 let viewOffset = 0.0;
 let viewOffsetTgt = 0.0;
 let rollbackLockUntil = 0;
-let lastObservedTechLevel = 0;
-const SCENE_RENDER_MODE_NORMAL = 'normal';
-const SCENE_RENDER_MODE_LEVEL05 = 'level0_5';
-let currentSceneRenderMode = SCENE_RENDER_MODE_NORMAL;
-let level05MapRect = null;
-let level05EndTurnRect = null;
-const LEVEL05_FACTION_ORDER = ['us', 'ru', 'cn', 'eu'];
-const LEVEL05_FACTION_COLOR = {
-    us: 'rgba(59,130,246,0.40)',
-    ru: 'rgba(239,68,68,0.40)',
-    cn: 'rgba(245,158,11,0.40)',
-    eu: 'rgba(168,85,247,0.40)',
-    none: 'rgba(15,23,42,0.10)'
-};
-const LEVEL05_FACTION_FLAG = {
-    us: '🇺🇸',
-    ru: '🇷🇺',
-    cn: '🇨🇳',
-    eu: '🇪🇺'
-};
-const LEVEL05_REGION_LAYOUT = [
-    { id: 'na_w', x: 0.16, y: 0.36, r: 0.060, owner: 'us', adj: ['na_e', 'pac'] },
-    { id: 'na_e', x: 0.28, y: 0.34, r: 0.058, owner: 'us', adj: ['na_w', 'atl', 'eu_w'] },
-    { id: 'pac', x: 0.36, y: 0.52, r: 0.052, owner: 'us', adj: ['na_w', 'cn_s', 'sea'] },
-    { id: 'atl', x: 0.43, y: 0.36, r: 0.048, owner: 'eu', adj: ['na_e', 'eu_w', 'af_n'] },
-    { id: 'eu_w', x: 0.50, y: 0.30, r: 0.052, owner: 'eu', adj: ['atl', 'eu_e', 'ru_w', 'af_n'] },
-    { id: 'eu_e', x: 0.57, y: 0.30, r: 0.050, owner: 'eu', adj: ['eu_w', 'ru_w', 'ru_e', 'me'] },
-    { id: 'ru_w', x: 0.62, y: 0.24, r: 0.055, owner: 'ru', adj: ['eu_w', 'eu_e', 'ru_e'] },
-    { id: 'ru_e', x: 0.74, y: 0.24, r: 0.058, owner: 'ru', adj: ['ru_w', 'cn_n', 'cn_s'] },
-    { id: 'cn_n', x: 0.72, y: 0.40, r: 0.054, owner: 'cn', adj: ['ru_e', 'cn_s', 'me'] },
-    { id: 'cn_s', x: 0.73, y: 0.51, r: 0.056, owner: 'cn', adj: ['cn_n', 'sea', 'pac', 'ru_e'] },
-    { id: 'me', x: 0.62, y: 0.43, r: 0.050, owner: 'ru', adj: ['eu_e', 'cn_n', 'af_n', 'af_s'] },
-    { id: 'af_n', x: 0.54, y: 0.46, r: 0.050, owner: 'eu', adj: ['atl', 'eu_w', 'me', 'af_s'] },
-    { id: 'af_s', x: 0.55, y: 0.60, r: 0.052, owner: 'cn', adj: ['af_n', 'me', 'sea'] },
-    { id: 'sea', x: 0.66, y: 0.62, r: 0.050, owner: 'cn', adj: ['cn_s', 'af_s', 'pac'] }
-];
-const LEVEL05_START_OWNER = {
-    na_e: 'us',
-    ru_w: 'ru',
-    cn_n: 'cn',
-    eu_w: 'eu'
-};
-
-function isLevel05RenderMode() {
-    return currentSceneRenderMode === SCENE_RENDER_MODE_LEVEL05;
-}
-
-function getFactionPowerScale(faction) {
-    if (faction === 'us') return 1.06;
-    if (faction === 'ru') return 1.02;
-    if (faction === 'cn') return 1.08;
-    if (faction === 'eu') return 1.00;
-    return 1;
-}
-
-function ensureLevel05WarState() {
-    if (!window.game) return null;
-    if (!window.game.level05War || !window.game.level05War.regions) {
-        const regions = {};
-        LEVEL05_REGION_LAYOUT.forEach(item => {
-            const owner = LEVEL05_START_OWNER[item.id] || 'none';
-            regions[item.id] = {
-                owner,
-                control: owner === 'none' ? (18 + Math.random() * 14) : (72 + Math.random() * 20),
-                supply: owner === 'none' ? (24 + Math.random() * 18) : (65 + Math.random() * 28),
-                troops: owner === 'none' ? 0 : (9 + ((Math.random() * 4) | 0)),
-                ap: owner === 'none' ? 0 : 2
-            };
-        });
-        window.game.level05War = {
-            playerFaction: 'cn',
-            turn: 1,
-            phase: 'player',
-            selectedRegionId: null,
-            lastActionAt: 0,
-            hoverRegionId: null,
-            hoverEndTurn: false,
-            attackFx: [],
-            regions
-        };
-    }
-    const war = window.game.level05War;
-    war.phase = war.phase === 'ai' ? 'ai' : 'player';
-    war.turn = Math.max(1, Number(war.turn) || 1);
-    war.selectedRegionId = typeof war.selectedRegionId === 'string' ? war.selectedRegionId : null;
-    war.hoverEndTurn = !!war.hoverEndTurn;
-    war.attackFx = Array.isArray(war.attackFx) ? war.attackFx : [];
-    LEVEL05_REGION_LAYOUT.forEach(item => {
-        const s = war.regions[item.id];
-        if (!s) return;
-        s.owner = ['us', 'ru', 'cn', 'eu', 'none'].includes(s.owner) ? s.owner : (LEVEL05_START_OWNER[item.id] || 'none');
-        s.control = Math.max(1, Math.min(100, Number(s.control) || 60));
-        s.supply = Math.max(1, Math.min(100, Number(s.supply) || 60));
-        const troopsFloor = s.owner === 'none' ? 0 : 1;
-        s.troops = Math.max(troopsFloor, Math.min(40, Math.floor(Number(s.troops) || 0)));
-        s.ap = Math.max(0, Math.min(4, Math.floor(Number(s.ap) || 0)));
-    });
-
-    return war;
-}
-
-function refreshLevel05TurnAp(war) {
-    if (!war) return;
-    LEVEL05_REGION_LAYOUT.forEach(item => {
-        const s = war.regions[item.id];
-        if (!s) return;
-        if (s.owner === 'none') s.ap = 0;
-        else s.ap = s.owner === war.playerFaction ? 2 : 1;
-    });
-}
-
-function getLevel05FactionRegionCount(war, faction) {
-    if (!war || !faction) return 0;
-    let count = 0;
-    LEVEL05_REGION_LAYOUT.forEach(item => {
-        const s = war.regions[item.id];
-        if (s && s.owner === faction) count++;
-    });
-    return count;
-}
-
-function getLevel05FactionName(faction) {
-    if (faction === 'cn') return '中国';
-    if (faction === 'us') return '美国';
-    if (faction === 'ru') return '俄罗斯';
-    if (faction === 'eu') return '欧盟';
-    return '该国家';
-}
-
-function triggerLevel05NationDefeat(war, faction) {
-    if (!war || war.gameOverShown) return;
-    war.gameOverShown = true;
-    war.phase = 'gameover';
-    const nationName = getLevel05FactionName(faction);
-    showStoryEvent(
-        '⚠️ 国家灭亡',
-        `${nationName} 已失去全部战区，战役失败。`,
-        '重开',
-        () => {
-            try {
-                localStorage.removeItem('spaceEmpireV5');
-                sessionStorage.setItem('resetFlag', 'true');
-            } catch (_) {}
-            location.reload(true);
-        }
-    );
-}
-
-function checkLevel05Elimination(war) {
-    if (!war) return;
-    if (getLevel05FactionRegionCount(war, war.playerFaction) <= 0) {
-        triggerLevel05NationDefeat(war, war.playerFaction);
-    }
-}
-
-function getLevel05RegionScreenPos(def) {
-    if (!def || !level05MapRect) return null;
-    return {
-        x: level05MapRect.x + def.x * level05MapRect.w,
-        y: level05MapRect.y + def.y * level05MapRect.h,
-        r: Math.max(16, Math.min(level05MapRect.w, level05MapRect.h) * def.r)
-    };
-}
-
-function getLevel05RegionByPoint(x, y) {
-    if (!level05MapRect) return null;
-    const rect = level05MapRect;
-    for (let i = LEVEL05_REGION_LAYOUT.length - 1; i >= 0; i--) {
-        const def = LEVEL05_REGION_LAYOUT[i];
-        const px = rect.x + def.x * rect.w;
-        const py = rect.y + def.y * rect.h;
-        const rr = Math.max(16, Math.min(rect.w, rect.h) * def.r);
-        const dx = x - px;
-        const dy = y - py;
-        if (dx * dx + dy * dy <= rr * rr) return def;
+let factoryLevel05Forced = false;
+// 滚轮在整数等级边界处的"卡顿"锁（需多滚一下才能穿越）
+let _scrollSnapLock = null; // null | { at: Number }
+function _getWheelSnapPt(from, delta) {
+    const to = from + delta;
+    for (let sp = 1.0; sp <= 5.0; sp += 1.0) {
+        if (from < sp && to >= sp) return sp;  // 向上穿越
+        if (from > sp && to <= sp) return sp;  // 向下穿越
     }
     return null;
 }
+let lastObservedTechLevel = 0;
+const SCENE_RENDER_MODE_NORMAL = 'normal';
+let currentSceneRenderMode = SCENE_RENDER_MODE_NORMAL;
 
-function resolveLevel05Attack(war, attackerFaction, fromDef, toDef) {
-    if (!war || !fromDef || !toDef) return false;
-    const fromState = war.regions[fromDef.id];
-    const toState = war.regions[toDef.id];
-    if (!fromState || !toState) return false;
-    if (fromState.owner !== attackerFaction || toState.owner === attackerFaction) return false;
-    if (!Array.isArray(fromDef.adj) || !fromDef.adj.includes(toDef.id)) return false;
-    if ((Number(fromState.troops) || 0) < 2) return false;
-    if ((Number(fromState.ap) || 0) <= 0) return false;
-
-    const committed = Math.max(2, Math.min(8, Math.floor((Number(fromState.troops) || 0) * 0.55)));
-    fromState.troops = Math.max(1, (Number(fromState.troops) || 0) - committed);
-    fromState.ap = Math.max(0, (Number(fromState.ap) || 0) - 1);
-
-    const attPower = getFactionPowerScale(attackerFaction)
-        * (0.72 + fromState.control / 140)
-        * (0.75 + fromState.supply / 160)
-        * (0.75 + committed / 10);
-    const defPower = getFactionPowerScale(toState.owner) * (0.62 + toState.control / 150) * (0.78 + toState.supply / 170);
-    const swing = attPower - defPower;
-    const damage = Math.max(6, Math.min(26, 13 + swing * 14 + (Math.random() - 0.5) * 5));
-    const recoil = Math.max(2, Math.min(9, 4 + defPower * 2.4 + Math.random() * 2.2));
-
-    toState.control -= damage;
-    fromState.control = Math.max(24, fromState.control - recoil);
-    fromState.supply = Math.max(18, fromState.supply - (3 + Math.random() * 2));
-    toState.troops = Math.max(1, (Number(toState.troops) || 0) - Math.max(1, Math.round(committed * (0.35 + Math.random() * 0.25))));
-
-    const fromPos = getLevel05RegionScreenPos(fromDef);
-    const toPos = getLevel05RegionScreenPos(toDef);
-    if (fromPos && toPos) {
-        war.attackFx.push({
-            fromX: fromPos.x,
-            fromY: fromPos.y,
-            toX: toPos.x,
-            toY: toPos.y,
-            attacker: attackerFaction,
-            startAt: performance.now(),
-            duration: 460,
-            committed
-        });
-        if (war.attackFx.length > 14) war.attackFx.splice(0, war.attackFx.length - 14);
-    }
-
-    if (toState.control <= 0) {
-        toState.owner = attackerFaction;
-        toState.control = 34 + Math.random() * 18;
-        toState.supply = 42 + Math.random() * 20;
-        toState.troops = Math.max(2, Math.floor(committed * 0.6));
-        if (window.game && attackerFaction === war.playerFaction) {
-            window.game.ore = Math.max(0, Number(window.game.ore) || 0) + 180;
-            window.game.tech = Math.max(0, Number(window.game.tech) || 0) + 70;
-            if (typeof window.updateUI === 'function') window.updateUI();
-        }
-    }
-    return true;
-}
-
-function resolveLevel05Move(war, faction, fromDef, toDef) {
-    if (!war || !fromDef || !toDef) return false;
-    const fromState = war.regions[fromDef.id];
-    const toState = war.regions[toDef.id];
-    if (!fromState || !toState) return false;
-    if (fromState.owner !== faction || toState.owner !== faction) return false;
-    if (!Array.isArray(fromDef.adj) || !fromDef.adj.includes(toDef.id)) return false;
-    if ((Number(fromState.ap) || 0) <= 0) return false;
-    if ((Number(fromState.troops) || 0) < 2) return false;
-
-    const moved = Math.max(1, Math.min(7, Math.floor((Number(fromState.troops) || 0) * 0.45)));
-    fromState.troops = Math.max(1, (Number(fromState.troops) || 0) - moved);
-    toState.troops = Math.max(1, Math.min(40, (Number(toState.troops) || 0) + moved));
-    fromState.ap = Math.max(0, (Number(fromState.ap) || 0) - 1);
-
-    const fromPos = getLevel05RegionScreenPos(fromDef);
-    const toPos = getLevel05RegionScreenPos(toDef);
-    if (fromPos && toPos) {
-        war.attackFx.push({
-            fromX: fromPos.x,
-            fromY: fromPos.y,
-            toX: toPos.x,
-            toY: toPos.y,
-            attacker: faction,
-            startAt: performance.now(),
-            duration: 380,
-            committed: moved,
-            moveOnly: true
-        });
-        if (war.attackFx.length > 14) war.attackFx.splice(0, war.attackFx.length - 14);
-    }
-    return true;
-}
-
-function runLevel05AiTurn(war, faction) {
-    if (!war || faction === war.playerFaction) return;
-    for (let step = 0; step < 2; step++) {
-        const candidates = [];
-        LEVEL05_REGION_LAYOUT.forEach(def => {
-            const state = war.regions[def.id];
-            if (!state || state.owner !== faction) return;
-            if ((Number(state.ap) || 0) <= 0 || (Number(state.troops) || 0) < 2) return;
-            (def.adj || []).forEach(adjId => {
-                const targetDef = LEVEL05_REGION_LAYOUT.find(r => r.id === adjId);
-                const targetState = targetDef ? war.regions[targetDef.id] : null;
-                if (!targetDef || !targetState || targetState.owner === faction) return;
-                const value = (100 - targetState.control) + (targetState.owner === war.playerFaction ? 16 : 0) + Math.random() * 12;
-                candidates.push({ fromDef: def, toDef: targetDef, score: value });
-            });
-        });
-        if (!candidates.length) break;
-        candidates.sort((a, b) => b.score - a.score);
-        resolveLevel05Attack(war, faction, candidates[0].fromDef, candidates[0].toDef);
-    }
-}
-
-function finishLevel05Round(war) {
-    if (!war) return;
-    war.turn = Math.max(1, Number(war.turn) || 1) + 1;
-    LEVEL05_FACTION_ORDER.forEach(f => runLevel05AiTurn(war, f));
-    Object.keys(war.regions).forEach(id => {
-        const state = war.regions[id];
-        state.control = Math.max(8, Math.min(100, state.control + 1.5 + Math.random() * 2.2));
-        state.supply = Math.max(10, Math.min(100, state.supply + 2.2 + Math.random() * 3));
-        if (state.owner === 'none') {
-            state.troops = 0;
-        } else {
-            state.troops = Math.max(1, Math.min(22, (Number(state.troops) || 0) + 1 + (Math.random() < 0.35 ? 1 : 0)));
-        }
-    });
-    refreshLevel05TurnAp(war);
-    war.phase = 'player';
-    war.selectedRegionId = null;
-    checkLevel05Elimination(war);
-}
-
-function tryEndLevel05PlayerTurn(war) {
-    if (!war || war.phase !== 'player') return;
-    war.phase = 'ai';
-    finishLevel05Round(war);
-}
-
-function handleLevel05MapClick(x, y) {
-    const war = ensureLevel05WarState();
-    if (!war) return;
-    if (war.phase === 'gameover') return;
-
-    if (level05EndTurnRect) {
-        const b = level05EndTurnRect;
-        const hitPad = 14;
-        if (x >= b.x - hitPad && x <= b.x + b.w + hitPad && y >= b.y - hitPad && y <= b.y + b.h + hitPad) {
-            tryEndLevel05PlayerTurn(war);
-            return;
-        }
-    }
-
-    const now = performance.now();
-    if (now - (war.lastActionAt || 0) < 120) return;
-    war.lastActionAt = now;
-
-    if (war.phase !== 'player') return;
-
-    const hit = getLevel05RegionByPoint(x, y);
-    if (!hit) {
-        war.selectedRegionId = null;
-        return;
-    }
-
-    const hitState = war.regions[hit.id];
-    if (!hitState) return;
-    if (!war.selectedRegionId) {
-        war.selectedRegionId = hitState.owner === war.playerFaction ? hit.id : null;
-        return;
-    }
-
-    const fromDef = LEVEL05_REGION_LAYOUT.find(r => r.id === war.selectedRegionId);
-    const fromState = fromDef ? war.regions[fromDef.id] : null;
-    if (!fromDef || !fromState || fromState.owner !== war.playerFaction) {
-        war.selectedRegionId = null;
-        return;
-    }
-
-    if (hit.id === fromDef.id) {
-        war.selectedRegionId = null;
-        return;
-    }
-
-    if (hitState.owner === war.playerFaction) {
-        war.selectedRegionId = hit.id;
-        return;
-    }
-
-    const attacked = resolveLevel05Attack(war, war.playerFaction, fromDef, hit);
-    if (attacked) {
-        war.selectedRegionId = fromDef.id;
-        checkLevel05Elimination(war);
-        return;
-    }
-
-    const moved = resolveLevel05Move(war, war.playerFaction, fromDef, hit);
-    if (moved) {
-        war.selectedRegionId = hit.id;
-    }
-}
-
-function drawFactionFlagBadge(faction, x, y, size) {
-    const w = Math.max(14, size * 0.95);
-    const h = Math.max(10, size * 0.62);
-    const left = x - w * 0.5;
-    const top = y - h * 0.5;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(left, top, w, h, 2);
-    ctx.clip();
-
-    function drawStar(cx, cy, outerR, innerR, points = 5) {
-        ctx.beginPath();
-        for (let i = 0; i < points * 2; i++) {
-            const ang = -Math.PI / 2 + (i * Math.PI) / points;
-            const rr = i % 2 === 0 ? outerR : innerR;
-            const px = cx + Math.cos(ang) * rr;
-            const py = cy + Math.sin(ang) * rr;
-            if (i === 0) ctx.moveTo(px, py);
-            else ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.fill();
-    }
-
-    if (faction === 'ru') {
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(left, top, w, h / 3);
-        ctx.fillStyle = '#2563eb';
-        ctx.fillRect(left, top + h / 3, w, h / 3);
-        ctx.fillStyle = '#dc2626';
-        ctx.fillRect(left, top + (h * 2) / 3, w, h / 3);
-    } else if (faction === 'cn') {
-        ctx.fillStyle = '#dc2626';
-        ctx.fillRect(left, top, w, h);
-        ctx.fillStyle = '#facc15';
-        drawStar(
-            left + w * 0.28,
-            top + h * 0.36,
-            Math.max(2, h * 0.18),
-            Math.max(1, h * 0.075),
-            5
-        );
-    } else if (faction === 'eu') {
-        ctx.fillStyle = '#1d4ed8';
-        ctx.fillRect(left, top, w, h);
-        ctx.fillStyle = '#facc15';
-        for (let i = 0; i < 8; i++) {
-            const a = (i / 8) * Math.PI * 2;
-            const sx = left + w * 0.5 + Math.cos(a) * w * 0.17;
-            const sy = top + h * 0.5 + Math.sin(a) * h * 0.22;
-            ctx.beginPath();
-            ctx.arc(sx, sy, Math.max(1, h * 0.04), 0, Math.PI * 2);
-            ctx.fill();
-        }
-    } else {
-        ctx.fillStyle = '#dc2626';
-        ctx.fillRect(left, top, w, h);
-        ctx.fillStyle = '#ffffff';
-        for (let i = 1; i <= 3; i++) {
-            ctx.fillRect(left, top + (h * i) / 7, w, Math.max(1, h * 0.08));
-        }
-        ctx.fillStyle = '#1d4ed8';
-        ctx.fillRect(left, top, w * 0.42, h * 0.56);
-    }
-
-    ctx.restore();
-    ctx.save();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-    ctx.strokeRect(left, top, w, h);
-    ctx.restore();
-}
-
-function drawLevel05WarOverlay(panelX, panelY, panelW, panelH) {
-    const war = ensureLevel05WarState();
-    if (!war) return;
-    level05MapRect = { x: panelX, y: panelY, w: panelW, h: panelH };
-    if ((Number(war.turn) || 0) <= 1) {
-        refreshLevel05TurnAp(war);
-    }
-
-    const btnW = Math.max(150, Math.min(210, panelW * 0.23));
-    const btnH = Math.max(44, Math.min(58, panelH * 0.10));
-    const btnX = panelX + (panelW - btnW) * 0.5;
-    let btnY = panelY + panelH - btnH - 12;
-    const panelEl = document.querySelector('.bottom-panel');
-    if (panelEl && !panelEl.classList.contains('is-collapsed')) {
-        const rect = panelEl.getBoundingClientRect();
-        btnY = Math.min(btnY, rect.top - btnH - 10);
-    }
-    level05EndTurnRect = { x: btnX, y: btnY, w: btnW, h: btnH };
-    const btnHovered = war.phase === 'player' && !!war.hoverEndTurn;
-
-    ctx.save();
-    const selectedDef = LEVEL05_REGION_LAYOUT.find(r => r.id === war.selectedRegionId) || null;
-    if (selectedDef) {
-        const fromPos = getLevel05RegionScreenPos(selectedDef);
-        (selectedDef.adj || []).forEach(adjId => {
-            const adjDef = LEVEL05_REGION_LAYOUT.find(r => r.id === adjId);
-            const adjPos = getLevel05RegionScreenPos(adjDef);
-            if (!fromPos || !adjPos) return;
-            const adjState = war.regions[adjId];
-            const isEnemy = !!adjState && adjState.owner !== war.playerFaction;
-            ctx.save();
-            ctx.lineWidth = isEnemy ? 2.4 : 1.3;
-            ctx.setLineDash(isEnemy ? [8, 6] : []);
-            ctx.strokeStyle = isEnemy ? 'rgba(248,113,113,0.95)' : 'rgba(125,211,252,0.45)';
-            ctx.beginPath();
-            ctx.moveTo(fromPos.x, fromPos.y);
-            ctx.lineTo(adjPos.x, adjPos.y);
-            ctx.stroke();
-            ctx.restore();
-        });
-    }
-
-    LEVEL05_REGION_LAYOUT.forEach(def => {
-        const state = war.regions[def.id];
-        if (!state) return;
-        const px = panelX + def.x * panelW;
-        const py = panelY + def.y * panelH;
-        const rr = Math.max(16, Math.min(panelW, panelH) * def.r);
-        const factionColor = LEVEL05_FACTION_COLOR[state.owner] || 'rgba(148,163,184,0.38)';
-        const selected = war.selectedRegionId === def.id;
-        const hovered = war.hoverRegionId === def.id;
-        const canAct = (Number(state.ap) || 0) > 0 && state.owner === war.playerFaction;
-        const isNeutral = state.owner === 'none';
-
-        ctx.beginPath();
-        ctx.arc(px, py, rr, 0, Math.PI * 2);
-        ctx.fillStyle = factionColor;
-        ctx.fill();
-
-        ctx.lineWidth = selected ? 3.2 : (hovered ? 2.4 : 1.4);
-        if (isNeutral) {
-            ctx.setLineDash([7, 6]);
-            ctx.strokeStyle = selected ? 'rgba(255,255,255,0.86)' : 'rgba(148,163,184,0.72)';
-        } else {
-            ctx.setLineDash([]);
-            ctx.strokeStyle = selected ? 'rgba(255,255,255,0.95)' : (hovered ? 'rgba(255,255,255,0.82)' : 'rgba(226,232,240,0.65)');
-        }
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        if (!isNeutral) {
-            drawFactionFlagBadge(state.owner, px, py - rr * 0.04, rr * 0.95);
-        } else {
-            ctx.fillStyle = 'rgba(203,213,225,0.8)';
-            ctx.font = `${Math.max(10, rr * 0.46)}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('□', px, py - rr * 0.05);
-        }
-
-        ctx.fillStyle = 'rgba(255,255,255,0.92)';
-        ctx.font = `700 ${Math.max(9, rr * 0.34)}px sans-serif`;
-        ctx.fillText(`${Math.max(0, Math.floor(state.troops || 0))}`, px, py + rr * 0.52);
-
-        if (canAct) {
-            ctx.fillStyle = 'rgba(255,255,255,0.88)';
-            ctx.font = `700 ${Math.max(8, rr * 0.26)}px sans-serif`;
-            ctx.fillText(`AP${Math.max(0, Math.floor(state.ap || 0))}`, px, py - rr * 0.62);
-        }
-
-        const p = Math.max(0, Math.min(1, state.control / 100));
-        ctx.beginPath();
-        ctx.arc(px, py, rr + 4, -Math.PI * 0.5, -Math.PI * 0.5 + Math.PI * 2 * p, false);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = 'rgba(250,250,250,0.9)';
-        ctx.stroke();
-    });
-
-    const now = performance.now();
-    war.attackFx = (war.attackFx || []).filter(fx => now - fx.startAt <= fx.duration);
-    war.attackFx.forEach(fx => {
-        const p = Math.max(0, Math.min(1, (now - fx.startAt) / fx.duration));
-        const x = fx.fromX + (fx.toX - fx.fromX) * p;
-        const y = fx.fromY + (fx.toY - fx.fromY) * p;
-        ctx.save();
-        ctx.strokeStyle = 'rgba(255,255,255,0.55)';
-        ctx.lineWidth = 1.3;
-        ctx.beginPath();
-        ctx.moveTo(fx.fromX, fx.fromY);
-        ctx.lineTo(x, y);
-        ctx.stroke();
-        ctx.fillStyle = LEVEL05_FACTION_COLOR[fx.attacker] || 'rgba(255,255,255,0.65)';
-        ctx.beginPath();
-        ctx.arc(x, y, 3 + fx.committed * 0.16, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    });
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.roundRect(btnX, btnY, btnW, btnH, 8);
-    const btnGrad = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH);
-    if (war.phase === 'player') {
-        if (btnHovered) {
-            btnGrad.addColorStop(0, 'rgba(110, 231, 183, 0.99)');
-            btnGrad.addColorStop(1, 'rgba(16, 185, 129, 0.99)');
-        } else {
-            btnGrad.addColorStop(0, 'rgba(52, 211, 153, 0.96)');
-            btnGrad.addColorStop(1, 'rgba(5, 150, 105, 0.96)');
-        }
-    } else {
-        btnGrad.addColorStop(0, 'rgba(148, 163, 184, 0.88)');
-        btnGrad.addColorStop(1, 'rgba(100, 116, 139, 0.88)');
-    }
-    ctx.fillStyle = btnGrad;
-    ctx.fill();
-    const gloss = ctx.createLinearGradient(btnX, btnY, btnX, btnY + btnH * 0.55);
-    gloss.addColorStop(0, 'rgba(255,255,255,0.20)');
-    gloss.addColorStop(1, 'rgba(255,255,255,0.00)');
-    ctx.fillStyle = gloss;
-    ctx.fill();
-    ctx.lineWidth = btnHovered ? 2.2 : 1.4;
-    ctx.strokeStyle = btnHovered ? 'rgba(220,252,231,0.98)' : 'rgba(255,255,255,0.72)';
-    ctx.stroke();
-    ctx.shadowColor = btnHovered ? 'rgba(16,185,129,0.65)' : 'rgba(0,0,0,0.35)';
-    ctx.shadowBlur = btnHovered ? 16 : 8;
-    ctx.fillStyle = 'rgba(255,255,255,0.96)';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.font = btnHovered ? '700 16px sans-serif' : '700 15px sans-serif';
-    ctx.fillText('结束回合', btnX + btnW * 0.5, btnY + btnH * 0.52);
-    ctx.restore();
-
-    ctx.fillStyle = 'rgba(255,255,255,0.90)';
-    ctx.font = '700 13px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    const phaseText = war.phase === 'player' ? '玩家回合' : 'AI回合';
-    ctx.fillText(`回合 ${Math.max(1, Number(war.turn) || 1)}  ${phaseText}`, panelX + 10, panelY + 8);
-    ctx.restore();
+function isLevel05RenderMode() {
+    return !!window.Level05Scene && window.Level05Scene.isRenderMode(currentSceneRenderMode);
 }
 
 function isRollbackLocked() {
@@ -777,7 +214,38 @@ window.addEventListener('wheel', (e) => {
     const maxOff = getSceneLevelFromGame() + 0.5;
     const delta = e.deltaY > 0 ? -0.25 : 0.25; // 上滚+，下滚-
     if (delta > 0 && isRollbackLocked()) return;
-    viewOffsetTgt = Math.max(0, Math.min(maxOff, viewOffsetTgt + delta));
+
+    // ── 等级边界卡顿 ──────────────────────────────────────────
+    // 当 viewOffsetTgt 被锁定在整数边界时，同方向继续滚才能通过
+    if (_scrollSnapLock !== null) {
+        if (delta === _scrollSnapLock.dir) {
+            _scrollSnapLock.count++;
+            const required = Math.max(2, Number(_scrollSnapLock.required) || 5);
+            if (_scrollSnapLock.count >= required) {
+                // 达到阈值后放行
+                const held = _scrollSnapLock.at;
+                _scrollSnapLock = null;
+                viewOffsetTgt = Math.max(0, Math.min(maxOff, held + delta));
+            }
+            // 否则继续卡在边界，不动
+            return;
+        }
+        // 反方向：解锁，正常移动
+        _scrollSnapLock = null;
+    }
+
+    const rawNew = Math.max(0, Math.min(maxOff, viewOffsetTgt + delta));
+    const snapPt = _getWheelSnapPt(viewOffsetTgt, delta);
+    if (snapPt !== null && snapPt <= maxOff) {
+        // 对 1.0 -> 0.5 这道坎加重阻尼，避免从 Lv2 回 Lv1 时一划过头到 Lv0.5
+        const sceneLv = getSceneLevelFromGame();
+        const required = (snapPt === 1 && delta > 0 && sceneLv >= 1) ? 12 : 5;
+        // 首次穿越整数边界，卡住
+        _scrollSnapLock = { at: snapPt, count: 1, dir: delta, required };
+        viewOffsetTgt = snapPt;
+    } else {
+        viewOffsetTgt = rawNew;
+    }
 }, { passive: false });
 
 // 已禁用双击回到当前等级，避免连点时误触发视角回跳
@@ -1327,29 +795,42 @@ function drawEarthWorldMapUnfold(ex, ey, earthR, renderLv, now) {
     ctx.fillStyle = 'rgba(4, 16, 38, 1)';
     ctx.fill();
 
+    const mapViewportRect = {
+        x: panelX + inset,
+        y: panelY + inset,
+        w: panelW - inset * 2,
+        h: panelH - inset * 2
+    };
+    const mapImageRect = {
+        x: mapViewportRect.x,
+        y: mapViewportRect.y,
+        w: mapViewportRect.w,
+        h: mapViewportRect.h
+    };
+
     if (worldMapImgLoaded) {
         ctx.save();
-        const innerX = panelX + inset;
-        const innerY = panelY + inset;
-        const innerW = panelW - inset * 2;
-        const innerH = panelH - inset * 2;
+        const innerX = mapViewportRect.x;
+        const innerY = mapViewportRect.y;
+        const innerW = mapViewportRect.w;
+        const innerH = mapViewportRect.h;
         ctx.beginPath();
         ctx.roundRect(innerX, innerY, innerW, innerH, Math.max(0, corner - inset));
         ctx.clip();
 
-        // Cover draw: always fill panel, crop overflow from image ratio mismatch.
-        const imgW = Math.max(1, worldMapImg.width || 1);
-        const imgH = Math.max(1, worldMapImg.height || 1);
-        const coverScale = Math.max(innerW / imgW, innerH / imgH);
-        const drawW = imgW * coverScale;
-        const drawH = imgH * coverScale;
-        const drawX = innerX + (innerW - drawW) * 0.5;
-        const drawY = innerY + (innerH - drawH) * 0.5;
-        ctx.drawImage(worldMapImg, drawX, drawY, drawW, drawH);
+        // Keep draw rect and interaction rect identical to avoid click miss/hit drift.
+        // This also removes desktop side bars by filling the whole map viewport.
+        mapImageRect.x = innerX;
+        mapImageRect.y = innerY;
+        mapImageRect.w = innerW;
+        mapImageRect.h = innerH;
+        ctx.drawImage(worldMapImg, innerX, innerY, innerW, innerH);
         ctx.restore();
     }
 
-    drawLevel05WarOverlay(panelX + inset, panelY + inset, panelW - inset * 2, panelH - inset * 2);
+    if (window.Level05Scene && typeof window.Level05Scene.drawWarOverlay === 'function') {
+        window.Level05Scene.drawWarOverlay(ctx, mapViewportRect.x, mapViewportRect.y, mapViewportRect.w, mapViewportRect.h, mapImageRect);
+    }
 
     ctx.restore();
 }
@@ -1771,6 +1252,19 @@ function ensureEarthWorkState() {
     g.autoCompanyIncomePerSec = Math.max(0, Number(g.autoCompanyIncomePerSec) || 0);
     g.jetpackOwned = !!g.jetpackOwned;
     g.remoteWorkTerminal = !!g.remoteWorkTerminal;
+    g.immortalLv = Math.max(1, Number(g.immortalLv) || 1);
+}
+
+// 永生研究所等级显示格式
+function _formatImmortalLv(lv) {
+    const n = Math.floor(lv);
+    if (n < 1000) return `lv${n}`;
+    if (n < 1e6)  return `lv${(n / 1e3).toFixed(1)}K`;
+    if (n < 1e9)  return `lv${(n / 1e6).toFixed(2)}M`;
+    if (n < 1e12) return `lv${(n / 1e9).toFixed(2)}B`;
+    const exp = Math.floor(Math.log10(n));
+    const mantissa = n / Math.pow(10, exp);
+    return `lv${mantissa.toFixed(1)}E${exp}`;
 }
 
 function spawnGainPopup(text, color, x, y, now, options = null) {
@@ -1975,12 +1469,13 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
         earthWalker.pendingMoneyGain = 0;
         earthWalker.pendingResearchGain = 0;
         earthWalker.lastSettledMonth = Math.floor(Math.max(0, Number(g.calendarMonthsElapsed) || 0));
-        earthWalker.nextNotEnoughHintAt = 0;
         earthWalker.nextFactoryHintAt = 0;
         earthWalker.nextTowerHintAt = 0;
         earthWalker.nextLabHintAt = 0;
         earthWalker.nextPortalHintAt = 0;
         earthWalker.holePromptShown = false;
+        earthWalker.immortalLv = Math.max(1, Number(g.immortalLv) || 1);
+        earthWalker.nextImmortalPopupAt = 0;
         earthWalker.lastUpdateAt = now;
         earthWalker.initialized = true;
     }
@@ -2059,6 +1554,7 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
     });
 
     const inSchool = !isPreludeMode && activeZones.includes('school');
+    const inFactory = !isPreludeMode && activeZones.includes('factory');
     const inLab = !isPreludeMode && activeZones.includes('lab');
     const inPreludeMachine = isPreludeMode && activeZones.includes('time_machine');
     const inPortal = inLab;
@@ -2070,6 +1566,20 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
     ) >= HOLE_UNLOCK_LEVEL;
     const inTower = !isPreludeMode && activeZones.includes('command_tower');
     g.inCommandTower = inTower;
+
+    // 作战中心视角：仅在"进入区域"时触发一次平滑切到 Lv0.5
+    // 避免角色停留在区内时反复把视角拉回 0.5
+    if (inFactory && !factoryLevel05Forced) {
+        factoryLevel05Forced = true;
+        _scrollSnapLock = null;
+        viewOffsetTgt = Math.max(0.5, viewOffsetTgt);
+    } else if (!inFactory && factoryLevel05Forced) {
+        // 离开作战中心后，回到当前等级视角
+        factoryLevel05Forced = false;
+        if (Math.abs(viewOffsetTgt - 0.5) < 0.08) {
+            viewOffsetTgt = 0;
+        }
+    }
     g.inHolePortal = isPreludeMode ? false : inPortal;
 
     overlappedZones.forEach(zone => {
@@ -2090,38 +1600,26 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
                 researchGain += 8.5;
             }
         } else if (zone.role === 'factory') {
-            if (g.rank === 'intern') {
-                if (now >= earthWalker.nextFactoryHintAt) {
-                    spawnGainPopup('工厂需工程师以上', '#f59e0b', px, py - playerSize * 1.35, now);
-                    earthWalker.nextFactoryHintAt = now + 2200;
-                }
-            } else {
-                // 提升产线节拍：工程师/主席产舰速度加快
-                g.factoryDroneProgress += dt * (g.rank === 'chair' ? 0.55 : 0.32);
-                while (g.factoryDroneProgress >= 1) {
-                    if (g.rank === 'chair' && (Number(g.totalMoney) || 0) >= FACTORY_STARSHIP_COST_CHAIR_GIANT) {
-                        g.totalMoney = Math.max(0, Number(g.totalMoney) - FACTORY_STARSHIP_COST_CHAIR_GIANT);
-                        g.giantShipsBuilt = Math.max(0, Number(g.giantShipsBuilt) || 0) + 1;
-                        spawnEarthShipStack({ screenX: ex, screenY: ey }, ex + earthR * 1.22, ey, 'giant');
-                        spawnGainPopup(`-${FACTORY_STARSHIP_COST_CHAIR_GIANT}`, '#fb7185', px, py - playerSize * 1.55, now);
-                        g.factoryDroneProgress -= 1;
-                    } else if ((Number(g.totalMoney) || 0) >= (g.rank === 'chair' ? FACTORY_STARSHIP_COST_CHAIR_NORMAL : FACTORY_STARSHIP_COST_ENGINEER)) {
-                        const normalCost = g.rank === 'chair' ? FACTORY_STARSHIP_COST_CHAIR_NORMAL : FACTORY_STARSHIP_COST_ENGINEER;
-                        g.totalMoney = Math.max(0, Number(g.totalMoney) - normalCost);
-                        g.shipsBuilt = Math.max(0, Number(g.shipsBuilt) || 0) + 1;
-                        spawnEarthShipStack({ screenX: ex, screenY: ey }, ex + earthR * 1.22, ey, 'normal');
-                        spawnGainPopup(`-${normalCost}`, '#fb7185', px, py - playerSize * 1.55, now);
-                        g.factoryDroneProgress -= 1;
-                    } else {
-                        // 资金不足时停止自动产线，避免无意义循环
-                        g.factoryDroneProgress = Math.min(g.factoryDroneProgress, 0.95);
-                        if (now >= earthWalker.nextNotEnoughHintAt) {
-                            const needCost = g.rank === 'chair' ? FACTORY_STARSHIP_COST_CHAIR_NORMAL : FACTORY_STARSHIP_COST_ENGINEER;
-                            spawnGainPopup(`资金不足(${needCost})`, '#f87171', px, py - playerSize * 1.35, now);
-                            earthWalker.nextNotEnoughHintAt = now + 1800;
-                        }
-                        break;
-                    }
+            // 无职级门槛：进入作战中心即可参与产线，主席仍保留高阶舰船优势
+            g.factoryDroneProgress += dt * (g.rank === 'chair' ? 0.55 : 0.32);
+            while (g.factoryDroneProgress >= 1) {
+                if (g.rank === 'chair' && (Number(g.totalMoney) || 0) >= FACTORY_STARSHIP_COST_CHAIR_GIANT) {
+                    g.totalMoney = Math.max(0, Number(g.totalMoney) - FACTORY_STARSHIP_COST_CHAIR_GIANT);
+                    g.giantShipsBuilt = Math.max(0, Number(g.giantShipsBuilt) || 0) + 1;
+                    spawnEarthShipStack({ screenX: ex, screenY: ey }, ex + earthR * 1.22, ey, 'giant');
+                    spawnGainPopup(`-${FACTORY_STARSHIP_COST_CHAIR_GIANT}`, '#fb7185', px, py - playerSize * 1.55, now);
+                    g.factoryDroneProgress -= 1;
+                } else if ((Number(g.totalMoney) || 0) >= (g.rank === 'chair' ? FACTORY_STARSHIP_COST_CHAIR_NORMAL : FACTORY_STARSHIP_COST_ENGINEER)) {
+                    const normalCost = g.rank === 'chair' ? FACTORY_STARSHIP_COST_CHAIR_NORMAL : FACTORY_STARSHIP_COST_ENGINEER;
+                    g.totalMoney = Math.max(0, Number(g.totalMoney) - normalCost);
+                    g.shipsBuilt = Math.max(0, Number(g.shipsBuilt) || 0) + 1;
+                    spawnEarthShipStack({ screenX: ex, screenY: ey }, ex + earthR * 1.22, ey, 'normal');
+                    spawnGainPopup(`-${normalCost}`, '#fb7185', px, py - playerSize * 1.55, now);
+                    g.factoryDroneProgress -= 1;
+                } else {
+                    // 资金不足时停止自动产线，避免无意义循环
+                    g.factoryDroneProgress = Math.min(g.factoryDroneProgress, 0.95);
+                    break;
                 }
             }
         }
@@ -2154,10 +1652,15 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
             );
         }
         earthWalker.nextLabHintAt = now + 4500;
-    } else if (!isPreludeMode && inTower && now >= earthWalker.nextTowerHintAt) {
-        spawnGainPopup('黑洞条件: 科技Lv.4', '#fb7185', px, py - playerSize * 1.55, now);
-        earthWalker.nextTowerHintAt = now + 2200;
     }
+
+    // 永生研究所：进入后线性升级
+    if (!isPreludeMode && inTower) {
+        if (earthWalker.immortalLv < 1) earthWalker.immortalLv = 1;
+        earthWalker.immortalLv += 8 * dt; // 每秒升8级，线性匀速
+    }
+    // 每帧回写到存档状态，刷新后可恢复
+    g.immortalLv = Math.max(1, earthWalker.immortalLv);
 
     if (inPreludeMachine) {
         if (!earthWalker.holePromptShown) {
@@ -2274,16 +1777,19 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
                 ctx.fillRect(zx + zw * 0.05, zy + zh * 0.04, zw * 0.9, zh * 0.08);
             }
         } else if (zone.role === 'factory') {
-            ctx.fillStyle = 'rgba(180, 83, 9, 0.85)';
-            ctx.fillRect(zx + zw * 0.08, zy + zh * 0.24, zw * 0.84, zh * 0.66);
-            ctx.fillStyle = 'rgba(120, 53, 15, 0.95)';
-            ctx.fillRect(zx + zw * 0.18, zy + zh * 0.08, zw * 0.14, zh * 0.22);
-            ctx.fillRect(zx + zw * 0.46, zy + zh * 0.03, zw * 0.12, zh * 0.28);
-            ctx.fillStyle = 'rgba(203, 213, 225, 0.58)';
-            ctx.beginPath();
-            ctx.arc(zx + zw * 0.25, zy + zh * 0.06, zw * 0.08, 0, Math.PI * 2);
-            ctx.arc(zx + zw * 0.52, zy + zh * 0.01, zw * 0.07, 0, Math.PI * 2);
-            ctx.fill();
+            const drew = drawEarthZonePhoto(zx, zy, zw, zh, 'factory');
+            if (!drew) {
+                ctx.fillStyle = 'rgba(180, 83, 9, 0.85)';
+                ctx.fillRect(zx + zw * 0.08, zy + zh * 0.24, zw * 0.84, zh * 0.66);
+                ctx.fillStyle = 'rgba(120, 53, 15, 0.95)';
+                ctx.fillRect(zx + zw * 0.18, zy + zh * 0.08, zw * 0.14, zh * 0.22);
+                ctx.fillRect(zx + zw * 0.46, zy + zh * 0.03, zw * 0.12, zh * 0.28);
+                ctx.fillStyle = 'rgba(203, 213, 225, 0.58)';
+                ctx.beginPath();
+                ctx.arc(zx + zw * 0.25, zy + zh * 0.06, zw * 0.08, 0, Math.PI * 2);
+                ctx.arc(zx + zw * 0.52, zy + zh * 0.01, zw * 0.07, 0, Math.PI * 2);
+                ctx.fill();
+            }
         } else if (zone.role === 'school') {
             ctx.fillStyle = 'rgba(224, 242, 254, 0.9)';
             ctx.fillRect(zx + zw * 0.1, zy + zh * 0.28, zw * 0.8, zh * 0.62);
@@ -2297,19 +1803,25 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
             ctx.fillStyle = 'rgba(59, 130, 246, 0.5)';
             ctx.fillRect(zx + zw * 0.46, zy + zh * 0.55, zw * 0.08, zh * 0.35);
         } else if (zone.role === 'lab') {
-            ctx.fillStyle = 'rgba(243, 232, 255, 0.88)';
-            ctx.fillRect(zx + zw * 0.12, zy + zh * 0.36, zw * 0.76, zh * 0.54);
-            ctx.fillStyle = 'rgba(147, 51, 234, 0.75)';
-            ctx.beginPath();
-            ctx.arc(zx + zw * 0.5, zy + zh * 0.36, Math.min(zw, zh) * 0.24, Math.PI, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(196, 181, 253, 0.45)';
-            ctx.fillRect(zx + zw * 0.2, zy + zh * 0.5, zw * 0.6, zh * 0.15);
+            const drew = drawEarthZonePhoto(zx, zy, zw, zh, 'lab');
+            if (!drew) {
+                ctx.fillStyle = 'rgba(243, 232, 255, 0.88)';
+                ctx.fillRect(zx + zw * 0.12, zy + zh * 0.36, zw * 0.76, zh * 0.54);
+                ctx.fillStyle = 'rgba(147, 51, 234, 0.75)';
+                ctx.beginPath();
+                ctx.arc(zx + zw * 0.5, zy + zh * 0.36, Math.min(zw, zh) * 0.24, Math.PI, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(196, 181, 253, 0.45)';
+                ctx.fillRect(zx + zw * 0.2, zy + zh * 0.5, zw * 0.6, zh * 0.15);
+            }
         } else if (zone.role === 'tower') {
-            ctx.fillStyle = 'rgba(251, 113, 133, 0.85)';
-            ctx.fillRect(zx + zw * 0.38, zy + zh * 0.08, zw * 0.24, zh * 0.82);
-            ctx.fillStyle = 'rgba(255, 228, 230, 0.9)';
-            ctx.fillRect(zx + zw * 0.46, zy, zw * 0.08, zh * 0.14);
+            const drew = drawEarthZonePhoto(zx, zy, zw, zh, 'tower');
+            if (!drew) {
+                ctx.fillStyle = 'rgba(251, 113, 133, 0.85)';
+                ctx.fillRect(zx + zw * 0.38, zy + zh * 0.08, zw * 0.24, zh * 0.82);
+                ctx.fillStyle = 'rgba(255, 228, 230, 0.9)';
+                ctx.fillRect(zx + zw * 0.46, zy, zw * 0.08, zh * 0.14);
+            }
         } else if (zone.role === 'time_machine') {
             ctx.fillStyle = 'rgba(250, 250, 250, 0.82)';
             ctx.fillRect(zx + zw * 0.16, zy + zh * 0.26, zw * 0.68, zh * 0.62);
@@ -2327,6 +1839,10 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
         ctx.strokeStyle = isActive ? '#ffffff' : zone.border;
         ctx.lineWidth = isActive ? 2.2 : 1.3;
         ctx.strokeRect(zx, zy, zw, zh);
+        if (zone.role === 'factory' || zone.role === 'lab' || zone.role === 'tower' || zone.role === 'time_machine') {
+            const preferredSide = zone.role === 'lab' ? 'bottom' : (zone.role === 'factory' ? 'left' : '');
+            drawZoneEarthConnector(ex, ey, zx, zy, zw, zh, isActive, preferredSide);
+        }
 
         ctx.font = `${Math.max(10, Math.min(13, earthR * 0.16))}px sans-serif`;
         ctx.textAlign = 'center';
@@ -2413,17 +1929,19 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
     ctx.fillRect(bodyX - armW, bodyY + ph * 0.05, armW, armH);
     ctx.fillRect(bodyX + bodyW, bodyY + ph * 0.05, armW, armH);
 
-    const badgeText = g.rankTitle || rankMeta.title;
+    const inImmortal = !!(workState?.inTower);
+    const badgeText = _formatImmortalLv(Math.max(1, earthWalker.immortalLv));
+    const badgeColor = inImmortal ? '#fbbf24' : '#fbbf24';
     const badgeY = py - Math.max(14, ph * 0.46);
     ctx.font = `700 ${Math.max(10, Math.min(14, pw * 0.36))}px sans-serif`;
     const badgeW = ctx.measureText(badgeText).width + 16;
     const badgeH = Math.max(16, ph * 0.3);
     ctx.fillStyle = 'rgba(15, 23, 42, 0.84)';
     ctx.fillRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH);
-    ctx.strokeStyle = 'rgba(224, 231, 255, 0.9)';
+    ctx.strokeStyle = inImmortal ? 'rgba(251,191,36,0.9)' : 'rgba(251,191,36,0.6)';
     ctx.lineWidth = 1;
     ctx.strokeRect(cx - badgeW / 2, badgeY - badgeH / 2, badgeW, badgeH);
-    ctx.fillStyle = '#f5f3ff';
+    ctx.fillStyle = badgeColor;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(badgeText, cx, badgeY);
@@ -3195,6 +2713,117 @@ function hitTestSlot(x, y) {
     return null;
 }
 
+function drawSlotBuildingPhoto(x, y, slotR, slotType) {
+    if (!slotType || !slotBuildingImgs[slotType] || !slotBuildingImgLoaded[slotType]) return false;
+    const img = slotBuildingImgs[slotType];
+    const drawR = Math.max(6, slotR - 3.2);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, drawR, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.drawImage(img, x - drawR, y - drawR, drawR * 2, drawR * 2);
+    ctx.restore();
+    return true;
+}
+
+function drawEarthZonePhoto(zx, zy, zw, zh, zoneRole) {
+    if (!zoneRole || !earthZoneImgs[zoneRole] || !earthZoneImgLoaded[zoneRole]) return false;
+    const img = earthZoneImgs[zoneRole];
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(zx, zy, zw, zh);
+    ctx.clip();
+    ctx.drawImage(img, zx, zy, zw, zh);
+    const shade = ctx.createLinearGradient(zx, zy, zx, zy + zh);
+    shade.addColorStop(0, 'rgba(5,10,18,0.05)');
+    shade.addColorStop(1, 'rgba(5,10,18,0.35)');
+    ctx.fillStyle = shade;
+    ctx.fillRect(zx, zy, zw, zh);
+    ctx.restore();
+    return true;
+}
+
+function drawZoneEarthConnector(ex, ey, zx, zy, zw, zh, active, preferredSide) {
+    const cx = zx + zw * 0.5;
+    const cy = zy + zh * 0.5;
+    const dx = ex - cx;
+    const dy = ey - cy;
+    const absX = Math.abs(dx / Math.max(1, zw));
+    const absY = Math.abs(dy / Math.max(1, zh));
+
+    const tailLen = active ? 11 : 9;
+    const halfBase = active ? 6.5 : 5.5;
+    let b1x = cx, b1y = cy, b2x = cx, b2y = cy, tx = cx, ty = cy;
+
+    const forced = preferredSide || '';
+    if (forced === 'right') {
+        const x = zx + zw;
+        const y = Math.max(zy + 9, Math.min(zy + zh - 9, cy));
+        b1x = x; b1y = y - halfBase;
+        b2x = x; b2y = y + halfBase;
+        tx = x + tailLen; ty = y;
+    } else if (forced === 'left') {
+        const x = zx;
+        const y = Math.max(zy + 9, Math.min(zy + zh - 9, cy));
+        b1x = x; b1y = y - halfBase;
+        b2x = x; b2y = y + halfBase;
+        tx = x - tailLen; ty = y;
+    } else if (forced === 'top') {
+        const y = zy;
+        const x = Math.max(zx + 9, Math.min(zx + zw - 9, cx));
+        b1x = x - halfBase; b1y = y;
+        b2x = x + halfBase; b2y = y;
+        tx = x; ty = y - tailLen;
+    } else if (forced === 'bottom') {
+        const y = zy + zh;
+        const x = Math.max(zx + 9, Math.min(zx + zw - 9, cx));
+        b1x = x - halfBase; b1y = y;
+        b2x = x + halfBase; b2y = y;
+        tx = x; ty = y + tailLen;
+    } else if (absX > absY) {
+        if (dx >= 0) {
+            const x = zx + zw;
+            const y = Math.max(zy + 9, Math.min(zy + zh - 9, cy));
+            b1x = x; b1y = y - halfBase;
+            b2x = x; b2y = y + halfBase;
+            tx = x + tailLen; ty = y;
+        } else {
+            const x = zx;
+            const y = Math.max(zy + 9, Math.min(zy + zh - 9, cy));
+            b1x = x; b1y = y - halfBase;
+            b2x = x; b2y = y + halfBase;
+            tx = x - tailLen; ty = y;
+        }
+    } else {
+        if (dy >= 0) {
+            const y = zy + zh;
+            const x = Math.max(zx + 9, Math.min(zx + zw - 9, cx));
+            b1x = x - halfBase; b1y = y;
+            b2x = x + halfBase; b2y = y;
+            tx = x; ty = y + tailLen;
+        } else {
+            const y = zy;
+            const x = Math.max(zx + 9, Math.min(zx + zw - 9, cx));
+            b1x = x - halfBase; b1y = y;
+            b2x = x + halfBase; b2y = y;
+            tx = x; ty = y - tailLen;
+        }
+    }
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(b1x, b1y);
+    ctx.lineTo(b2x, b2y);
+    ctx.lineTo(tx, ty);
+    ctx.closePath();
+    ctx.fillStyle = active ? 'rgba(255,255,255,0.98)' : 'rgba(226,232,240,0.88)';
+    ctx.fill();
+    ctx.lineWidth = active ? 1.4 : 1.1;
+    ctx.strokeStyle = active ? 'rgba(255,255,255,1)' : 'rgba(203,213,225,0.95)';
+    ctx.stroke();
+    ctx.restore();
+}
+
 function getCanvasPointerPosition(event) {
     const rect = canvas.getBoundingClientRect();
     const source = event?.touches?.[0] || event?.changedTouches?.[0] || event;
@@ -3280,14 +2909,17 @@ function drawEarthSlots(ex, ey, earthR, viewLevel = 0) {
                     : slotType === 'researchCenter'
                         ? '🔬'
                         : '+';
-        ctx.fillStyle = slotType ? '#ffffff' : 'rgba(224,242,254,0.98)';
-        ctx.font = `${Math.max(13, slotR * 1.1)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.68)';
-        ctx.shadowBlur = 3;
-        ctx.fillText(icon, x, y + 0.5);
-        ctx.shadowBlur = 0;
+        const drewPhoto = drawSlotBuildingPhoto(x, y, slotR, slotType);
+        if (!drewPhoto) {
+            ctx.fillStyle = slotType ? '#ffffff' : 'rgba(224,242,254,0.98)';
+            ctx.font = `${Math.max(13, slotR * 1.1)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.68)';
+            ctx.shadowBlur = 3;
+            ctx.fillText(icon, x, y + 0.5);
+            ctx.shadowBlur = 0;
+        }
 
         const regionName = activeRegionNames[index] || `地表区域${index + 1}`;
         const labelFontSize = Math.max(
@@ -3380,14 +3012,17 @@ function drawSinglePlanetSlot(planetId, visibleBodyIds = null) {
                     : slotType === 'researchCenter'
                         ? '🔬'
                         : '+';
-        ctx.fillStyle = slotType ? '#ffffff' : 'rgba(224,242,254,0.98)';
-        ctx.font = `${Math.max(13, slotR * 1.08)}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.68)';
-        ctx.shadowBlur = 3;
-        ctx.fillText(icon, x, y + 0.5);
-        ctx.shadowBlur = 0;
+        const drewPhoto = drawSlotBuildingPhoto(x, y, slotR, slotType);
+        if (!drewPhoto) {
+            ctx.fillStyle = slotType ? '#ffffff' : 'rgba(224,242,254,0.98)';
+            ctx.font = `${Math.max(13, slotR * 1.08)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.68)';
+            ctx.shadowBlur = 3;
+            ctx.fillText(icon, x, y + 0.5);
+            ctx.shadowBlur = 0;
+        }
         ctx.restore();
     }
 }
@@ -3400,8 +3035,17 @@ canvas.addEventListener('click', (event) => {
     const pointer = getCanvasPointerPosition(event);
     const x = pointer.x;
     const y = pointer.y;
+    if (window.Level05Scene
+        && typeof window.Level05Scene.isPointInMap === 'function'
+        && window.Level05Scene.isPointInMap(x, y)
+        && typeof window.Level05Scene.handleMapClick === 'function') {
+        window.Level05Scene.handleMapClick(x, y);
+        return;
+    }
     if (isLevel05RenderMode()) {
-        handleLevel05MapClick(x, y);
+        if (window.Level05Scene && typeof window.Level05Scene.handleMapClick === 'function') {
+            window.Level05Scene.handleMapClick(x, y);
+        }
         return;
     }
     const earth = planets.find(p => p.id === 'earth');
@@ -3450,24 +3094,12 @@ canvas.addEventListener('mousedown', (event) => {
 
 canvas.addEventListener('mousemove', (event) => {
     if (isLevel05RenderMode()) {
-        const war = ensureLevel05WarState();
-        if (war) {
+        if (window.Level05Scene && typeof window.Level05Scene.handlePointerMove === 'function') {
             const pointer = getCanvasPointerPosition(event);
-            let hoverEndTurn = false;
-            if (level05EndTurnRect && war.phase === 'player') {
-                const b = level05EndTurnRect;
-                const hitPad = 14;
-                hoverEndTurn = pointer.x >= b.x - hitPad && pointer.x <= b.x + b.w + hitPad
-                    && pointer.y >= b.y - hitPad && pointer.y <= b.y + b.h + hitPad;
-            }
-            war.hoverEndTurn = hoverEndTurn;
-            canvas.style.cursor = hoverEndTurn ? 'pointer' : 'default';
-            if (war.phase === 'player') {
-                const hit = getLevel05RegionByPoint(pointer.x, pointer.y);
-                war.hoverRegionId = hit ? hit.id : null;
-            } else {
-                war.hoverRegionId = null;
-            }
+            const result = window.Level05Scene.handlePointerMove(pointer.x, pointer.y);
+            canvas.style.cursor = result?.cursor || 'default';
+        } else {
+            canvas.style.cursor = 'default';
         }
         return;
     }
@@ -3501,8 +3133,17 @@ canvas.addEventListener('touchstart', (event) => {
     const pointer = getCanvasPointerPosition(event);
     const x = pointer.x;
     const y = pointer.y;
+    if (window.Level05Scene
+        && typeof window.Level05Scene.isPointInMap === 'function'
+        && window.Level05Scene.isPointInMap(x, y)
+        && typeof window.Level05Scene.handleMapClick === 'function') {
+        window.Level05Scene.handleMapClick(x, y);
+        return;
+    }
     if (isLevel05RenderMode()) {
-        handleLevel05MapClick(x, y);
+        if (window.Level05Scene && typeof window.Level05Scene.handleMapClick === 'function') {
+            window.Level05Scene.handleMapClick(x, y);
+        }
         return;
     }
     const earth = planets.find(p => p.id === 'earth');
@@ -3628,8 +3269,9 @@ function drawSolarSystem() {
     let rA, rB, rtp;
     let renderLv;
     let showLevel05Map = false;
-    level05MapRect = null;
-    level05EndTurnRect = null;
+    if (window.Level05Scene && typeof window.Level05Scene.resetFrameState === 'function') {
+        window.Level05Scene.resetFrameState();
+    }
     currentSceneRenderMode = SCENE_RENDER_MODE_NORMAL;
     if(sceneP < 1 || viewOffset < 0.01){
         renderLv = sLerp(fromLv, toLv, tp);
@@ -3654,7 +3296,7 @@ function drawSolarSystem() {
             rtp = 0;
             renderLv = Math.max(0, Math.min(0.5, -effectiveRawLv));
             showLevel05Map = true;
-            currentSceneRenderMode = SCENE_RENDER_MODE_LEVEL05;
+            currentSceneRenderMode = window.Level05Scene?.RENDER_MODE || 'level0_5';
         }
     }
 
@@ -4207,6 +3849,7 @@ function updateSolarOverlay() {
 function applyUserZoom() {
     viewOffsetTgt = 0.0;
     viewOffset = 0.0;
+    _scrollSnapLock = null;
 }
 
 window.showStoryEvent = showStoryEvent;
