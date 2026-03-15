@@ -11,9 +11,21 @@
                 return Array.from(new Set((list || []).filter(Boolean)));
             }
 
+            // Guard inline onclick handlers before the main game script finishes booting.
+            window.selectCountry = window.selectCountry || function (id) {
+                if (typeof window.__selectCountryImpl === 'function') {
+                    return window.__selectCountryImpl(id);
+                }
+                console.warn('selectCountry is not ready yet:', id);
+            };
+
             window.__worldAssetCandidates = function (relativePath) {
                 var clean = String(relativePath || '').replace(/^\.\//, '').replace(/^\//, '');
-                var prefixes = ['', './', 'world/', './world/', '../world/'];
+                var pathname = String(window.location && window.location.pathname || '').toLowerCase();
+                var looksLikeTimeRoute = /\/time\/?(?:index\.html)?$/.test(pathname);
+                var prefixes = looksLikeTimeRoute
+                    ? ['../', '', './', 'time/', './time/', 'world/', './world/', '../world/']
+                    : ['', './', '../', 'time/', './time/', 'world/', './world/', '../world/'];
                 return uniq(prefixes.map(function (prefix) {
                     try {
                         return new URL(prefix + clean, window.location.href).href;
@@ -3374,6 +3386,9 @@
             updateUI();
             checkStageProgress();
         }
+
+        window.__selectCountryImpl = selectCountry;
+        window.selectCountry = selectCountry;
 
         function resetGame() {
             if (!confirm('确定要重新开始游戏吗？所有进度将会丢失！')) {
