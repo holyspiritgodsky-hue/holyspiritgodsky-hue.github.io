@@ -11,21 +11,9 @@
                 return Array.from(new Set((list || []).filter(Boolean)));
             }
 
-            // Guard inline onclick handlers before the main game script finishes booting.
-            window.selectCountry = window.selectCountry || function (id) {
-                if (typeof window.__selectCountryImpl === 'function') {
-                    return window.__selectCountryImpl(id);
-                }
-                console.warn('selectCountry is not ready yet:', id);
-            };
-
             window.__worldAssetCandidates = function (relativePath) {
                 var clean = String(relativePath || '').replace(/^\.\//, '').replace(/^\//, '');
-                var pathname = String(window.location && window.location.pathname || '').toLowerCase();
-                var looksLikeTimeRoute = /\/time\/?(?:index\.html)?$/.test(pathname);
-                var prefixes = looksLikeTimeRoute
-                    ? ['../', '', './', 'time/', './time/', 'world/', './world/', '../world/']
-                    : ['', './', '../', 'time/', './time/', 'world/', './world/', '../world/'];
+                var prefixes = ['', './', 'world/', './world/', '../world/'];
                 return uniq(prefixes.map(function (prefix) {
                     try {
                         return new URL(prefix + clean, window.location.href).href;
@@ -41,6 +29,9 @@
             };
 
             window.__fetchWorldAsset = async function (relativePath, init) {
+                if (window.location && window.location.protocol === 'file:') {
+                    return null;
+                }
                 var candidates = window.__worldAssetCandidates(relativePath);
                 for (var i = 0; i < candidates.length; i += 1) {
                     try {
@@ -1581,7 +1572,6 @@
 
     <script src="battle.js"></script>
     <script src="cardBattle.js"></script>
-    <script src="level05_geo_layout_preset.js"></script>
     <script src="level05.js"></script>
     <script src="scene.js"></script>
     <script src="events.js"></script>
@@ -3386,9 +3376,6 @@
             updateUI();
             checkStageProgress();
         }
-
-        window.__selectCountryImpl = selectCountry;
-        window.selectCountry = selectCountry;
 
         function resetGame() {
             if (!confirm('确定要重新开始游戏吗？所有进度将会丢失！')) {
