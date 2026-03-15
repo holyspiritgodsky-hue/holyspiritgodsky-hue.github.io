@@ -16,6 +16,9 @@ function ensureMoonEvacuationLine() {
 }
 
 function playEarthSplitCinematic(onComplete = null) {
+    const earthSplitImgUrl = typeof window.__resolveWorldAssetUrl === 'function'
+        ? window.__resolveWorldAssetUrl('img/earth2.jpg')
+        : 'img/earth2.jpg';
     const flash = document.createElement('div');
     flash.style.cssText = `
         position: fixed;
@@ -44,7 +47,7 @@ function playEarthSplitCinematic(onComplete = null) {
             <div class="milestone-emoji">☢️</div>
             <div class="milestone-heading" style="background:linear-gradient(135deg,#fca5a5,#f87171);-webkit-background-clip:text;-webkit-text-fill-color:transparent;">核大战爆发</div>
             <div class="milestone-description">全球核打击链路失控，地表秩序瞬间崩解。</div>
-            <img src="img/earth2.jpg" alt="地球裂变" style="width:min(360px,80vw);max-height:220px;object-fit:cover;border-radius:12px;border:1px solid rgba(248,113,113,0.65);margin:0 auto 1.2rem;display:block;" />
+            <img src="${earthSplitImgUrl}" alt="地球裂变" style="width:min(360px,80vw);max-height:220px;object-fit:cover;border-radius:12px;border:1px solid rgba(248,113,113,0.65);margin:0 auto 1.2rem;display:block;" />
             <button class="milestone-cta" style="background:linear-gradient(135deg,#ef4444,#f97316);">继续</button>
         </div>
     `;
