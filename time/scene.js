@@ -81,8 +81,9 @@ const earthWalker = {
     initialized: false
 };
 const earthWorkZones = [
+    { id: 'moon_gravity_station', label: '月球引力实验站', role: 'moon_station', x: -0.70, y: -0.42, w: 0.34, h: 0.24, color: 'rgba(56, 189, 248, 0.24)', border: '#7dd3fc' },
     { id: 'factory', label: '作战中心', role: 'factory', x: -0.64, y: 0.20, w: 0.34, h: 0.26, color: 'rgba(251, 191, 36, 0.25)', border: '#fde68a' },
-    { id: 'lab', label: '实验室', role: 'lab', x: 0.34, y: -0.52, w: 0.34, h: 0.26, color: 'rgba(167, 139, 250, 0.26)', border: '#c4b5fd' },
+    { id: 'lab', label: '时空实验室', role: 'lab', x: 0.34, y: -0.52, w: 0.34, h: 0.26, color: 'rgba(167, 139, 250, 0.26)', border: '#c4b5fd' },
     { id: 'command_tower', label: '永生研究所', role: 'tower', x: 0.56, y: -0.02, w: 0.22, h: 0.34, color: 'rgba(251, 113, 133, 0.24)', border: '#fda4af' }
 ];
 const earthPreludeZones = [
@@ -129,11 +130,13 @@ const earthSplitImg = new Image();
 const moonImg = new Image();
 const worldMapImg = new Image();
 const earthZoneImgs = {
+    moonStation: new Image(),
     factory: new Image(),
     lab: new Image(),
     tower: new Image()
 };
 const earthZoneImgLoaded = {
+    moonStation: false,
     factory: false,
     lab: false,
     tower: false
@@ -164,13 +167,21 @@ Object.keys(earthZoneImgs).forEach(key => {
 Object.keys(slotBuildingImgs).forEach(key => {
     slotBuildingImgs[key].onload = () => { slotBuildingImgLoaded[key] = true; };
 });
-earthImg.src = 'img/earth.jpg';
-earthSplitImg.src = 'img/earth2.jpg';
-moonImg.src = 'img/moon.jpg';
-worldMapImg.src = 'img/world_equirect_2000.png';
-earthZoneImgs.factory.src = 'img/factory.png';
-earthZoneImgs.lab.src = 'img/nukler.png';
-earthZoneImgs.tower.src = 'img/by.png';
+function assignLocalImage(img, relativePath) {
+    if (typeof window.__loadImageAsset === 'function') {
+        window.__loadImageAsset(img, relativePath);
+        return;
+    }
+    img.src = relativePath;
+}
+assignLocalImage(earthImg, 'img/earth.jpg');
+assignLocalImage(earthSplitImg, 'img/earth2.jpg');
+assignLocalImage(moonImg, 'img/moon.jpg');
+assignLocalImage(worldMapImg, 'img/world_equirect_2000.png');
+assignLocalImage(earthZoneImgs.moonStation, 'img/conc.webp');
+assignLocalImage(earthZoneImgs.factory, 'img/factory.png');
+assignLocalImage(earthZoneImgs.lab, 'img/nukler.png');
+assignLocalImage(earthZoneImgs.tower, 'img/by.png');
 slotBuildingImgs.autoFactory.src = 'https://picsum.photos/seed/earth-factory/220/220';
 slotBuildingImgs.robotLegion.src = 'https://picsum.photos/seed/earth-robot/220/220';
 slotBuildingImgs.energyStation.src = 'https://picsum.photos/seed/earth-energy/220/220';
@@ -1388,6 +1399,106 @@ function enterHolePage() {
     } catch (_) {}
 }
 
+function enterMoonGravityStationPage() {
+    try {
+        window.location.href = 'https://gameart.top/moon';
+    } catch (_) {}
+}
+
+function closeMoonGravityStationPrompt() {
+    const existing = document.getElementById('moon-gravity-station-prompt');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+}
+
+function promptMoonGravityStationPage() {
+    const g = window.game || {};
+    if (g.moonGravityStationPromptOpen) return;
+    closeMoonGravityStationPrompt();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'moon-gravity-station-prompt';
+    overlay.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'background:rgba(2,6,23,0.62)',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'z-index:12000',
+        'padding:18px',
+        'box-sizing:border-box'
+    ].join(';');
+
+    const panel = document.createElement('div');
+    panel.style.cssText = [
+        'min-width:280px',
+        'max-width:92vw',
+        'background:rgba(15,23,42,0.95)',
+        'border:1px solid rgba(125,211,252,0.7)',
+        'border-radius:12px',
+        'padding:18px 16px 14px',
+        'box-shadow:0 10px 28px rgba(2,6,23,0.42)',
+        'color:#e2e8f0',
+        'text-align:center',
+        'font-family:sans-serif'
+    ].join(';');
+
+    const title = document.createElement('div');
+    title.textContent = 'TO the moon';
+    title.style.cssText = 'font-size:20px;font-weight:800;letter-spacing:0.04em;color:#f8fafc;margin-bottom:12px;';
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;justify-content:center;align-items:center;';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = '取消';
+    cancelBtn.style.cssText = [
+        'padding:8px 14px',
+        'border-radius:8px',
+        'border:1px solid rgba(148,163,184,0.75)',
+        'background:rgba(30,41,59,0.9)',
+        'color:#e2e8f0',
+        'cursor:pointer'
+    ].join(';');
+
+    const okBtn = document.createElement('button');
+    okBtn.type = 'button';
+    okBtn.textContent = 'to the moon';
+    okBtn.style.cssText = [
+        'padding:8px 14px',
+        'border-radius:8px',
+        'border:1px solid rgba(186,230,253,0.95)',
+        'background:rgba(14,165,233,0.28)',
+        'color:#e0f2fe',
+        'font-weight:700',
+        'cursor:pointer'
+    ].join(';');
+
+    const closePrompt = () => {
+        g.moonGravityStationPromptOpen = false;
+        closeMoonGravityStationPrompt();
+    };
+
+    cancelBtn.addEventListener('click', closePrompt);
+    okBtn.addEventListener('click', () => {
+        closePrompt();
+        g.moonGravityStationJumping = true;
+        enterMoonGravityStationPage();
+    });
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) closePrompt();
+    });
+
+    row.appendChild(cancelBtn);
+    row.appendChild(okBtn);
+    panel.appendChild(title);
+    panel.appendChild(row);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    g.moonGravityStationPromptOpen = true;
+}
+
 function triggerEarthPreludeJump() {
     const g = window.game;
     if (!g) return;
@@ -1554,6 +1665,7 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
     });
 
     const inSchool = !isPreludeMode && activeZones.includes('school');
+    const inMoonGravityStation = !isPreludeMode && activeZones.includes('moon_gravity_station');
     const inFactory = !isPreludeMode && activeZones.includes('factory');
     const inLab = !isPreludeMode && activeZones.includes('lab');
     const inPreludeMachine = isPreludeMode && activeZones.includes('time_machine');
@@ -1581,6 +1693,18 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
         }
     }
     g.inHolePortal = isPreludeMode ? false : inPortal;
+
+    if (inMoonGravityStation) {
+        if (!g.moonGravityStationPrompted) {
+            g.moonGravityStationPrompted = true;
+            promptMoonGravityStationPage();
+        }
+    } else {
+        g.moonGravityStationJumping = false;
+        g.moonGravityStationPrompted = false;
+        g.moonGravityStationPromptOpen = false;
+        closeMoonGravityStationPrompt();
+    }
 
     overlappedZones.forEach(zone => {
         if (isPreludeMode) return;
@@ -1755,13 +1879,20 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
         const zw = Math.max(16, zone.w * earthR);
         const zh = Math.max(14, zone.h * earthR);
         const isActive = activeSet.has(zone.id);
+        let frameX = zx;
+        let frameY = zy;
+        let frameW = zw;
+        let frameH = zh;
+        const hasPhotoCard = zone.role === 'factory' || zone.role === 'moon_station' || zone.role === 'lab' || zone.role === 'tower';
 
         ctx.save();
-        const baseGrad = ctx.createLinearGradient(zx, zy, zx + zw, zy + zh);
-        baseGrad.addColorStop(0, zone.color);
-        baseGrad.addColorStop(1, 'rgba(15, 23, 42, 0.35)');
-        ctx.fillStyle = baseGrad;
-        ctx.fillRect(zx, zy, zw, zh);
+        if (!hasPhotoCard) {
+            const baseGrad = ctx.createLinearGradient(zx, zy, zx + zw, zy + zh);
+            baseGrad.addColorStop(0, zone.color);
+            baseGrad.addColorStop(1, 'rgba(15, 23, 42, 0.35)');
+            ctx.fillStyle = baseGrad;
+            ctx.fillRect(zx, zy, zw, zh);
+        }
 
         if (zone.role === 'company') {
             ctx.fillStyle = 'rgba(203, 213, 225, 0.88)';
@@ -1778,6 +1909,12 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
             }
         } else if (zone.role === 'factory') {
             const drew = drawEarthZonePhoto(zx, zy, zw, zh, 'factory');
+            if (drew) {
+                frameX = drew.x;
+                frameY = drew.y;
+                frameW = drew.w;
+                frameH = drew.h;
+            }
             if (!drew) {
                 ctx.fillStyle = 'rgba(180, 83, 9, 0.85)';
                 ctx.fillRect(zx + zw * 0.08, zy + zh * 0.24, zw * 0.84, zh * 0.66);
@@ -1789,6 +1926,27 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
                 ctx.arc(zx + zw * 0.25, zy + zh * 0.06, zw * 0.08, 0, Math.PI * 2);
                 ctx.arc(zx + zw * 0.52, zy + zh * 0.01, zw * 0.07, 0, Math.PI * 2);
                 ctx.fill();
+            }
+        } else if (zone.role === 'moon_station') {
+            const drew = drawEarthZonePhoto(zx, zy, zw, zh, 'moonStation');
+            if (drew) {
+                frameX = drew.x;
+                frameY = drew.y;
+                frameW = drew.w;
+                frameH = drew.h;
+            }
+            if (!drew) {
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+                ctx.fillRect(zx + zw * 0.1, zy + zh * 0.16, zw * 0.8, zh * 0.72);
+                ctx.strokeStyle = 'rgba(125, 211, 252, 0.9)';
+                ctx.lineWidth = Math.max(1.2, earthR * 0.02);
+                ctx.beginPath();
+                ctx.arc(zx + zw * 0.52, zy + zh * 0.52, Math.min(zw, zh) * 0.22, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(zx + zw * 0.2, zy + zh * 0.78);
+                ctx.lineTo(zx + zw * 0.84, zy + zh * 0.24);
+                ctx.stroke();
             }
         } else if (zone.role === 'school') {
             ctx.fillStyle = 'rgba(224, 242, 254, 0.9)';
@@ -1804,6 +1962,12 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
             ctx.fillRect(zx + zw * 0.46, zy + zh * 0.55, zw * 0.08, zh * 0.35);
         } else if (zone.role === 'lab') {
             const drew = drawEarthZonePhoto(zx, zy, zw, zh, 'lab');
+            if (drew) {
+                frameX = drew.x;
+                frameY = drew.y;
+                frameW = drew.w;
+                frameH = drew.h;
+            }
             if (!drew) {
                 ctx.fillStyle = 'rgba(243, 232, 255, 0.88)';
                 ctx.fillRect(zx + zw * 0.12, zy + zh * 0.36, zw * 0.76, zh * 0.54);
@@ -1816,6 +1980,12 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
             }
         } else if (zone.role === 'tower') {
             const drew = drawEarthZonePhoto(zx, zy, zw, zh, 'tower');
+            if (drew) {
+                frameX = drew.x;
+                frameY = drew.y;
+                frameW = drew.w;
+                frameH = drew.h;
+            }
             if (!drew) {
                 ctx.fillStyle = 'rgba(251, 113, 133, 0.85)';
                 ctx.fillRect(zx + zw * 0.38, zy + zh * 0.08, zw * 0.24, zh * 0.82);
@@ -1836,22 +2006,32 @@ function drawEarthWorkZonesAndWalker(ex, ey, earthR, activeZones, playerRect, wo
             ctx.fill();
         }
 
-        ctx.strokeStyle = isActive ? '#ffffff' : zone.border;
+        const frameColor = isActive ? '#ffffff' : zone.border;
+        ctx.strokeStyle = frameColor;
         ctx.lineWidth = isActive ? 2.2 : 1.3;
-        ctx.strokeRect(zx, zy, zw, zh);
-        if (zone.role === 'factory' || zone.role === 'lab' || zone.role === 'tower' || zone.role === 'time_machine') {
-            const preferredSide = zone.role === 'lab' ? 'bottom' : (zone.role === 'factory' ? 'left' : '');
-            drawZoneEarthConnector(ex, ey, zx, zy, zw, zh, isActive, preferredSide);
+        ctx.strokeRect(frameX, frameY, frameW, frameH);
+        if (zone.role === 'factory' || zone.role === 'lab' || zone.role === 'tower' || zone.role === 'time_machine' || zone.role === 'moon_station') {
+            const preferredSide = zone.role === 'lab' ? 'bottom' : (zone.role === 'factory' ? 'left' : (zone.role === 'moon_station' ? 'bottom-right' : ''));
+            drawZoneEarthConnector(ex, ey, frameX, frameY, frameW, frameH, isActive, preferredSide, frameColor);
         }
 
+        const labelAbovePhoto = zone.role === 'moon_station' || zone.role === 'lab' || zone.role === 'tower' || zone.role === 'factory';
         ctx.font = `${Math.max(10, Math.min(13, earthR * 0.16))}px sans-serif`;
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
         ctx.fillStyle = '#f8fafc';
         ctx.strokeStyle = 'rgba(0,0,0,0.62)';
         ctx.lineWidth = 2;
-        ctx.strokeText(zone.label, zx + zw / 2, zy + zh / 2);
-        ctx.fillText(zone.label, zx + zw / 2, zy + zh / 2);
+        if (labelAbovePhoto) {
+            const labelY = frameY - Math.max(6, earthR * 0.06);
+            ctx.fillStyle = '#f8fafc';
+            ctx.textBaseline = 'middle';
+            ctx.strokeText(zone.label, frameX + frameW / 2, labelY);
+            ctx.fillText(zone.label, frameX + frameW / 2, labelY);
+        } else {
+            ctx.textBaseline = 'middle';
+            ctx.strokeText(zone.label, zx + zw / 2, zy + zh / 2);
+            ctx.fillText(zone.label, zx + zw / 2, zy + zh / 2);
+        }
         ctx.restore();
     });
 
@@ -2727,23 +2907,30 @@ function drawSlotBuildingPhoto(x, y, slotR, slotType) {
 }
 
 function drawEarthZonePhoto(zx, zy, zw, zh, zoneRole) {
-    if (!zoneRole || !earthZoneImgs[zoneRole] || !earthZoneImgLoaded[zoneRole]) return false;
+    if (!zoneRole || !earthZoneImgs[zoneRole] || !earthZoneImgLoaded[zoneRole]) return null;
     const img = earthZoneImgs[zoneRole];
+    const iw = Math.max(1, img.naturalWidth || img.width || 1);
+    const ih = Math.max(1, img.naturalHeight || img.height || 1);
+    const scale = Math.min(zw / iw, zh / ih);
+    const dw = iw * scale;
+    const dh = ih * scale;
+    const dx = zx + (zw - dw) * 0.5;
+    const dy = zy + (zh - dh) * 0.5;
     ctx.save();
     ctx.beginPath();
     ctx.rect(zx, zy, zw, zh);
     ctx.clip();
-    ctx.drawImage(img, zx, zy, zw, zh);
-    const shade = ctx.createLinearGradient(zx, zy, zx, zy + zh);
+    ctx.drawImage(img, dx, dy, dw, dh);
+    const shade = ctx.createLinearGradient(dx, dy, dx, dy + dh);
     shade.addColorStop(0, 'rgba(5,10,18,0.05)');
     shade.addColorStop(1, 'rgba(5,10,18,0.35)');
     ctx.fillStyle = shade;
-    ctx.fillRect(zx, zy, zw, zh);
+    ctx.fillRect(dx, dy, dw, dh);
     ctx.restore();
-    return true;
+    return { x: dx, y: dy, w: dw, h: dh };
 }
 
-function drawZoneEarthConnector(ex, ey, zx, zy, zw, zh, active, preferredSide) {
+function drawZoneEarthConnector(ex, ey, zx, zy, zw, zh, active, preferredSide, connectorColor) {
     const cx = zx + zw * 0.5;
     const cy = zy + zh * 0.5;
     const dx = ex - cx;
@@ -2756,7 +2943,13 @@ function drawZoneEarthConnector(ex, ey, zx, zy, zw, zh, active, preferredSide) {
     let b1x = cx, b1y = cy, b2x = cx, b2y = cy, tx = cx, ty = cy;
 
     const forced = preferredSide || '';
-    if (forced === 'right') {
+    if (forced === 'bottom-right') {
+        const x = zx + zw;
+        const y = zy + zh;
+        b1x = x - halfBase; b1y = y;
+        b2x = x; b2y = y - halfBase;
+        tx = x + tailLen * 0.92; ty = y + tailLen * 0.92;
+    } else if (forced === 'right') {
         const x = zx + zw;
         const y = Math.max(zy + 9, Math.min(zy + zh - 9, cy));
         b1x = x; b1y = y - halfBase;
@@ -2816,10 +3009,10 @@ function drawZoneEarthConnector(ex, ey, zx, zy, zw, zh, active, preferredSide) {
     ctx.lineTo(b2x, b2y);
     ctx.lineTo(tx, ty);
     ctx.closePath();
-    ctx.fillStyle = active ? 'rgba(255,255,255,0.98)' : 'rgba(226,232,240,0.88)';
+    ctx.fillStyle = connectorColor || (active ? 'rgba(255,255,255,1)' : 'rgba(241,245,249,0.96)');
     ctx.fill();
     ctx.lineWidth = active ? 1.4 : 1.1;
-    ctx.strokeStyle = active ? 'rgba(255,255,255,1)' : 'rgba(203,213,225,0.95)';
+    ctx.strokeStyle = connectorColor || (active ? 'rgba(255,255,255,1)' : 'rgba(226,232,240,1)');
     ctx.stroke();
     ctx.restore();
 }
