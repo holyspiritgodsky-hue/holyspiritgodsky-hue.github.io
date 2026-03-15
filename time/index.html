@@ -4,6 +4,65 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>太空帝国 - 征服太阳系</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%230a0e1a'/%3E%3Ccircle cx='32' cy='32' r='14' fill='%2322d3ee'/%3E%3Cpath d='M10 36c10-8 34-8 44 0' stroke='%23fbbf24' stroke-width='4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+    <script>
+        (function () {
+            function uniq(list) {
+                return Array.from(new Set((list || []).filter(Boolean)));
+            }
+
+            window.__worldAssetCandidates = function (relativePath) {
+                var clean = String(relativePath || '').replace(/^\.\//, '').replace(/^\//, '');
+                var prefixes = ['', './', 'world/', './world/', '../world/'];
+                return uniq(prefixes.map(function (prefix) {
+                    try {
+                        return new URL(prefix + clean, window.location.href).href;
+                    } catch (_) {
+                        return '';
+                    }
+                }));
+            };
+
+            window.__resolveWorldAssetUrl = function (relativePath) {
+                var candidates = window.__worldAssetCandidates(relativePath);
+                return candidates[0] || String(relativePath || '');
+            };
+
+            window.__fetchWorldAsset = async function (relativePath, init) {
+                var candidates = window.__worldAssetCandidates(relativePath);
+                for (var i = 0; i < candidates.length; i += 1) {
+                    try {
+                        var res = await fetch(candidates[i], init || { cache: 'no-store' });
+                        if (res && res.ok) return res;
+                    } catch (_) {}
+                }
+                return null;
+            };
+
+            window.__loadImageAsset = function (img, relativePath) {
+                if (!img) return '';
+                var candidates = window.__worldAssetCandidates(relativePath);
+                if (!candidates.length) {
+                    img.src = relativePath;
+                    return relativePath;
+                }
+
+                var index = 0;
+                var previousOnError = img.onerror;
+                img.onerror = function () {
+                    index += 1;
+                    if (index < candidates.length) {
+                        img.src = candidates[index];
+                        return;
+                    }
+                    if (typeof previousOnError === 'function') previousOnError.apply(this, arguments);
+                };
+
+                img.src = candidates[index];
+                return candidates[index];
+            };
+        })();
+    </script>
     <style>
         :root {
             --font-ui:    'Courier New', Consolas, 'SF Mono', monospace;
@@ -1510,7 +1569,7 @@
 
     <script src="battle.js"></script>
     <script src="cardBattle.js"></script>
-    <script src="data/level05_geo_layout_preset.js"></script>
+    <script src="level05_geo_layout_preset.js"></script>
     <script src="level05.js"></script>
     <script src="scene.js"></script>
     <script src="events.js"></script>
@@ -1520,6 +1579,7 @@
             ore: 0,           // 矿石（基础资源，点击和工厂产出）
             energy: 0,        // 能源（用矿石生产）
             tech: 1500,       // 科技点（调试默认值）
+            immortalLv: 1,
             ironOre: 0,
             goldOre: 0,
             uraniumOre: 0,
@@ -1593,6 +1653,37 @@
             upgrades: { mining: [], energy: [], tech: [], special: [] }
         };
         window.game = game;  // 供 scene.js 访问
+
+        const AVATAR_PROGRESS_KEY = 'spaceEmpireAvatarV1';
+
+        function getPersistentAvatarProgress() {
+            try {
+                const raw = localStorage.getItem(AVATAR_PROGRESS_KEY);
+                if (!raw) return { immortalLv: 1 };
+                const parsed = JSON.parse(raw);
+                return {
+                    immortalLv: Math.max(1, Number(parsed?.immortalLv) || 1)
+                };
+            } catch (_) {
+                return { immortalLv: 1 };
+            }
+        }
+
+        function applyPersistentAvatarProgress(targetGame) {
+            if (!targetGame) return;
+            const progress = getPersistentAvatarProgress();
+            targetGame.immortalLv = Math.max(1, Number(progress.immortalLv) || 1, Number(targetGame.immortalLv) || 1);
+        }
+
+        function savePersistentAvatarProgress(sourceGame) {
+            try {
+                const previous = getPersistentAvatarProgress();
+                const nextLv = Math.max(1, Number(previous.immortalLv) || 1, Number(sourceGame?.immortalLv) || 1);
+                localStorage.setItem(AVATAR_PROGRESS_KEY, JSON.stringify({ immortalLv: nextLv }));
+            } catch (_) {}
+        }
+
+        applyPersistentAvatarProgress(game);
 
         // 文明阶段
         const stages = [
@@ -2921,6 +3012,7 @@
         setInterval(() => {
             if (game.country) {  // 只有选择了国家才保存
                 game.lastSaveTime = Date.now();
+                savePersistentAvatarProgress(game);
                 localStorage.setItem('spaceEmpireV5', JSON.stringify(game));
             }
         }, 5000);
@@ -2940,6 +3032,7 @@
                 savedGame.country = countryMap[savedGame.country];
             }
             Object.assign(game, savedGame);
+            applyPersistentAvatarProgress(game);
             // 清理旧版本残留字段，避免场景等级被错误覆盖
             if (Object.prototype.hasOwnProperty.call(game, 'selectedTechOptionLevel')) {
                 delete game.selectedTechOptionLevel;
@@ -3287,6 +3380,7 @@
                 return;
             }
             // 设置重置标志，然后清除存档
+            savePersistentAvatarProgress(game);
             sessionStorage.setItem('resetFlag', 'true');
             localStorage.removeItem('spaceEmpireV5');
             location.reload(true);  // 强制从服务器重新加载
@@ -3492,6 +3586,7 @@
                         window.showEarthDestroyedEvent('地球反击战失败，火星地底军团突破最后防线！地球灭亡。');
                     } else {
                         try {
+                            savePersistentAvatarProgress(game);
                             localStorage.removeItem('spaceEmpireV5');
                             sessionStorage.setItem('resetFlag', 'true');
                         } catch (_) {}
@@ -3504,6 +3599,7 @@
         gameLoop();
 
         window.addEventListener('beforeunload', () => {
+            savePersistentAvatarProgress(game);
             if (game.country) {  // 只有选择了国家才保存
                 localStorage.setItem('spaceEmpireV5', JSON.stringify(game));
             }
