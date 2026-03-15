@@ -7,6 +7,8 @@
     const LEVEL05_FACTION_ORDER = ['us', 'ru', 'cn', 'eu'];
     const LEVEL05_LAYOUT_VERSION = 4;
     const LEVEL05_GEOJSON_URL = 'data/countries.geo.json';
+    const LEVEL05_HAS_PRESET_LAYOUT = Array.isArray(window.__LEVEL05_GEO_LAYOUT_PRESET)
+        && window.__LEVEL05_GEO_LAYOUT_PRESET.length >= 10;
     const LEVEL05_MINOR_FACTIONS = ['in', 'jp', 'ir', 'tw', 've', 'ua', 'br', 'eg', 'sa', 'pa', 'mx', 'ca', 'il', 'iq'];
     const LEVEL05_VALID_OWNERS = ['us', 'ru', 'cn', 'eu', 'none'].concat(LEVEL05_MINOR_FACTIONS);
     // Keep 1:1 map coverage so regions tile seamlessly without visible gaps.
@@ -332,9 +334,12 @@
     }
 
     async function tryLoadGeoJsonLayout() {
+        if (LEVEL05_HAS_PRESET_LAYOUT) return;
         try {
-            const res = await fetch(LEVEL05_GEOJSON_URL, { cache: 'no-store' });
-            if (!res.ok) return;
+            const res = typeof window.__fetchWorldAsset === 'function'
+                ? await window.__fetchWorldAsset(LEVEL05_GEOJSON_URL, { cache: 'no-store' })
+                : await fetch(LEVEL05_GEOJSON_URL, { cache: 'no-store' });
+            if (!res || !res.ok) return;
             const geojson = await res.json();
             const geoLayout = buildRegionLayoutFromGeoJson(geojson);
             if (!Array.isArray(geoLayout) || geoLayout.length < 10) return;
