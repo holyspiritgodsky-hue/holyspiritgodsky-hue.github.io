@@ -161,6 +161,11 @@ earthImg.onload = () => { earthImgLoaded = true; };
 earthSplitImg.onload = () => { earthSplitImgLoaded = true; };
 moonImg.onload = () => { moonImgLoaded = true; };
 worldMapImg.onload = () => { worldMapImgLoaded = true; };
+worldMapImg.onerror = () => {
+    if (worldMapImg.dataset.altAttempted === '1') return;
+    worldMapImg.dataset.altAttempted = '1';
+    assignLocalImage(worldMapImg, 'img/world_equirect_20003.png');
+};
 Object.keys(earthZoneImgs).forEach(key => {
     earthZoneImgs[key].onload = () => { earthZoneImgLoaded[key] = true; };
 });
@@ -1475,6 +1480,19 @@ function promptMoonGravityStationPage() {
         'cursor:pointer'
     ].join(';');
 
+    const blackHoleBtn = document.createElement('button');
+    blackHoleBtn.type = 'button';
+    blackHoleBtn.textContent = 'to black hole';
+    blackHoleBtn.style.cssText = [
+        'padding:8px 14px',
+        'border-radius:8px',
+        'border:1px solid rgba(167,139,250,0.95)',
+        'background:rgba(88,28,220,0.28)',
+        'color:#ede9fe',
+        'font-weight:700',
+        'cursor:pointer'
+    ].join(';');
+
     const closePrompt = () => {
         g.moonGravityStationPromptOpen = false;
         closeMoonGravityStationPrompt();
@@ -1486,12 +1504,17 @@ function promptMoonGravityStationPage() {
         g.moonGravityStationJumping = true;
         enterMoonGravityStationPage();
     });
+    blackHoleBtn.addEventListener('click', () => {
+        closePrompt();
+        window.location.href = 'https://gameart.top/hole';
+    });
     overlay.addEventListener('click', (event) => {
         if (event.target === overlay) closePrompt();
     });
 
     row.appendChild(cancelBtn);
     row.appendChild(okBtn);
+    row.appendChild(blackHoleBtn);
     panel.appendChild(title);
     panel.appendChild(row);
     overlay.appendChild(panel);
