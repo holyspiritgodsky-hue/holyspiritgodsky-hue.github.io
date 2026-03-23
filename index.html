@@ -207,6 +207,112 @@ font-size:16px;
 margin-top:20px;
 }
 
+/* Sponsor wall */
+
+.sponsor-section{
+padding:70px 20px 30px 20px;
+max-width:1100px;
+margin:auto;
+}
+
+.sponsor-shell{
+background:radial-gradient(circle at top right, rgba(56,189,248,0.18), transparent 40%),
+linear-gradient(145deg, #11182a, #0d1424 55%, #101a2e);
+border:1px solid rgba(255,255,255,0.1);
+border-radius:18px;
+padding:30px;
+box-shadow:0 14px 36px rgba(0,0,0,0.25);
+}
+
+.sponsor-head{
+display:flex;
+justify-content:space-between;
+align-items:flex-start;
+gap:16px;
+flex-wrap:wrap;
+margin-bottom:22px;
+}
+
+.sponsor-head h2{
+font-size:30px;
+margin-bottom:8px;
+}
+
+.sponsor-head p{
+color:#afbdd6;
+font-size:15px;
+line-height:1.6;
+}
+
+.paypal-btn{
+display:inline-block;
+padding:12px 22px;
+border-radius:999px;
+background:#ffc439;
+color:#0b2240;
+font-weight:700;
+text-decoration:none;
+transition:transform 0.2s, filter 0.2s;
+box-shadow:0 8px 20px rgba(255,196,57,0.25);
+}
+
+.paypal-btn:hover{
+transform:translateY(-2px);
+filter:brightness(1.06);
+}
+
+.sponsor-grid{
+display:grid;
+grid-template-columns:repeat(4, minmax(0, 1fr));
+gap:12px;
+}
+
+.sponsor-item{
+background:rgba(255,255,255,0.04);
+border:1px solid rgba(255,255,255,0.08);
+border-radius:12px;
+padding:12px 14px;
+}
+
+.sponsor-name{
+font-size:15px;
+font-weight:600;
+color:#f2f6ff;
+margin-bottom:5px;
+}
+
+.sponsor-level{
+font-size:12px;
+letter-spacing:0.2px;
+color:#8dc9f9;
+}
+
+.sponsor-note{
+margin-top:14px;
+color:#93a4c4;
+font-size:13px;
+}
+
+@media (max-width:900px){
+.sponsor-grid{
+grid-template-columns:repeat(2, minmax(0, 1fr));
+}
+}
+
+@media (max-width:520px){
+.sponsor-shell{
+padding:22px;
+}
+
+.sponsor-head h2{
+font-size:26px;
+}
+
+.sponsor-grid{
+grid-template-columns:1fr;
+}
+}
+
 </style>
 </head>
 <body>
@@ -239,7 +345,7 @@ margin-top:20px;
 进入太阳系探索 →
 </a>
 
-<a href="/time" class="button">
+<a href="https://www.gameart.top/time" class="button">
 回到地球逆转时空 →
 </a>
 </div>
@@ -308,6 +414,69 @@ GameArt 是一个新型游戏平台。<br><br>
 但只有极少数，真正值得被体验。<br><br>
 
 我们只展示真正有创造力的游戏。
+
+</div>
+
+</div>
+
+
+
+<div class="sponsor-section" id="sponsors">
+
+<div class="sponsor-shell">
+
+<div class="sponsor-head">
+<div>
+<h2>赞助人名单</h2>
+<p>
+你们的支持让 GameArt 可以持续发掘真正有创造力的游戏。<br>
+感谢每一位赞助者。
+</p>
+</div>
+
+<a href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=8YWK9V8B26H6G&currency_code=USD&item_name=Support+GameArt" target="_blank" rel="noopener noreferrer" class="paypal-btn">
+通过 PayPal 赞助
+</a>
+</div>
+
+<div class="sponsor-grid">
+<div class="sponsor-item">
+<div class="sponsor-name">Nova Forge</div>
+<div class="sponsor-level">银河守护者</div>
+</div>
+<div class="sponsor-item">
+<div class="sponsor-name">Wang Kai</div>
+<div class="sponsor-level">星云赞助人</div>
+</div>
+<div class="sponsor-item">
+<div class="sponsor-name">Luna Studio</div>
+<div class="sponsor-level">星云赞助人</div>
+</div>
+<div class="sponsor-item">
+<div class="sponsor-name">Chen Yi</div>
+<div class="sponsor-level">轨道支持者</div>
+</div>
+<div class="sponsor-item">
+<div class="sponsor-name">Pixel Harbor</div>
+<div class="sponsor-level">轨道支持者</div>
+</div>
+<div class="sponsor-item">
+<div class="sponsor-name">Liu Han</div>
+<div class="sponsor-level">轨道支持者</div>
+</div>
+<div class="sponsor-item">
+<div class="sponsor-name">Yuki Mori</div>
+<div class="sponsor-level">轨道支持者</div>
+</div>
+<div class="sponsor-item">
+<div class="sponsor-name">你的名字在这里</div>
+<div class="sponsor-level">下一位赞助者</div>
+</div>
+</div>
+
+<div class="sponsor-note">
+PayPal 商家号已接入：8YWK9V8B26H6G
+</div>
 
 </div>
 
