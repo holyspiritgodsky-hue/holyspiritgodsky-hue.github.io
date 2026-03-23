@@ -60,18 +60,30 @@
 			display: block;
 		}
 
-		#pauseBtn {
+		#pauseBtn,
+		#musicBtn,
+		#labBtn {
 			position: fixed;
 			top: 14px;
-			right: 14px;
 			z-index: 4;
 			border: 1px solid rgba(255, 255, 255, 0.35);
-			background: rgba(26, 34, 26, 0.85);
 			color: #f2f5ee;
-			padding: 8px 14px;
+			height: 36px;
+			padding: 0 14px;
 			border-radius: 8px;
 			font-size: 13px;
 			font-weight: 600;
+			line-height: 1;
+			box-sizing: border-box;
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			text-decoration: none;
+		}
+
+		#pauseBtn {
+			right: 14px;
+			background: rgba(26, 34, 26, 0.85);
 			cursor: pointer;
 		}
 
@@ -80,23 +92,22 @@
 		}
 
 		#labBtn {
-			position: fixed;
-			top: 14px;
-			right: 92px;
-			z-index: 4;
-			border: 1px solid rgba(255, 255, 255, 0.35);
+			right: 172px;
 			background: rgba(34, 28, 22, 0.85);
-			color: #f2f5ee;
-			padding: 8px 14px;
-			border-radius: 8px;
-			font-size: 13px;
-			font-weight: 600;
-			text-decoration: none;
-			line-height: 1;
 		}
 
 		#labBtn:hover {
 			background: rgba(58, 47, 35, 0.92);
+		}
+
+		#musicBtn {
+			right: 92px;
+			background: rgba(24, 30, 44, 0.86);
+			cursor: pointer;
+		}
+
+		#musicBtn:hover {
+			background: rgba(37, 47, 67, 0.92);
 		}
 
 		#chargeBtn {
@@ -121,9 +132,11 @@
 		@media (max-width: 900px), (pointer: coarse) {
 			#pauseBtn,
 			#labBtn,
+			#musicBtn,
 			#chargeBtn {
 				font-size: 14px;
-				padding: 10px 14px;
+				height: 40px;
+				padding: 0 14px;
 			}
 
 			#pauseBtn {
@@ -133,7 +146,12 @@
 
 			#labBtn {
 				top: max(8px, env(safe-area-inset-top));
-				right: calc(max(8px, env(safe-area-inset-right)) + 78px);
+				right: calc(max(8px, env(safe-area-inset-right)) + 164px);
+			}
+
+			#musicBtn {
+				top: max(8px, env(safe-area-inset-top));
+				right: calc(max(8px, env(safe-area-inset-right)) + 82px);
 			}
 
 			#chargeBtn {
@@ -152,8 +170,9 @@
 </head>
 <body>
 	<a id="labBtn" href="https://gameart.top/time">返回实验室</a>
+	<button id="musicBtn">音乐: 开</button>
 	<button id="pauseBtn">暂停</button>
-	<button id="chargeBtn">冲锋</button>
+	<button id="chargeBtn">大喝</button>
 	<canvas id="game"></canvas>
 	<div id="miniWrap">
 		<canvas id="mini"></canvas>
@@ -165,7 +184,80 @@
 		const mini = document.getElementById("mini");
 		const miniCtx = mini.getContext("2d");
 		const pauseBtn = document.getElementById("pauseBtn");
+		const musicBtn = document.getElementById("musicBtn");
 		const chargeBtn = document.getElementById("chargeBtn");
+
+		// Procedural royalty-free BGM (single-tone synth loop)
+		let audioCtx = null;
+		let musicTimer = null;
+		let musicStep = 0;
+		let bgmEnabled = true;
+		let bgmTriedAutoplay = false;
+
+		function syncMusicBtn() {
+			musicBtn.textContent = `音乐: ${bgmEnabled ? "开" : "关"}`;
+		}
+
+		function noteFreq(note) {
+			return 440 * Math.pow(2, (note - 69) / 12);
+		}
+
+		function playTone(note, duration, volume, type, when) {
+			if (!audioCtx) return;
+			const osc = audioCtx.createOscillator();
+			const gain = audioCtx.createGain();
+			osc.type = type;
+			osc.frequency.setValueAtTime(noteFreq(note), when);
+			gain.gain.setValueAtTime(0.0001, when);
+			gain.gain.exponentialRampToValueAtTime(volume, when + 0.02);
+			gain.gain.exponentialRampToValueAtTime(0.0001, when + duration);
+			osc.connect(gain).connect(audioCtx.destination);
+			osc.start(when);
+			osc.stop(when + duration + 0.02);
+		}
+
+		function stopSynthBgm() {
+			if (musicTimer) {
+				clearInterval(musicTimer);
+				musicTimer = null;
+			}
+		}
+
+		function startSynthBgm() {
+			if (!audioCtx || musicTimer) return;
+			const melody = [64, 67, 69, 71, 72, 71, 69, 67, 64, 67, 69, 72, 71, 69, 67, 66];
+			const bass = [40, 40, 43, 43, 45, 45, 43, 43, 40, 40, 43, 43, 47, 45, 43, 42];
+			const beat = 0.28;
+
+			musicTimer = setInterval(() => {
+				if (!bgmEnabled || !audioCtx || audioCtx.state !== "running") return;
+				const when = audioCtx.currentTime + 0.02;
+				const i = musicStep % melody.length;
+				playTone(melody[i], beat * 0.95, 0.075, "triangle", when);
+				if (musicStep % 2 === 0) {
+					playTone(bass[i], beat * 1.8, 0.058, "sine", when);
+				}
+				if (musicStep % 4 === 0) {
+					playTone(melody[(i + 4) % melody.length], beat * 0.45, 0.04, "square", when + 0.06);
+				}
+				musicStep += 1;
+			}, beat * 1000);
+		}
+
+		function tryStartBgm() {
+			if (!bgmEnabled || gameState.over) return;
+			if (!audioCtx) {
+				audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+			}
+			audioCtx.resume().then(() => {
+				startSynthBgm();
+			}).catch(() => {
+				if (!bgmTriedAutoplay) {
+					musicBtn.textContent = "音乐: 点按开启";
+				}
+			});
+			bgmTriedAutoplay = true;
+		}
 
 		const CFG = {
 			worldW: 5200,
@@ -180,6 +272,11 @@
 			spawnTickMs: 1800,
 			neutralTickMs: 2600,
 			maxFollowersBase: 22
+		};
+
+		const MISSION = {
+			needOutposts: 4,
+			needGenerals: 2
 		};
 
 		const rand = (min, max) => min + Math.random() * (max - min);
@@ -398,7 +495,20 @@
 
 		function updatePlayer(dt) {
 			if (player.dead) return;
-			moveTo(player, player.target.x, player.target.y, player.speed, dt);
+			const mx = (moveInput.right ? 1 : 0) - (moveInput.left ? 1 : 0);
+			const my = (moveInput.down ? 1 : 0) - (moveInput.up ? 1 : 0);
+			if (mx !== 0 || my !== 0) {
+				const d = Math.hypot(mx, my) || 1;
+				const nx = mx / d;
+				const ny = my / d;
+				player.x += nx * player.speed * dt;
+				player.y += ny * player.speed * dt;
+				player.dir = Math.atan2(ny, nx);
+				player.target.x = player.x;
+				player.target.y = player.y;
+			} else {
+				moveTo(player, player.target.x, player.target.y, player.speed, dt);
+			}
 			player.x = clamp(player.x, 50, CFG.worldW - 50);
 			player.y = clamp(player.y, 50, CFG.worldH - 50);
 			pushOutMountains(player);
@@ -414,6 +524,16 @@
 			target.y += ny * power;
 			src.x -= nx * power * 0.2;
 			src.y -= ny * power * 0.2;
+		}
+
+		function pushAwayOnly(src, target, power) {
+			const dx = target.x - src.x;
+			const dy = target.y - src.y;
+			const d = Math.max(0.001, Math.hypot(dx, dy));
+			const nx = dx / d;
+			const ny = dy / d;
+			target.x += nx * power;
+			target.y += ny * power;
 		}
 
 		function triggerLeaderSlash(attacker, target) {
@@ -564,8 +684,11 @@
 			for (const l of [player, ...enemies]) {
 				if (!l.dead && l.hp <= 0) l.dead = true;
 			}
+			const allyOut = outposts.filter((o) => o.owner === "ally").length;
+			const deadEnemyGenerals = enemies.filter((e) => e.dead).length;
 			const aliveEnemies = enemies.filter((e) => !e.dead).length;
-			if (aliveEnemies === 0) gameState.result = "胜利";
+			const missionDone = allyOut >= MISSION.needOutposts && deadEnemyGenerals >= MISSION.needGenerals;
+			if (missionDone || aliveEnemies === 0) gameState.result = "游戏通关";
 			if (player.dead) gameState.result = "失败";
 			if (gameState.result) gameState.over = true;
 		}
@@ -951,35 +1074,6 @@
 			}
 
 			ctx.restore();
-
-			// ===== SKILL HUD (screen space) =====
-			if (!player.dead && !gameState.over) {
-				const sx2 = 18, sy2 = canvas.height - 58;
-				const cdRatio = clamp(player.chargeCool / 8, 0, 1);
-				const ready = cdRatio <= 0;
-				ctx.fillStyle = "rgba(0,0,0,0.60)";
-				ctx.beginPath();
-				ctx.arc(sx2 + 18, sy2 + 18, 19, 0, Math.PI * 2);
-				ctx.fill();
-				// Cooldown arc
-				ctx.strokeStyle = ready ? "#ffe050" : "#555";
-				ctx.lineWidth = 3;
-				ctx.beginPath();
-				if (ready) {
-					ctx.arc(sx2 + 18, sy2 + 18, 19, 0, Math.PI * 2);
-				} else {
-					ctx.arc(sx2 + 18, sy2 + 18, 19, -Math.PI / 2, -Math.PI / 2 + (1 - cdRatio) * Math.PI * 2);
-				}
-				ctx.stroke();
-				ctx.fillStyle = ready ? "#ffe050" : "#888";
-				ctx.font = "bold 10px Microsoft YaHei";
-				ctx.textAlign = "center";
-				ctx.fillText("Q冲", sx2 + 18, sy2 + 22);
-				ctx.font = "10px sans-serif";
-				ctx.textAlign = "left";
-				ctx.fillStyle = ready ? "#ffe050" : "#aaa";
-				ctx.fillText(ready ? "就绪" : Math.ceil(player.chargeCool) + "s", sx2 + 42, sy2 + 22);
-			}
 		}
 
 		function drawMini() {
@@ -1050,6 +1144,13 @@
 			result: ""
 		};
 
+		const moveInput = {
+			up: false,
+			down: false,
+			left: false,
+			right: false
+		};
+
 		function togglePause() {
 			gameState.paused = !gameState.paused;
 			pauseBtn.textContent = gameState.paused ? "继续" : "暂停";
@@ -1062,13 +1163,13 @@
 			const chargeR = 200;
 			for (const u of enemyUnits) {
 				if (!u.dead && dist(player, u) < chargeR) {
-					applyKnockback(player, u, 95);
+					pushAwayOnly(player, u, 95);
 					u.hp -= 18;
 				}
 			}
 			for (const e of enemies) {
 				if (!e.dead && dist(player, e) < chargeR) {
-					applyKnockback(player, e, 65);
+					pushAwayOnly(player, e, 65);
 					e.hp -= 35;
 				}
 			}
@@ -1088,19 +1189,47 @@
 
 		canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 		window.addEventListener("keydown", (e) => {
+			tryStartBgm();
+			const key = e.key.toLowerCase();
+			if (key === "w" || e.key === "ArrowUp") moveInput.up = true;
+			if (key === "s" || e.key === "ArrowDown") moveInput.down = true;
+			if (key === "a" || e.key === "ArrowLeft") moveInput.left = true;
+			if (key === "d" || e.key === "ArrowRight") moveInput.right = true;
+			if (key === "w" || key === "a" || key === "s" || key === "d" || e.key.startsWith("Arrow")) {
+				e.preventDefault();
+			}
 			if (e.code === "Space" || e.key.toLowerCase() === "p") {
 				e.preventDefault();
 				togglePause();
 			}
 			if (e.key.toLowerCase() === "q") castCharge();
 		});
+		window.addEventListener("keyup", (e) => {
+			const key = e.key.toLowerCase();
+			if (key === "w" || e.key === "ArrowUp") moveInput.up = false;
+			if (key === "s" || e.key === "ArrowDown") moveInput.down = false;
+			if (key === "a" || e.key === "ArrowLeft") moveInput.left = false;
+			if (key === "d" || e.key === "ArrowRight") moveInput.right = false;
+		});
 		pauseBtn.addEventListener("click", () => {
+			tryStartBgm();
 			togglePause();
+		});
+		musicBtn.addEventListener("click", () => {
+			bgmEnabled = !bgmEnabled;
+			syncMusicBtn();
+			if (bgmEnabled) {
+				tryStartBgm();
+			} else {
+				stopSynthBgm();
+				if (audioCtx && audioCtx.state === "running") audioCtx.suspend();
+			}
 		});
 		chargeBtn.addEventListener("click", () => castCharge());
 		canvas.addEventListener("pointerdown", (e) => {
 			if (e.pointerType === "mouse" && e.button !== 0) return;
 			if (e.pointerType !== "mouse") e.preventDefault();
+			tryStartBgm();
 			issueMoveCommand(e.clientX, e.clientY);
 		}, { passive: false });
 		if (!window.PointerEvent) {
@@ -1108,9 +1237,19 @@
 				if (!e.touches || e.touches.length === 0) return;
 				e.preventDefault();
 				const t = e.touches[0];
+				tryStartBgm();
 				issueMoveCommand(t.clientX, t.clientY);
 			}, { passive: false });
 		}
+
+		document.addEventListener("visibilitychange", () => {
+			if (document.hidden) {
+				if (audioCtx && audioCtx.state === "running") audioCtx.suspend();
+			} else if (bgmEnabled) {
+				tryStartBgm();
+			}
+		});
+		syncMusicBtn();
 
 		window.addEventListener("resize", resize);
 		resize();
@@ -1193,6 +1332,30 @@
 			updateCamera(dt);
 			drawMap();
 			drawMini();
+
+			if (!gameState.over) {
+				const allyOut = outposts.filter((o) => o.owner === "ally").length;
+				const deadEnemyGenerals = enemies.filter((e) => e.dead).length;
+				const txt = `主线任务: 占领城池 ${Math.min(allyOut, MISSION.needOutposts)}/${MISSION.needOutposts} | 击败敌将 ${Math.min(deadEnemyGenerals, MISSION.needGenerals)}/${MISSION.needGenerals}`;
+				ctx.fillStyle = "rgba(0,0,0,0.40)";
+				ctx.fillRect(canvas.width * 0.5 - 210, 10, 420, 24);
+				ctx.fillStyle = "#f3f6da";
+				ctx.font = "600 13px Microsoft YaHei";
+				ctx.textAlign = "center";
+				ctx.fillText(txt, canvas.width * 0.5, 27);
+			}
+
+			if (gameState.over) {
+				ctx.fillStyle = "rgba(0, 0, 0, 0.42)";
+				ctx.fillRect(0, 0, canvas.width, canvas.height);
+				ctx.fillStyle = gameState.result === "游戏通关" ? "#ffe78b" : "#ffc3b5";
+				ctx.font = "700 54px Microsoft YaHei";
+				ctx.textAlign = "center";
+				ctx.fillText(gameState.result, canvas.width * 0.5, canvas.height * 0.5 - 8);
+				ctx.fillStyle = "#f2f2f2";
+				ctx.font = "500 18px Microsoft YaHei";
+				ctx.fillText("刷新页面可重新开始", canvas.width * 0.5, canvas.height * 0.5 + 34);
+			}
 			chargeBtn.disabled = gameState.paused || gameState.over || player.dead || player.chargeCool > 0;
 
 			requestAnimationFrame(loop);
