@@ -1522,6 +1522,100 @@ function promptMoonGravityStationPage() {
     g.moonGravityStationPromptOpen = true;
 }
 
+function closeLabPrompt() {
+    const existing = document.getElementById('lab-time-prompt');
+    if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+}
+
+function promptLabPage() {
+    const g = window.game || {};
+    if (g.labPromptOpen) return;
+    closeLabPrompt();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'lab-time-prompt';
+    overlay.style.cssText = [
+        'position:fixed',
+        'inset:0',
+        'background:rgba(2,6,23,0.62)',
+        'display:flex',
+        'align-items:center',
+        'justify-content:center',
+        'z-index:12000',
+        'padding:18px',
+        'box-sizing:border-box'
+    ].join(';');
+
+    const panel = document.createElement('div');
+    panel.style.cssText = [
+        'min-width:280px',
+        'max-width:92vw',
+        'background:rgba(15,23,42,0.95)',
+        'border:1px solid rgba(167,139,250,0.7)',
+        'border-radius:12px',
+        'padding:18px 16px 14px',
+        'box-shadow:0 10px 28px rgba(2,6,23,0.42)',
+        'color:#e2e8f0',
+        'text-align:center',
+        'font-family:sans-serif'
+    ].join(';');
+
+    const title = document.createElement('div');
+    title.textContent = 'TO the 3 country';
+    title.style.cssText = 'font-size:20px;font-weight:800;letter-spacing:0.04em;color:#f8fafc;margin-bottom:12px;';
+
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;gap:10px;justify-content:center;align-items:center;';
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = '取消';
+    cancelBtn.style.cssText = [
+        'padding:8px 14px',
+        'border-radius:8px',
+        'border:1px solid rgba(148,163,184,0.75)',
+        'background:rgba(30,41,59,0.9)',
+        'color:#e2e8f0',
+        'cursor:pointer'
+    ].join(';');
+
+    const goBtn = document.createElement('button');
+    goBtn.type = 'button';
+    goBtn.textContent = 'TO the 3 country';
+    goBtn.style.cssText = [
+        'padding:8px 14px',
+        'border-radius:8px',
+        'border:1px solid rgba(167,139,250,0.95)',
+        'background:rgba(109,40,217,0.32)',
+        'color:#ede9fe',
+        'font-weight:700',
+        'cursor:pointer'
+    ].join(';');
+
+    const closePrompt = () => {
+        g.labPromptOpen = false;
+        g.labPrompted = false;
+        closeLabPrompt();
+    };
+
+    cancelBtn.addEventListener('click', closePrompt);
+    goBtn.addEventListener('click', () => {
+        closePrompt();
+        window.location.href = 'https://gameart.top/war';
+    });
+    overlay.addEventListener('click', (event) => {
+        if (event.target === overlay) closePrompt();
+    });
+
+    row.appendChild(cancelBtn);
+    row.appendChild(goBtn);
+    panel.appendChild(title);
+    panel.appendChild(row);
+    overlay.appendChild(panel);
+    document.body.appendChild(overlay);
+    g.labPromptOpen = true;
+}
+
 function triggerEarthPreludeJump() {
     const g = window.game;
     if (!g) return;
@@ -1727,6 +1821,17 @@ function updateEarthWalkerAndOutput(now, ex, ey, earthR) {
         g.moonGravityStationPrompted = false;
         g.moonGravityStationPromptOpen = false;
         closeMoonGravityStationPrompt();
+    }
+
+    if (inLab) {
+        if (!g.labPrompted) {
+            g.labPrompted = true;
+            promptLabPage();
+        }
+    } else {
+        g.labPrompted = false;
+        g.labPromptOpen = false;
+        closeLabPrompt();
     }
 
     overlappedZones.forEach(zone => {
