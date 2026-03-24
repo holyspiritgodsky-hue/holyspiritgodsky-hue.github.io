@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>Lordz 风格战场</title>
+	<title>三国战场</title>
 	<style>
 		:root {
 			--sky: #9ec7da;
@@ -58,6 +58,7 @@
 			width: 100%;
 			height: 100%;
 			display: block;
+			cursor: pointer;
 		}
 
 		#pauseBtn,
@@ -112,7 +113,8 @@
 
 		#chargeBtn {
 			position: fixed;
-			left: 14px;
+			left: 50%;
+			transform: translateX(-50%);
 			bottom: 16px;
 			z-index: 4;
 			border: 1px solid rgba(255, 223, 124, 0.55);
@@ -276,7 +278,7 @@
 
 		const MISSION = {
 			needOutposts: 4,
-			needGenerals: 2
+			needGenerals: 3
 		};
 
 		const rand = (min, max) => min + Math.random() * (max - min);
@@ -340,6 +342,7 @@
 				y,
 				team,
 				name: team === "ally" ? "张飞" : "敌将",
+				weaponType: team === "ally" ? "pudao" : "saber",
 				hp: CFG.heroHp,
 				maxHp: CFG.heroHp,
 				target: { x, y },
@@ -348,6 +351,11 @@
 				radius: 12,
 				slashTimer: 0,
 				slashCd: 0,
+				attackLock: 0,
+				recoverTimer: 0,
+				hitFlash: 0,
+				hitStop: 0,
+				active: true,
 				dead: false,
 				thinking: 0
 			};
@@ -363,6 +371,8 @@
 				dead: false,
 				speed: CFG.unitSpeed,
 				dir: 0,
+				slashTimer: 0,
+				slashCd: 0,
 				radius: 7,
 				owner
 			};
@@ -378,23 +388,93 @@
 		enemies[0].name = "夏侯惇";
 		enemies[1].name = "张辽";
 		enemies[2].name = "许褚";
-		enemies[3].name = "曹仁";			player.chargeCool = 0;
+		enemies[3].name = "曹仁";
+		enemies[0].weaponType = "saber";
+		enemies[1].weaponType = "spear";
+		enemies[2].weaponType = "hammer";
+		enemies[3].weaponType = "halberd";
+		enemies[0].active = true;
+		enemies[1].active = true;
+		enemies[2].active = false;
+		enemies[3].active = false;
+		enemies[0].isGuardLeader = true;
+		enemies[1].isGuardLeader = false;
+		enemies[2].isGuardLeader = false;
+		enemies[3].isGuardLeader = false;
+		player.chargeCool = 0;
 		const allies = [];
 		const enemyUnits = [];
 
 		for (let i = 0; i < 10; i += 1) allies.push(createUnit(player, "ally"));
 		for (const e of enemies) {
+			if (!e.active) continue;
 			for (let i = 0; i < 7; i += 1) enemyUnits.push(createUnit(e, "enemy"));
 		}
 
 		const outposts = [
 				{ x: 1300, y: 860,  owner: "neutral", tick: 0, r: 62, name: "许昌", breakParts: [] },
 				{ x: 2550, y: 640,  owner: "neutral", tick: 0, r: 62, name: "邺城", breakParts: [] },
-				{ x: 3880, y: 940,  owner: "neutral", tick: 0, r: 62, name: "合肥", breakParts: [] },
+				{ x: 3880, y: 940,  owner: "neutral", tick: 0, r: 62, name: "北平", breakParts: [] },
+				{ x: 2550, y: 1880, owner: "neutral", tick: 0, r: 62, name: "汉阳", breakParts: [] },
 				{ x: 1470, y: 2480, owner: "neutral", tick: 0, r: 62, name: "江陵", breakParts: [] },
 				{ x: 2650, y: 2730, owner: "neutral", tick: 0, r: 62, name: "襄阳", breakParts: [] },
 				{ x: 3920, y: 2500, owner: "neutral", tick: 0, r: 62, name: "建业", breakParts: [] }
 		];
+
+		const mines = [
+			{ x: 2425, y: 485, r: 34, name: "金矿", resource: "gold", outpost: outposts[1], tick: 0, sparkle: 0 },
+			{ x: 2445, y: 1985, r: 34, name: "铁矿", resource: "iron", outpost: outposts[3], tick: 0, sparkle: 0 },
+			{ x: 2665, y: 2000, r: 34, name: "铁矿", resource: "iron", outpost: outposts[3], tick: 0, sparkle: 0 },
+			{ x: 2860, y: 2870, r: 34, name: "金矿", resource: "gold", outpost: outposts[5], tick: 0, sparkle: 0 }
+		];
+		const mineWorkers = [];
+		let mineWorkerSeed = 0;
+		const hanyangOutpost = outposts[3];
+		const clinic = {
+			x: 1325,
+			y: 2595,
+			r: 44,
+			name: "医馆",
+			outpost: outposts[4],
+			pulse: 0,
+			tick: 0
+		};
+		const stable = { x: 4065, y: 822, r: 42, name: "马场", outpost: outposts[2] };
+
+		const xiahouDunGuardOutpost = outposts[0];
+		const xiahouDunGuardPos = {
+			x: xiahouDunGuardOutpost.x - xiahouDunGuardOutpost.r - 18,
+			y: xiahouDunGuardOutpost.y + 18
+		};
+		enemies[0].guardPos = xiahouDunGuardPos;
+		enemies[0].x = xiahouDunGuardPos.x;
+		enemies[0].y = xiahouDunGuardPos.y;
+		enemies[0].target = { ...xiahouDunGuardPos };
+
+		const enemyReinforcementWaves = [
+			{ delay: 30, indices: [2, 3] }
+		];
+		let enemyWaveTimer = 0;
+		let enemyWaveIndex = 0;
+
+		function activateEnemyLeader(index) {
+			const e = enemies[index];
+			if (!e || e.dead || e.active) return;
+			e.active = true;
+			e.thinking = 0;
+			e.target = { x: player.x + rand(-220, 220), y: player.y + rand(-220, 220) };
+			for (let i = 0; i < 7; i += 1) enemyUnits.push(createUnit(e, "enemy"));
+		}
+
+		function updateEnemyWaves(dt) {
+			if (enemyWaveIndex >= enemyReinforcementWaves.length) return;
+			enemyWaveTimer += dt;
+			const wave = enemyReinforcementWaves[enemyWaveIndex];
+			if (enemyWaveTimer < wave.delay) return;
+			enemyWaveTimer = 0;
+			for (const idx of wave.indices) activateEnemyLeader(idx);
+			enemyWaveIndex += 1;
+		}
 
 		const biomes = [
 			{ type: "wet",    x: 980,  y: 1380, r: 520 },
@@ -418,13 +498,28 @@
 			{ x: 152, y: 2330, r: 172 },
 			{ x: 185, y: 2610, r: 170 },
 			{ x: 162, y: 2885, r: 174 },
-			{ x: 178, y: 3160, r: 168 }
+			{ x: 178, y: 3160, r: 168 },
+			// 武当山 — left of Hanyang (2550,1880)
+			{ x: 1980, y: 1760, r: 148, name: "武当山" },
+			{ x: 1870, y: 1980, r: 136 },
+			{ x: 2080, y: 1960, r: 122 },
+			{ x: 1940, y: 2140, r: 118 }
 		];
 
 		const chargeEffects = []; // { x, y, life, r }
 
 		function viewToWorld(cx, cy) {
 			return { x: cx + camera.x, y: cy + camera.y };
+		}
+
+		function miniToWorld(clientX, clientY) {
+			const rect = mini.getBoundingClientRect();
+			const localX = clamp(clientX - rect.left, 0, rect.width);
+			const localY = clamp(clientY - rect.top, 0, rect.height);
+			return {
+				x: (localX / rect.width) * CFG.worldW,
+				y: (localY / rect.height) * CFG.worldH
+			};
 		}
 
 		function moveTo(entity, tx, ty, speed, dt) {
@@ -493,21 +588,69 @@
 			}
 		}
 
+		function createMineWorker(mine, team) {
+			mineWorkerSeed += 1;
+			return {
+				id: mineWorkerSeed,
+				x: mine.x + rand(-10, 10),
+				y: mine.y + rand(-8, 8),
+				team,
+				mine,
+				phase: "toMine",
+				carrying: false,
+				speed: 98,
+				radius: 5,
+				dir: 0,
+				wait: rand(0.1, 0.9),
+				offsetX: rand(-16, 16),
+				offsetY: rand(-10, 10)
+			};
+		}
+
+		function mineWorkerTarget(worker) {
+			if (worker.phase === "toMine") {
+				return {
+					x: worker.mine.x + worker.offsetX,
+					y: worker.mine.y + worker.offsetY
+				};
+			}
+			return {
+				x: worker.mine.outpost.x + worker.offsetX * 0.38,
+				y: worker.mine.outpost.y + 16 + worker.offsetY * 0.35
+			};
+		}
+
+		function getTeamAttackMultiplier(team) {
+			return hanyangOutpost.owner === team ? 1.22 : 1;
+		}
+
+		function triggerUnitSlash(attacker, target) {
+			attacker.slashTimer = 0.12;
+			attacker.slashCd = 0.34;
+			if (!target) return;
+			const dx = target.x - attacker.x;
+			const dy = target.y - attacker.y;
+			attacker.dir = Math.atan2(dy, dx);
+		}
+
 		function updatePlayer(dt) {
 			if (player.dead) return;
+			const mountSpeed = stable.outpost.owner === "ally" ? CFG.heroSpeed * 1.55 : CFG.heroSpeed;
+			const moveScale = (player.attackLock > 0 || player.hitStop > 0) ? 0.18 : player.recoverTimer > 0 ? 0.52 : 1;
+			const moveSpeed = mountSpeed * moveScale;
 			const mx = (moveInput.right ? 1 : 0) - (moveInput.left ? 1 : 0);
 			const my = (moveInput.down ? 1 : 0) - (moveInput.up ? 1 : 0);
 			if (mx !== 0 || my !== 0) {
 				const d = Math.hypot(mx, my) || 1;
 				const nx = mx / d;
 				const ny = my / d;
-				player.x += nx * player.speed * dt;
-				player.y += ny * player.speed * dt;
+				player.x += nx * moveSpeed * dt;
+				player.y += ny * moveSpeed * dt;
 				player.dir = Math.atan2(ny, nx);
 				player.target.x = player.x;
 				player.target.y = player.y;
 			} else {
-				moveTo(player, player.target.x, player.target.y, player.speed, dt);
+				moveTo(player, player.target.x, player.target.y, moveSpeed, dt);
 			}
 			player.x = clamp(player.x, 50, CFG.worldW - 50);
 			player.y = clamp(player.y, 50, CFG.worldH - 50);
@@ -537,18 +680,34 @@
 		}
 
 		function triggerLeaderSlash(attacker, target) {
-			attacker.slashTimer = 0.18;
-			attacker.slashCd = 0.26;
+			if (attacker.team === "enemy") {
+				attacker.slashTimer = 0.52;
+				attacker.slashCd = 1.02;
+				attacker.attackLock = 0.2;
+				attacker.recoverTimer = Math.max(attacker.recoverTimer, 0.32);
+			} else {
+				attacker.slashTimer = 0.34;
+				attacker.slashCd = 0.72;
+				attacker.attackLock = 0.11;
+				attacker.recoverTimer = Math.max(attacker.recoverTimer, 0.2);
+			}
 			if (!target) return;
 			const dx = target.x - attacker.x;
 			const dy = target.y - attacker.y;
-			const d = Math.max(0.001, Math.hypot(dx, dy));
 			attacker.dir = Math.atan2(dy, dx);
 		}
 
 		function updateEnemyLeaders(dt) {
 			for (const e of enemies) {
-				if (e.dead) continue;
+				if (e.dead || !e.active) continue;
+				if (e.attackLock > 0 || e.recoverTimer > 0) continue;
+				if (e.guardPos) {
+					if (dist(e, player) < 116 && e.slashCd <= 0) triggerLeaderSlash(e, player);
+					e.target = e.guardPos;
+					e.x = e.guardPos.x;
+					e.y = e.guardPos.y;
+					continue;
+				}
 				e.thinking -= dt;
 				if (e.thinking <= 0 || dist(e, e.target) < 40) {
 					e.thinking = rand(1.1, 2.8);
@@ -563,6 +722,7 @@
 				e.x = clamp(e.x, 60, CFG.worldW - 60);
 				e.y = clamp(e.y, 60, CFG.worldH - 60);
 				pushOutMountains(e);
+				if (dist(e, player) < 116 && e.slashCd <= 0) triggerLeaderSlash(e, player);
 			}
 		}
 
@@ -597,7 +757,9 @@
 
 				if (target && td < CFG.aggroRange) {
 					if (td <= CFG.attackRange + 6) {
-						target.hp -= CFG.unitDps * dt;
+						u.dir = Math.atan2(target.y - u.y, target.x - u.x);
+						if (u.slashCd <= 0) triggerUnitSlash(u, target);
+						target.hp -= CFG.unitDps * getTeamAttackMultiplier(u.team) * dt;
 						applyKnockback(u, target, 0.9);
 					} else {
 						moveTo(u, target.x, target.y, u.speed, dt);
@@ -648,7 +810,7 @@
 					allies.push(createUnit(player, "ally"));
 				}
 				for (const e of enemies) {
-					if (e.dead) continue;
+					if (e.dead || !e.active) continue;
 					const count = enemyUnits.filter((u) => !u.dead && u.owner === e).length;
 					if (count < 12) enemyUnits.push(createUnit(e, "enemy"));
 				}
@@ -659,7 +821,7 @@
 		function outpostSystem(dtMs) {
 			for (const o of outposts) {
 				const nearAlly = dist(player, o) < o.r + 24 || allies.some((u) => !u.dead && dist(u, o) < o.r + 10);
-				const nearEnemy = enemies.some((e) => !e.dead && dist(e, o) < o.r + 24) || enemyUnits.some((u) => !u.dead && dist(u, o) < o.r + 10);
+				const nearEnemy = enemies.some((e) => e.active && !e.dead && dist(e, o) < o.r + 24) || enemyUnits.some((u) => !u.dead && dist(u, o) < o.r + 10);
 
 				const oldOwner = o.owner;
 				if (nearAlly && !nearEnemy) o.owner = "ally";
@@ -673,10 +835,90 @@
 						allies.push(createUnit(player, "ally"));
 					}
 					if (o.owner === "enemy") {
-						const owner = enemies.filter((e) => !e.dead)[Math.floor(Math.random() * Math.max(1, enemies.filter((e) => !e.dead).length))];
+						const activeEnemyLeaders = enemies.filter((e) => e.active && !e.dead);
+						const owner = activeEnemyLeaders[Math.floor(Math.random() * Math.max(1, activeEnemyLeaders.length))];
 						if (owner) enemyUnits.push(createUnit(owner, "enemy"));
 					}
 				}
+			}
+		}
+
+		function mineSystem(dt, dtMs) {
+			for (let i = mineWorkers.length - 1; i >= 0; i -= 1) {
+				const worker = mineWorkers[i];
+				const owner = worker.mine.outpost.owner;
+				if (owner === "neutral") {
+					mineWorkers.splice(i, 1);
+					continue;
+				}
+				worker.team = owner;
+				if (worker.wait > 0) {
+					worker.wait = Math.max(0, worker.wait - dt);
+					continue;
+				}
+				const target = mineWorkerTarget(worker);
+				const remaining = moveTo(worker, target.x, target.y, worker.speed, dt);
+				if (worker.phase === "toMine" && remaining <= 8) {
+					worker.phase = "toOutpost";
+					worker.carrying = true;
+					worker.wait = rand(0.28, 0.75);
+					worker.mine.sparkle = 1;
+				} else if (worker.phase === "toOutpost" && remaining <= worker.mine.outpost.r * 0.42) {
+					worker.phase = "toMine";
+					worker.carrying = false;
+					worker.wait = rand(0.2, 0.55);
+				}
+				worker.x = clamp(worker.x, 16, CFG.worldW - 16);
+				worker.y = clamp(worker.y, 16, CFG.worldH - 16);
+				pushOutMountains(worker);
+			}
+
+			for (const mine of mines) {
+				mine.sparkle = Math.max(0, mine.sparkle - dt * 1.8);
+				if (mine.outpost.owner === "neutral") {
+					mine.tick = 0;
+					continue;
+				}
+				mine.tick += dtMs;
+				const activeWorkers = mineWorkers.filter((worker) => worker.mine === mine).length;
+				if (mine.tick >= 2200 && activeWorkers < 3) {
+					mine.tick = 0;
+					mineWorkers.push(createMineWorker(mine, mine.outpost.owner));
+				}
+			}
+		}
+
+		function clinicSystem(dt, dtMs) {
+			clinic.pulse = Math.max(0, clinic.pulse - dt * 1.8);
+			if (clinic.outpost.owner === "neutral") {
+				clinic.tick = 0;
+				return;
+			}
+
+			const healRadius = 180;
+			const nearClinic = (entity, extra) => !entity.dead && dist(entity, clinic) <= healRadius + (extra || 0);
+
+			if (clinic.outpost.owner === "ally") {
+				if (nearClinic(player, 14)) {
+					player.hp = Math.min(player.maxHp, player.hp + 20 * dt);
+				}
+				for (const u of allies) {
+					if (nearClinic(u, 4)) u.hp = Math.min(u.maxHp, u.hp + 12 * dt);
+				}
+			} else if (clinic.outpost.owner === "enemy") {
+				for (const e of enemies) {
+					if (!e.active || !nearClinic(e, 14)) continue;
+					e.hp = Math.min(e.maxHp, e.hp + 18 * dt);
+				}
+				for (const u of enemyUnits) {
+					if (nearClinic(u, 4)) u.hp = Math.min(u.maxHp, u.hp + 12 * dt);
+				}
+			}
+
+			clinic.tick += dtMs;
+			if (clinic.tick >= 900) {
+				clinic.tick = 0;
+				clinic.pulse = 1;
 			}
 		}
 
@@ -686,7 +928,7 @@
 			}
 			const allyOut = outposts.filter((o) => o.owner === "ally").length;
 			const deadEnemyGenerals = enemies.filter((e) => e.dead).length;
-			const aliveEnemies = enemies.filter((e) => !e.dead).length;
+			const aliveEnemies = enemies.filter((e) => e.active && !e.dead).length;
 			const missionDone = allyOut >= MISSION.needOutposts && deadEnemyGenerals >= MISSION.needGenerals;
 			if (missionDone || aliveEnemies === 0) gameState.result = "游戏通关";
 			if (player.dead) gameState.result = "失败";
@@ -716,6 +958,26 @@
 
 			const scale = isLeader ? 1.25 : 0.82;
 			ctx.scale(scale, scale);
+
+			// mounted horse body
+			if (isLeader && entity === player && stable.outpost.owner === "ally") {
+				ctx.fillStyle = "#8b5e3c";
+				ctx.beginPath();
+				ctx.ellipse(0, 13, 14, 7.5, 0, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.fillStyle = "#7a4a24";
+				ctx.beginPath();
+				ctx.ellipse(10, 5, 6.5, 5, -0.5, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.strokeStyle = "#5a3010";
+				ctx.lineWidth = 2.2;
+				ctx.beginPath();
+				ctx.moveTo(-9, 18); ctx.lineTo(-10, 26);
+				ctx.moveTo(-3, 20); ctx.lineTo(-3, 28);
+				ctx.moveTo(3, 20);  ctx.lineTo(4, 28);
+				ctx.moveTo(9, 17);  ctx.lineTo(10, 25);
+				ctx.stroke();
+			}
 
 			ctx.strokeStyle = "rgba(0,0,0,0.35)";
 			ctx.lineWidth = 2;
@@ -751,33 +1013,222 @@
 			ctx.fillRect(-5, -14.8, 10, 2.8);
 
 			if (isLeader) {
+				const empoweredBlade = entity === player && hanyangOutpost.owner === "ally";
+				const weaponType = entity.weaponType || "saber";
+				ctx.save();
+				ctx.rotate((entity.dir || 0) + 0.06);
+				if (empoweredBlade) {
+					ctx.shadowColor = "rgba(255, 221, 96, 0.95)";
+					ctx.shadowBlur = 14;
+				}
+
+				if (weaponType === "pudao") {
+					// swing weight shift: blade tip extends at mid-swing (下劈重心变化)
+					if (entity.slashTimer > 0) {
+						const swingP = 1 - entity.slashTimer / 0.34;
+						const ext = Math.sin(clamp(swingP, 0, 1) * Math.PI) * 4.5;
+						ctx.translate(ext * 0.28, -ext * 0.6);
+					}
+
+					// counterweight knob at butt of handle (刀背配重)
+					ctx.fillStyle = empoweredBlade ? "#a07830" : "#4d3621";
+					ctx.beginPath();
+					ctx.ellipse(-5.2, 7.2, 3.2, 2.1, 0.9, 0, Math.PI * 2);
+					ctx.fill();
+
+					// shaft
+					ctx.strokeStyle = empoweredBlade ? "#8a682a" : "#6b4c2d";
+					ctx.lineWidth = 3;
+					ctx.beginPath();
+					ctx.moveTo(-3.2, 4.6);
+					ctx.lineTo(16.8, -21.4);
+					ctx.stroke();
+
+					// blade body
+					ctx.fillStyle = empoweredBlade ? "#f0cd60" : "#cfd7e1";
+					ctx.beginPath();
+					ctx.moveTo(16.2, -21.8);
+					ctx.lineTo(24.6, -31.2);
+					ctx.lineTo(22.6, -15.8);
+					ctx.lineTo(18.4, -19.1);
+					ctx.closePath();
+					ctx.fill();
+
+					// blade spine — dark ridge (刀背)
+					ctx.strokeStyle = empoweredBlade ? "#7a5515" : "#8a9aaa";
+					ctx.lineWidth = 1.6;
+					ctx.beginPath();
+					ctx.moveTo(16.6, -21.4);
+					ctx.lineTo(22.8, -15.6);
+					ctx.stroke();
+
+					// cutting edge highlight
+					ctx.fillStyle = empoweredBlade ? "#f7df92" : "#ecf2f8";
+					ctx.beginPath();
+					ctx.moveTo(18.3, -20.1);
+					ctx.lineTo(22.1, -24.6);
+					ctx.lineTo(21.3, -18.6);
+					ctx.closePath();
+					ctx.fill();
+
+					// edge line (刀刃)
+					ctx.strokeStyle = empoweredBlade ? "#f5d46d" : "#d8e0e9";
+					ctx.lineWidth = 1.4;
+					ctx.beginPath();
+					ctx.moveTo(16.6, -21.2);
+					ctx.lineTo(23.6, -29.1);
+					ctx.stroke();
+
+					// guard (护格)
+					ctx.fillStyle = empoweredBlade ? "#f3c95a" : "#c9d2dd";
+					ctx.fillRect(14.7, -19.8, 2.3, 2.3);
+				} else if (weaponType === "spear") {
+					ctx.strokeStyle = "#61462c";
+					ctx.lineWidth = 2.3;
+					ctx.beginPath();
+					ctx.moveTo(-2, 4);
+					ctx.lineTo(18, -20);
+					ctx.stroke();
+					ctx.strokeStyle = "#d5dce5";
+					ctx.lineWidth = 1.6;
+					ctx.beginPath();
+					ctx.moveTo(18, -20);
+					ctx.lineTo(23, -24);
+					ctx.lineTo(21, -18);
+					ctx.stroke();
+				} else if (weaponType === "hammer") {
+					ctx.strokeStyle = "#5a4026";
+					ctx.lineWidth = 2.9;
+					ctx.beginPath();
+					ctx.moveTo(-2, 3);
+					ctx.lineTo(9, -15);
+					ctx.stroke();
+					ctx.fillStyle = "#adb8c4";
+					ctx.fillRect(9, -20, 9, 8);
+					ctx.fillStyle = "#87919d";
+					ctx.fillRect(10.2, -18.8, 2.4, 5.6);
+					ctx.fillRect(14.2, -18.8, 2.4, 5.6);
+				} else if (weaponType === "halberd") {
+					ctx.strokeStyle = "#5f452b";
+					ctx.lineWidth = 2.4;
+					ctx.beginPath();
+					ctx.moveTo(-2, 4);
+					ctx.lineTo(14, -19);
+					ctx.stroke();
+					ctx.strokeStyle = "#d0d9e2";
+					ctx.lineWidth = 1.8;
+					ctx.beginPath();
+					ctx.moveTo(13.5, -19.2);
+					ctx.quadraticCurveTo(22, -24, 21, -10.5);
+					ctx.moveTo(14.5, -16.5);
+					ctx.lineTo(7.5, -20.5);
+					ctx.stroke();
+				} else {
+					ctx.strokeStyle = "#5f4327";
+					ctx.lineWidth = 2.2;
+					ctx.beginPath();
+					ctx.moveTo(-2, 4);
+					ctx.lineTo(14, -18);
+					ctx.stroke();
+				}
+
+				ctx.restore();
+
 				ctx.strokeStyle = "rgba(255, 248, 209, 0.9)";
 				ctx.lineWidth = 2;
 				ctx.beginPath();
 				ctx.arc(0, -2, 14 + Math.sin(performance.now() * 0.01) * 1.2, 0, Math.PI * 2);
 				ctx.stroke();
 
-				if (entity.slashTimer > 0) {
-					const t = clamp(entity.slashTimer / 0.18, 0, 1);
-					const swing = (1 - t) * 1.2 - 0.6;
-					const facing = entity.dir || 0;
-					const sa = facing - 1.15 + swing;
-					const ea = facing + 0.15 + swing;
-
-					ctx.strokeStyle = `rgba(255, 226, 138, ${0.35 + (1 - t) * 0.55})`;
-					ctx.lineWidth = 3.6;
+				if (entity.hitFlash > 0) {
+					const hf = entity.hitFlash;
+					// outer warm bloom
+					ctx.fillStyle = `rgba(255, 210, 100, ${clamp(hf * 0.38, 0, 0.36)})`;
 					ctx.beginPath();
-					ctx.arc(0, -8, 16.5, sa, ea);
+					ctx.ellipse(0, -5.5, 14, 16, 0, 0, Math.PI * 2);
+					ctx.fill();
+					// inner white core
+					ctx.fillStyle = `rgba(255, 252, 230, ${clamp(0.18 + hf * 0.52, 0, 0.72)})`;
+					ctx.beginPath();
+					ctx.ellipse(0, -5.5, 9.8, 11, 0, 0, Math.PI * 2);
+					ctx.fill();
+				}
+
+				if (entity.slashTimer > 0) {
+					const t = clamp(entity.slashTimer / 0.34, 0, 1);
+					const heavy = entity.attackLock > 0 ? 0.5 : entity.recoverTimer > 0 ? -0.25 : 0;
+					const swing = (1 - t) * 1.5 - 0.85 + heavy;
+					const facing = entity.dir || 0;
+					const sa = facing - 1.35 + swing;
+					const ea = facing + 0.22 + swing;
+
+					ctx.strokeStyle = empoweredBlade ? `rgba(255, 218, 86, ${0.48 + (1 - t) * 0.42})` : `rgba(255, 231, 156, ${0.38 + (1 - t) * 0.52})`;
+					ctx.lineWidth = 4.6;
+					ctx.beginPath();
+					ctx.arc(0, -8, 18.8, sa, ea);
 					ctx.stroke();
 
-					ctx.strokeStyle = `rgba(255, 255, 255, ${0.2 + (1 - t) * 0.4})`;
-					ctx.lineWidth = 1.4;
+					ctx.strokeStyle = empoweredBlade ? `rgba(255, 248, 198, ${0.32 + (1 - t) * 0.44})` : `rgba(255, 255, 255, ${0.25 + (1 - t) * 0.4})`;
+					ctx.lineWidth = 1.8;
 					ctx.beginPath();
-					ctx.arc(0, -8, 13.2, sa + 0.04, ea - 0.05);
+					ctx.arc(0, -8, 15.2, sa + 0.05, ea - 0.08);
 					ctx.stroke();
 				}
+			} else if (entity.slashTimer > 0) {
+				const t = clamp(entity.slashTimer / 0.12, 0, 1);
+				const swing = (1 - t) * 1.35 - 0.72;
+				const facing = entity.dir || 0;
+				const sa = facing - 1.05 + swing;
+				const ea = facing + 0.05 + swing;
+
+				ctx.strokeStyle = `rgba(255, 228, 150, ${0.28 + (1 - t) * 0.45})`;
+				ctx.lineWidth = 2.1;
+				ctx.beginPath();
+				ctx.arc(0, -5, 10.5, sa, ea);
+				ctx.stroke();
+
+				ctx.strokeStyle = `rgba(255, 255, 255, ${0.16 + (1 - t) * 0.28})`;
+				ctx.lineWidth = 0.9;
+				ctx.beginPath();
+				ctx.arc(0, -5, 8.2, sa + 0.03, ea - 0.04);
+				ctx.stroke();
 			}
 
+			ctx.restore();
+		}
+
+		function drawMineWorker(worker) {
+			ctx.save();
+			ctx.translate(worker.x, worker.y);
+			const body = worker.team === "ally" ? "#d4b35e" : "#cd6e5d";
+			const accent = worker.team === "ally" ? "#f7e3a0" : "#f1b0a0";
+			ctx.strokeStyle = "rgba(0,0,0,0.28)";
+			ctx.lineWidth = 1.4;
+			ctx.beginPath();
+			ctx.moveTo(0, 1);
+			ctx.lineTo(-2.2, 5.6);
+			ctx.moveTo(0, 1);
+			ctx.lineTo(2.2, 5.6);
+			ctx.stroke();
+
+			ctx.fillStyle = body;
+			ctx.fillRect(-2.8, -4.5, 5.6, 7.2);
+			ctx.fillStyle = accent;
+			ctx.fillRect(-3.7, -3.3, 1.2, 4.2);
+			ctx.fillRect(2.5, -3.3, 1.2, 4.2);
+
+			ctx.fillStyle = "#ecc8a0";
+			ctx.beginPath();
+			ctx.arc(0, -6.8, 2.5, 0, Math.PI * 2);
+			ctx.fill();
+
+			if (worker.carrying) {
+				ctx.fillStyle = worker.mine.resource === "iron" ? "#b7c0ca" : "#f3cf59";
+				ctx.fillRect(2.2, -6.2, 4.1, 4.1);
+				ctx.strokeStyle = worker.mine.resource === "iron" ? "rgba(235, 241, 247, 0.65)" : "rgba(255, 249, 201, 0.65)";
+				ctx.lineWidth = 0.9;
+				ctx.strokeRect(2.2, -6.2, 4.1, 4.1);
+			}
 			ctx.restore();
 		}
 
@@ -976,7 +1427,153 @@
 					ctx.lineTo(ox + m.r * 0.12, m.y + m.r * 0.28);
 					ctx.stroke();
 				}
+
+				// Named mountain label
+				if (m.name) {
+					ctx.fillStyle = "rgba(248, 240, 220, 0.88)";
+					ctx.font = "bold 15px Microsoft YaHei";
+					ctx.textAlign = "center";
+					ctx.fillText(m.name, m.x, m.y - m.r * 0.52);
+				}
 			}
+
+			for (const mine of mines) {
+				if (mine.x + 70 < camera.x || mine.x - 70 > camera.x + canvas.width) continue;
+				if (mine.y + 60 < camera.y || mine.y - 60 > camera.y + canvas.height) continue;
+
+				const banner = mine.outpost.owner === "ally" ? "#cfb35e" : mine.outpost.owner === "enemy" ? "#ca705f" : "#8f7bc0";
+				const oreColor = mine.resource === "iron" ? "#9fa8b4" : "#c8ab55";
+				const sparkleColor = mine.resource === "iron" ? "rgba(216, 230, 245, " : "rgba(255, 236, 140, ";
+				ctx.fillStyle = "rgba(0,0,0,0.2)";
+				ctx.beginPath();
+				ctx.ellipse(mine.x + 5, mine.y + 24, 34, 14, 0, 0, Math.PI * 2);
+				ctx.fill();
+
+				ctx.fillStyle = "#6a5942";
+				ctx.fillRect(mine.x - 26, mine.y - 8, 52, 20);
+				ctx.fillStyle = "#8b7457";
+				ctx.beginPath();
+				ctx.moveTo(mine.x - 32, mine.y - 8);
+				ctx.lineTo(mine.x, mine.y - 28);
+				ctx.lineTo(mine.x + 32, mine.y - 8);
+				ctx.closePath();
+				ctx.fill();
+
+				ctx.fillStyle = "#4f4536";
+				ctx.beginPath();
+				ctx.arc(mine.x, mine.y + 7, mine.r, 0.1, Math.PI - 0.1, true);
+				ctx.fill();
+
+				ctx.fillStyle = oreColor;
+				for (let i = 0; i < 4; i += 1) {
+					ctx.beginPath();
+					ctx.arc(mine.x - 10 + i * 7, mine.y + 5 + (i % 2) * 3, 3.1, 0, Math.PI * 2);
+					ctx.fill();
+				}
+
+				if (mine.sparkle > 0) {
+					ctx.strokeStyle = `${sparkleColor}${mine.sparkle})`;
+					ctx.lineWidth = 2;
+					ctx.beginPath();
+					ctx.arc(mine.x - 2, mine.y + 6, 12 + (1 - mine.sparkle) * 8, 0, Math.PI * 2);
+					ctx.stroke();
+				}
+
+				ctx.fillStyle = banner;
+				ctx.fillRect(mine.x + 23, mine.y - 31, 4, 23);
+				ctx.beginPath();
+				ctx.moveTo(mine.x + 27, mine.y - 31);
+				ctx.lineTo(mine.x + 45, mine.y - 25);
+				ctx.lineTo(mine.x + 27, mine.y - 18);
+				ctx.closePath();
+				ctx.fill();
+
+				ctx.fillStyle = "#f6ead6";
+				ctx.font = "700 11px Microsoft YaHei";
+				ctx.textAlign = "center";
+				ctx.fillText(mine.name, mine.x, mine.y - 36);
+			}
+
+			const clinicBanner = clinic.outpost.owner === "ally" ? "#cfb35e" : clinic.outpost.owner === "enemy" ? "#ca705f" : "#8f7bc0";
+			ctx.fillStyle = "rgba(0,0,0,0.22)";
+			ctx.beginPath();
+			ctx.ellipse(clinic.x + 3, clinic.y + 27, 38, 14, 0, 0, Math.PI * 2);
+			ctx.fill();
+
+			ctx.fillStyle = "#cab6a2";
+			ctx.fillRect(clinic.x - 31, clinic.y - 10, 62, 34);
+			ctx.fillStyle = "#8d6f5b";
+			ctx.beginPath();
+			ctx.moveTo(clinic.x - 36, clinic.y - 10);
+			ctx.lineTo(clinic.x, clinic.y - 34);
+			ctx.lineTo(clinic.x + 36, clinic.y - 10);
+			ctx.closePath();
+			ctx.fill();
+
+			ctx.fillStyle = "#f4f0e8";
+			ctx.fillRect(clinic.x - 18, clinic.y + 2, 36, 14);
+			ctx.fillStyle = "#cf5f5f";
+			ctx.fillRect(clinic.x - 3, clinic.y - 2, 6, 22);
+			ctx.fillRect(clinic.x - 11, clinic.y + 6, 22, 6);
+
+			if (clinic.pulse > 0) {
+				ctx.strokeStyle = `rgba(178, 247, 191, ${clinic.pulse * 0.85})`;
+				ctx.lineWidth = 2.2;
+				ctx.beginPath();
+				ctx.arc(clinic.x, clinic.y + 6, 20 + (1 - clinic.pulse) * 18, 0, Math.PI * 2);
+				ctx.stroke();
+			}
+
+			ctx.fillStyle = clinicBanner;
+			ctx.fillRect(clinic.x + 25, clinic.y - 33, 4, 24);
+			ctx.beginPath();
+			ctx.moveTo(clinic.x + 29, clinic.y - 33);
+			ctx.lineTo(clinic.x + 47, clinic.y - 26);
+			ctx.lineTo(clinic.x + 29, clinic.y - 19);
+			ctx.closePath();
+			ctx.fill();
+
+			ctx.fillStyle = "#f6ead6";
+			ctx.font = "700 11px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText(clinic.name, clinic.x, clinic.y - 42);
+
+			// stable (马场) near 北平
+			const stableWall = stable.outpost.owner === "ally" ? "#b59b57" : stable.outpost.owner === "enemy" ? "#b15b4a" : "#7b6aa8";
+			const stableGate = stable.outpost.owner === "ally" ? "#d7c079" : stable.outpost.owner === "enemy" ? "#d68170" : "#9f8bcc";
+			ctx.fillStyle = "rgba(0,0,0,0.18)";
+			ctx.beginPath();
+			ctx.ellipse(stable.x + 3, stable.y + 32, 50, 13, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#d6bc7e";
+			ctx.fillRect(stable.x - 46, stable.y - 22, 92, 58);
+			ctx.strokeStyle = stableWall;
+			ctx.lineWidth = 5;
+			ctx.strokeRect(stable.x - 46, stable.y - 22, 92, 58);
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.moveTo(stable.x - 46, stable.y + 8);
+			ctx.lineTo(stable.x + 46, stable.y + 8);
+			ctx.stroke();
+			ctx.fillStyle = "#7a4e28";
+			ctx.beginPath();
+			ctx.ellipse(stable.x - 6, stable.y + 22, 16, 8, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.beginPath();
+			ctx.ellipse(stable.x + 9, stable.y + 13, 7.5, 5.5, -0.45, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = stableGate;
+			ctx.fillRect(stable.x + 30, stable.y - 38, 4, 22);
+			ctx.beginPath();
+			ctx.moveTo(stable.x + 34, stable.y - 38);
+			ctx.lineTo(stable.x + 53, stable.y - 29);
+			ctx.lineTo(stable.x + 34, stable.y - 22);
+			ctx.closePath();
+			ctx.fill();
+			ctx.fillStyle = "#f6ead6";
+			ctx.font = "700 11px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText(stable.name, stable.x, stable.y - 48);
 
 			for (const o of outposts) {
 				const wall = o.owner === "ally" ? "#b59b57" : o.owner === "enemy" ? "#b15b4a" : "#7b6aa8";
@@ -1017,8 +1614,12 @@
 				ctx.globalAlpha = 1;
 			}
 
+			for (const worker of mineWorkers) {
+				drawMineWorker(worker);
+			}
+
 			for (const e of enemies) {
-				if (e.dead) continue;
+				if (e.dead || !e.active) continue;
 				drawSoldier(e, true, "#b64339", "#d97162");
 				ctx.fillStyle = "#ffd2c6";
 				ctx.font = "700 12px Microsoft YaHei";
@@ -1106,6 +1707,21 @@
 				miniCtx.fill();
 			}
 
+			for (const mine of mines) {
+				miniCtx.fillStyle = mine.resource === "iron" ? "#c4cfdb" : "#f1c952";
+				miniCtx.fillRect(mine.x * sx - 1.5, mine.y * sy - 1.5, 3, 3);
+			}
+
+// clinic cross on minimap
+				const ccx = clinic.x * sx, ccy = clinic.y * sy;
+				miniCtx.fillStyle = "#4ddd80";
+				miniCtx.fillRect(ccx - 4, ccy - 1, 8, 2);
+				miniCtx.fillRect(ccx - 1, ccy - 4, 2, 8);
+				// stable marker on minimap
+				const smx = stable.x * sx, smy = stable.y * sy;
+				miniCtx.fillStyle = stable.outpost.owner === "ally" ? "#e8c04a" : stable.outpost.owner === "enemy" ? "#d06050" : "#a07840";
+				miniCtx.fillRect(smx - 2.5, smy - 2.5, 5, 5);
+
 			miniCtx.fillStyle = "#ffe7a5";
 			for (const u of allies) {
 				if (u.dead) continue;
@@ -1168,9 +1784,11 @@
 				}
 			}
 			for (const e of enemies) {
-				if (!e.dead && dist(player, e) < chargeR) {
+				if (!e.active || e.dead) continue;
+				if (dist(player, e) < chargeR) {
 					pushAwayOnly(player, e, 65);
 					e.hp -= 35;
+					e.hitFlash = Math.max(e.hitFlash || 0, 0.16);
 				}
 			}
 		}
@@ -1178,6 +1796,18 @@
 		function issueMoveCommand(clientX, clientY) {
 			if (gameState.over || gameState.paused || player.dead) return;
 			const p = viewToWorld(clientX, clientY);
+			player.target = {
+				x: clamp(p.x, 0, CFG.worldW),
+				y: clamp(p.y, 0, CFG.worldH)
+			};
+			clickMarker.x = player.target.x;
+			clickMarker.y = player.target.y;
+			clickMarker.life = 1;
+		}
+
+		function issueMiniMapCommand(clientX, clientY) {
+			if (gameState.over || gameState.paused || player.dead) return;
+			const p = miniToWorld(clientX, clientY);
 			player.target = {
 				x: clamp(p.x, 0, CFG.worldW),
 				y: clamp(p.y, 0, CFG.worldH)
@@ -1232,6 +1862,29 @@
 			tryStartBgm();
 			issueMoveCommand(e.clientX, e.clientY);
 		}, { passive: false });
+		let miniDragging = false;
+		mini.addEventListener("pointerdown", (e) => {
+			if (e.pointerType === "mouse" && e.button !== 0) return;
+			miniDragging = true;
+			if (typeof mini.setPointerCapture === "function") mini.setPointerCapture(e.pointerId);
+			e.preventDefault();
+			tryStartBgm();
+			issueMiniMapCommand(e.clientX, e.clientY);
+		}, { passive: false });
+		mini.addEventListener("pointermove", (e) => {
+			if (!miniDragging) return;
+			e.preventDefault();
+			issueMiniMapCommand(e.clientX, e.clientY);
+		}, { passive: false });
+		mini.addEventListener("pointerup", (e) => {
+			miniDragging = false;
+			if (typeof mini.releasePointerCapture === "function") {
+				try { mini.releasePointerCapture(e.pointerId); } catch (_err) {}
+			}
+		});
+		mini.addEventListener("pointercancel", () => {
+			miniDragging = false;
+		});
 		if (!window.PointerEvent) {
 			canvas.addEventListener("touchstart", (e) => {
 				if (!e.touches || e.touches.length === 0) return;
@@ -1239,6 +1892,19 @@
 				const t = e.touches[0];
 				tryStartBgm();
 				issueMoveCommand(t.clientX, t.clientY);
+			}, { passive: false });
+			mini.addEventListener("touchstart", (e) => {
+				if (!e.touches || e.touches.length === 0) return;
+				e.preventDefault();
+				const t = e.touches[0];
+				tryStartBgm();
+				issueMiniMapCommand(t.clientX, t.clientY);
+			}, { passive: false });
+			mini.addEventListener("touchmove", (e) => {
+				if (!e.touches || e.touches.length === 0) return;
+				e.preventDefault();
+				const t = e.touches[0];
+				issueMiniMapCommand(t.clientX, t.clientY);
 			}, { passive: false });
 		}
 
@@ -1262,29 +1928,65 @@
 
 			if (!gameState.over && !gameState.paused) {
 				player.slashCd = Math.max(0, player.slashCd - dt);
-				player.slashTimer = Math.max(0, player.slashTimer - dt);
+				player.hitStop = Math.max(0, player.hitStop - dt);
+				if (player.hitStop <= 0) player.slashTimer = Math.max(0, player.slashTimer - dt);
+				player.attackLock = Math.max(0, player.attackLock - dt);
+				player.recoverTimer = Math.max(0, player.recoverTimer - dt);
+				player.hitFlash = Math.max(0, player.hitFlash - dt * 1.6);
 				for (const e of enemies) {
 					e.slashCd = Math.max(0, e.slashCd - dt);
-					e.slashTimer = Math.max(0, e.slashTimer - dt);
+					e.hitStop = Math.max(0, (e.hitStop || 0) - dt);
+					if (e.hitStop <= 0) e.slashTimer = Math.max(0, e.slashTimer - dt);
+					e.attackLock = Math.max(0, e.attackLock - dt);
+					e.recoverTimer = Math.max(0, e.recoverTimer - dt);
+					e.hitFlash = Math.max(0, e.hitFlash - dt * 1.6);
+				}
+				for (const u of allies) {
+					u.slashCd = Math.max(0, u.slashCd - dt);
+					u.slashTimer = Math.max(0, u.slashTimer - dt);
+				}
+				for (const u of enemyUnits) {
+					u.slashCd = Math.max(0, u.slashCd - dt);
+					u.slashTimer = Math.max(0, u.slashTimer - dt);
 				}
 
 				updatePlayer(dt);
+				updateEnemyWaves(dt);
 				updateEnemyLeaders(dt);
 
-				updateUnitSwarm(allies, player, allies, enemyUnits, enemies, dt);
-				for (const e of enemies) {
+				const activeEnemyLeaders = enemies.filter((e) => e.active && !e.dead);
+				updateUnitSwarm(allies, player, allies, enemyUnits, activeEnemyLeaders, dt);
+				for (const e of activeEnemyLeaders) {
 					if (!e.dead) {
 						const myUnits = enemyUnits.filter((u) => !u.dead && u.owner === e);
 						updateUnitSwarm(myUnits, e, myUnits, allies, [player], dt);
 					}
 				}
 
-				for (const e of enemies) {
+				// Zhang Fei direct melee vs enemy units
+				if (!player.dead) {
+					for (const u of enemyUnits) {
+						if (u.dead) continue;
+						const du = dist(player, u);
+						if (du < CFG.attackRange + 8) {
+							u.hp -= 58 * getTeamAttackMultiplier(player.team) * dt;
+							applyKnockback(player, u, 0.9);
+							if (player.slashCd <= 0) triggerLeaderSlash(player, u);
+						}
+						if (u.hp <= 0) u.dead = true;
+					}
+				}
+
+				for (const e of activeEnemyLeaders) {
 					if (e.dead || player.dead) continue;
 					const d = dist(player, e);
-					if (d < CFG.attackRange + 10) {
-						player.hp -= 32 * dt;
-						e.hp -= 21 * dt;
+					if (d < CFG.attackRange + 18) {
+						player.hp -= 32 * getTeamAttackMultiplier(e.team) * dt;
+						e.hp -= 52 * getTeamAttackMultiplier(player.team) * dt;
+						player.hitFlash = Math.max(player.hitFlash || 0, 0.78);
+						player.hitStop  = Math.max(player.hitStop  || 0, 0.09);
+						e.hitFlash = Math.max(e.hitFlash || 0, 0.78);
+						e.hitStop  = Math.max(e.hitStop  || 0, 0.09);
 						applyKnockback(e, player, 1.2);
 						if (player.slashCd <= 0) triggerLeaderSlash(player, e);
 						if (e.slashCd <= 0) triggerLeaderSlash(e, player);
@@ -1296,12 +1998,14 @@
 				applyCrowdCollision(allies, enemyUnits, false);
 				applyCrowdCollision([player], allies, false);
 				applyCrowdCollision([player], enemyUnits, false);
-				applyCrowdCollision(enemies, allies, false);
-				applyCrowdCollision(enemies, enemyUnits, false);
-				applyCrowdCollision(enemies, [player], false);
+				applyCrowdCollision(activeEnemyLeaders, allies, false);
+				applyCrowdCollision(activeEnemyLeaders, enemyUnits, false);
+				applyCrowdCollision(activeEnemyLeaders, [player], false);
 
 				spawnSystem(dtMs);
 				outpostSystem(dtMs);
+				mineSystem(dt, dtMs);
+				clinicSystem(dt, dtMs);
 				cleanup();
 
 				// Charge cooldown
