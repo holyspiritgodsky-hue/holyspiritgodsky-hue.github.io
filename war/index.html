@@ -429,6 +429,7 @@
 		];
 		const mineWorkers = [];
 		let mineWorkerSeed = 0;
+		let playerGold = 5000; // 初始资金
 		const hanyangOutpost = outposts[3];
 		const clinic = {
 			x: 1325,
@@ -507,6 +508,17 @@
 		];
 
 		const chargeEffects = []; // { x, y, life, r }
+
+		// 武当山茅屋 — 占领后诸葛亮加入
+		const wudangHut = {
+			x: 1975, y: 1600, r: 50,
+			owner: "neutral",
+			captured: false,
+			name: "茅屋",
+			breakParts: []
+		};
+		let zhugeliang = null;
+		const lightningBolts = []; // { tx, ty, segs, life, splashR }
 
 		function viewToWorld(cx, cy) {
 			return { x: cx + camera.x, y: cy + camera.y };
@@ -867,6 +879,9 @@
 					worker.phase = "toMine";
 					worker.carrying = false;
 					worker.wait = rand(0.2, 0.55);
+					if (worker.mine.resource === "gold" && worker.team === "ally") {
+						playerGold += 120;
+					}
 				}
 				worker.x = clamp(worker.x, 16, CFG.worldW - 16);
 				worker.y = clamp(worker.y, 16, CFG.worldH - 16);
@@ -922,10 +937,240 @@
 			}
 		}
 
+		function generateLightningSegs(x1, y1, x2, y2, roughness) {
+			const pts = [{ x: x1, y: y1 }];
+			for (let i = 1; i < 8; i++) {
+				const t = i / 8;
+				pts.push({
+					x: x1 + (x2 - x1) * t + (Math.random() - 0.5) * roughness * 2,
+					y: y1 + (y2 - y1) * t
+				});
+			}
+			pts.push({ x: x2, y: y2 });
+			return pts;
+		}
+
+		function wudangHutSystem() {
+			if (wudangHut.captured || player.dead) return;
+			const inRange = dist(player, wudangHut) < wudangHut.r + 55 ||
+				allies.some(u => !u.dead && dist(u, wudangHut) < wudangHut.r + 28);
+			if (!inRange) return;
+			if (playerGold < 3000) { wudangHut._notEnoughGold = true; return; }
+			wudangHut._notEnoughGold = false;
+			playerGold -= 3000;
+			wudangHut.owner = "ally";
+			wudangHut.captured = true;
+			triggerBreakAnim(wudangHut);
+			zhugeliang = {
+				x: wudangHut.x, y: wudangHut.y - 20,
+				name: "诸葛亮",
+				team: "ally",
+				hp: 260, maxHp: 260,
+				speed: 205,
+				dir: Math.PI,
+				radius: 11,
+				attackRange: 310,
+				attackCd: 0,
+				hitFlash: 0,
+				dead: false
+			};
+		}
+
+		function updateZhugeliang(dt) {
+			if (!zhugeliang || zhugeliang.dead) return;
+			zhugeliang.hitFlash = Math.max(0, zhugeliang.hitFlash - dt * 1.6);
+			zhugeliang.attackCd = Math.max(0, zhugeliang.attackCd - dt);
+			if (!player.dead && dist(zhugeliang, player) > 80) {
+				moveTo(zhugeliang, player.x, player.y, zhugeliang.speed, dt);
+			}
+			zhugeliang.x = clamp(zhugeliang.x, 20, CFG.worldW - 20);
+			zhugeliang.y = clamp(zhugeliang.y, 20, CFG.worldH - 20);
+			pushOutMountains(zhugeliang);
+			if (zhugeliang.attackCd > 0) return;
+			let bestTarget = null, bestD = Infinity;
+			for (const u of enemyUnits) {
+				if (u.dead) continue;
+				const d = dist(zhugeliang, u);
+				if (d < zhugeliang.attackRange && d < bestD) { bestTarget = u; bestD = d; }
+			}
+			for (const e of enemies) {
+				if (!e.active || e.dead) continue;
+				const d = dist(zhugeliang, e);
+				if (d < zhugeliang.attackRange && d < bestD) { bestTarget = e; bestD = d; }
+			}
+			if (!bestTarget) return;
+			zhugeliang.attackCd = 2.8;
+			zhugeliang.dir = Math.atan2(bestTarget.y - zhugeliang.y, bestTarget.x - zhugeliang.x);
+			bestTarget.hp -= 55;
+			if (bestTarget.hitFlash !== undefined) bestTarget.hitFlash = Math.max(bestTarget.hitFlash || 0, 0.7);
+			for (const u of enemyUnits) {
+				if (!u.dead && u !== bestTarget && dist(u, bestTarget) < 52) u.hp -= 24;
+			}
+			const segs = generateLightningSegs(bestTarget.x, bestTarget.y - 280, bestTarget.x, bestTarget.y, 40);
+			lightningBolts.push({ tx: bestTarget.x, ty: bestTarget.y, segs, life: 1, splashR: 52 });
+		}
+
+		function drawWudangHut() {
+			const h = wudangHut;
+			ctx.fillStyle = "rgba(20,16,10,0.26)";
+			ctx.beginPath();
+			ctx.ellipse(h.x + 4, h.y + 16, 26, 9, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#c8b68e";
+			ctx.fillRect(h.x - 17, h.y - 7, 34, 22);
+			ctx.fillStyle = wudangHut.captured ? "#9aab62" : "#8a7a50";
+			ctx.beginPath();
+			ctx.moveTo(h.x - 22, h.y - 7);
+			ctx.lineTo(h.x, h.y - 30);
+			ctx.lineTo(h.x + 22, h.y - 7);
+			ctx.closePath();
+			ctx.fill();
+			ctx.strokeStyle = "rgba(55,45,24,0.28)";
+			ctx.lineWidth = 1.2;
+			for (let i = -14; i <= 14; i += 7) {
+				ctx.beginPath();
+				ctx.moveTo(h.x + i * 0.45, h.y - 28);
+				ctx.lineTo(h.x + i, h.y - 7);
+				ctx.stroke();
+			}
+			ctx.fillStyle = "#5a3d24";
+			ctx.fillRect(h.x - 5, h.y + 4, 10, 11);
+			const bannerColor = wudangHut.captured ? "#cfb35e" : "#9e84d4";
+			ctx.fillStyle = "#6b5232";
+			ctx.fillRect(h.x + 15, h.y - 40, 3, 24);
+			ctx.fillStyle = bannerColor;
+			ctx.beginPath();
+			ctx.moveTo(h.x + 18, h.y - 40);
+			ctx.lineTo(h.x + 35, h.y - 33);
+			ctx.lineTo(h.x + 18, h.y - 26);
+			ctx.closePath();
+			ctx.fill();
+			ctx.fillStyle = "#f6ead6";
+			ctx.font = "bold 10px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText(h.name, h.x, h.y - 46);
+			if (!wudangHut.captured && !player.dead && dist(player, wudangHut) < wudangHut.r + 70) {
+				if (wudangHut._notEnoughGold) {
+					ctx.fillStyle = "rgba(255,120,100,0.95)";
+					ctx.font = "bold 12px Microsoft YaHei";
+					ctx.fillText("钱不够！需要3000金", h.x, h.y - 60);
+				} else {
+					ctx.fillStyle = "rgba(255,242,185,0.92)";
+					ctx.font = "12px Microsoft YaHei";
+					ctx.fillText("占领茅屋 (-3000金) 诸葛亮加入", h.x, h.y - 60);
+				}
+			}
+			for (const bp of h.breakParts) {
+				ctx.globalAlpha = Math.max(0, bp.life);
+				ctx.fillStyle = bp.color;
+				ctx.fillRect(bp.x - bp.w / 2, bp.y - bp.h / 2, bp.w, bp.h);
+			}
+			ctx.globalAlpha = 1;
+		}
+
+		function drawZhugeliang() {
+			if (!zhugeliang || zhugeliang.dead) return;
+			const zg = zhugeliang;
+			ctx.save();
+			ctx.translate(zg.x, zg.y);
+			ctx.scale(1.18, 1.18);
+			// Robe
+			ctx.fillStyle = "#d8eeff";
+			ctx.fillRect(-5, -8, 10, 14);
+			ctx.fillStyle = "#aac8e8";
+			ctx.fillRect(-6.5, -6.5, 2, 7.5);
+			ctx.fillRect(4.5, -6.5, 2, 7.5);
+			ctx.fillStyle = "#7a9ec0";
+			ctx.fillRect(-5.5, 2, 11, 2.5);
+			ctx.fillStyle = "#c2d8f0";
+			ctx.fillRect(-3.2, 6, 2.8, 5);
+			ctx.fillRect(0.5, 6, 2.8, 5);
+			// Head
+			ctx.fillStyle = "#e8c89a";
+			ctx.beginPath();
+			ctx.arc(0, -12, 4.5, 0, Math.PI * 2);
+			ctx.fill();
+			// Scholar hat
+			ctx.fillStyle = "#394e6a";
+			ctx.fillRect(-5, -15.8, 10, 3);
+			ctx.fillStyle = "#28374e";
+			ctx.fillRect(-3.8, -17.6, 7.6, 2.2);
+			// Feather fan
+			ctx.save();
+			ctx.rotate(zg.dir + 0.35);
+			ctx.strokeStyle = "#7a5c38";
+			ctx.lineWidth = 1.6;
+			ctx.beginPath();
+			ctx.moveTo(1, -8);
+			ctx.lineTo(9, -5);
+			ctx.stroke();
+			ctx.fillStyle = "rgba(228,248,210,0.92)";
+			ctx.beginPath();
+			ctx.ellipse(13, -3.5, 7.5, 4.2, -0.3, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = "rgba(140,190,110,0.7)";
+			ctx.lineWidth = 0.7;
+			for (let i = -3; i <= 3; i++) {
+				ctx.beginPath();
+				ctx.moveTo(8, -3.5 + i * 0.55);
+				ctx.lineTo(19, -3.5 + i * 0.65);
+				ctx.stroke();
+			}
+			ctx.restore();
+			// Aura
+			ctx.strokeStyle = `rgba(130,195,255,${0.14 + 0.07 * Math.sin(performance.now() * 0.005)})`;
+			ctx.lineWidth = 1.8;
+			ctx.beginPath();
+			ctx.arc(0, -4, 14.5 + Math.sin(performance.now() * 0.008) * 1.2, 0, Math.PI * 2);
+			ctx.stroke();
+			if (zg.hitFlash > 0) {
+				ctx.fillStyle = `rgba(190,220,255,${zg.hitFlash * 0.45})`;
+				ctx.beginPath();
+				ctx.ellipse(0, -4, 11, 14, 0, 0, Math.PI * 2);
+				ctx.fill();
+			}
+			ctx.restore();
+			ctx.fillStyle = "#c8e8ff";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText(zg.name, zg.x, zg.y - 31);
+			drawHealthBar(zg.x, zg.y - 26, 40, zg.hp, zg.maxHp, "#6ab8ff");
+		}
+
+		function drawLightningBolts() {
+			for (const bolt of lightningBolts) {
+				const a = bolt.life;
+				ctx.save();
+				ctx.shadowColor = `rgba(100,200,255,${a * 0.8})`;
+				ctx.shadowBlur = 22 * a;
+				ctx.strokeStyle = `rgba(160,220,255,${a * 0.85})`;
+				ctx.lineWidth = 3.5 * a;
+				ctx.lineJoin = "round";
+				ctx.beginPath();
+				ctx.moveTo(bolt.segs[0].x, bolt.segs[0].y);
+				for (let i = 1; i < bolt.segs.length; i++) ctx.lineTo(bolt.segs[i].x, bolt.segs[i].y);
+				ctx.stroke();
+				ctx.shadowBlur = 8 * a;
+				ctx.strokeStyle = `rgba(255,255,255,${a * 0.9})`;
+				ctx.lineWidth = 1.5 * a;
+				ctx.beginPath();
+				ctx.moveTo(bolt.segs[0].x, bolt.segs[0].y);
+				for (let i = 1; i < bolt.segs.length; i++) ctx.lineTo(bolt.segs[i].x, bolt.segs[i].y);
+				ctx.stroke();
+				ctx.restore();
+				ctx.strokeStyle = `rgba(180,230,255,${a * 0.55})`;
+				ctx.lineWidth = 2.2 * a;
+				ctx.beginPath();
+				ctx.arc(bolt.tx, bolt.ty, bolt.splashR * (0.6 + (1 - a) * 0.5), 0, Math.PI * 2);
+				ctx.stroke();
+			}
+		}
+
 		function cleanup() {
 			for (const l of [player, ...enemies]) {
 				if (!l.dead && l.hp <= 0) l.dead = true;
 			}
+			if (zhugeliang && !zhugeliang.dead && zhugeliang.hp <= 0) zhugeliang.dead = true;
 			const allyOut = outposts.filter((o) => o.owner === "ally").length;
 			const deadEnemyGenerals = enemies.filter((e) => e.dead).length;
 			const aliveEnemies = enemies.filter((e) => e.active && !e.dead).length;
@@ -1437,6 +1682,9 @@
 				}
 			}
 
+			// 武当山茅屋
+			drawWudangHut();
+
 			for (const mine of mines) {
 				if (mine.x + 70 < camera.x || mine.x - 70 > camera.x + canvas.width) continue;
 				if (mine.y + 60 < camera.y || mine.y - 60 > camera.y + canvas.height) continue;
@@ -1638,6 +1886,8 @@
 				drawSoldier(u, false, "#cfad5b", "#f3dd99");
 			}
 
+			drawZhugeliang();
+
 			if (!player.dead) {
 				drawSoldier(player, true, "#cfad5b", "#ffe7a5");
 
@@ -1673,6 +1923,9 @@
 				ctx.arc(ef.x, ef.y, ef.r * 0.52, 0, Math.PI * 2);
 				ctx.stroke();
 			}
+
+			// 诸葛亮雷电效果
+			drawLightningBolts();
 
 			ctx.restore();
 		}
@@ -1738,6 +1991,17 @@
 			miniCtx.beginPath();
 			miniCtx.arc(player.x * sx, player.y * sy, 3.2, 0, Math.PI * 2);
 			miniCtx.fill();
+
+			// 武当山茅屋
+			miniCtx.fillStyle = wudangHut.captured ? "#cfb35e" : "#9e84d4";
+			miniCtx.fillRect(wudangHut.x * sx - 2, wudangHut.y * sy - 2, 4, 4);
+			// 诸葛亮
+			if (zhugeliang && !zhugeliang.dead) {
+				miniCtx.fillStyle = "#78c0ff";
+				miniCtx.beginPath();
+				miniCtx.arc(zhugeliang.x * sx, zhugeliang.y * sy, 2.5, 0, Math.PI * 2);
+				miniCtx.fill();
+			}
 
 			miniCtx.strokeStyle = "#fff4c8";
 			miniCtx.lineWidth = 1;
@@ -1977,6 +2241,24 @@
 					}
 				}
 
+				// 敌方攻击诸葛亮
+				if (zhugeliang && !zhugeliang.dead) {
+					for (const u of enemyUnits) {
+						if (u.dead) continue;
+						if (dist(zhugeliang, u) < CFG.attackRange + 8) {
+							zhugeliang.hp -= CFG.unitDps * dt;
+							zhugeliang.hitFlash = Math.max(zhugeliang.hitFlash || 0, 0.4);
+						}
+					}
+					for (const e of activeEnemyLeaders) {
+						if (e.dead) continue;
+						if (dist(zhugeliang, e) < CFG.attackRange + 14) {
+							zhugeliang.hp -= 22 * getTeamAttackMultiplier(e.team) * dt;
+							zhugeliang.hitFlash = Math.max(zhugeliang.hitFlash || 0, 0.65);
+						}
+					}
+				}
+
 				for (const e of activeEnemyLeaders) {
 					if (e.dead || player.dead) continue;
 					const d = dist(player, e);
@@ -2006,6 +2288,8 @@
 				outpostSystem(dtMs);
 				mineSystem(dt, dtMs);
 				clinicSystem(dt, dtMs);
+				wudangHutSystem();
+				updateZhugeliang(dt);
 				cleanup();
 
 				// Charge cooldown
@@ -2016,6 +2300,22 @@
 					chargeEffects[i].life -= dt * 1.6;
 					chargeEffects[i].r += dt * 310;
 					if (chargeEffects[i].life <= 0) chargeEffects.splice(i, 1);
+				}
+
+				// 雷电效果衰减
+				for (let i = lightningBolts.length - 1; i >= 0; i--) {
+					lightningBolts[i].life -= dt * 3.5;
+					if (lightningBolts[i].life <= 0) lightningBolts.splice(i, 1);
+				}
+
+				// 茅屋碎片
+				for (let i = wudangHut.breakParts.length - 1; i >= 0; i--) {
+					const bp = wudangHut.breakParts[i];
+					bp.x += bp.vx * dt;
+					bp.y += bp.vy * dt;
+					bp.vy += 220 * dt;
+					bp.life -= dt * 1.4;
+					if (bp.life <= 0) wudangHut.breakParts.splice(i, 1);
 				}
 
 				// Break particles physics
@@ -2047,6 +2347,14 @@
 				ctx.font = "600 13px Microsoft YaHei";
 				ctx.textAlign = "center";
 				ctx.fillText(txt, canvas.width * 0.5, 27);
+
+				// 金钱 HUD
+				ctx.fillStyle = "rgba(0,0,0,0.45)";
+				ctx.fillRect(10, 10, 140, 24);
+				ctx.fillStyle = "#f3cf59";
+				ctx.font = "700 13px Microsoft YaHei";
+				ctx.textAlign = "left";
+				ctx.fillText(`💰 金: ${Math.floor(playerGold)}`, 18, 27);
 			}
 
 			if (gameState.over) {
