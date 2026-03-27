@@ -491,8 +491,7 @@
 			{ x: 165, y: 100,  r: 168 },
 			{ x: 195, y: 375,  r: 178 },
 			{ x: 155, y: 655,  r: 172 },
-			{ x: 190, y: 935,  r: 180 },
-			{ x: 150, y: 1210, r: 170 },
+			// [3] & [4] removed — replaced by 嘉峪关隘口
 			{ x: 180, y: 1490, r: 175 },
 			{ x: 158, y: 1770, r: 168 },
 			{ x: 192, y: 2050, r: 176 },
@@ -507,6 +506,15 @@
 			{ x: 1940, y: 2140, r: 118 }
 		];
 
+		// 嘉峪关隘口 — sits in the gap between mountain[2] (y=655) and mountain[3-now] (y=1490)
+		const jiayuguan = {
+			x: 175, y: 1060, // centre of the removed gap
+			w: 92, h: 56,   // gate footprint
+			name: "嘉峪关",
+			portalR: 54,    // trigger radius
+			pulse: 0
+		};
+
 		const chargeEffects = []; // { x, y, life, r }
 
 		// 武当山茅屋 — 占领后诸葛亮加入
@@ -519,6 +527,35 @@
 		};
 		let zhugeliang = null;
 		const lightningBolts = []; // { tx, ty, segs, life, splashR }
+		let lancelot_ally = null; // 兰斯洛特骑士（从欧洲战场带回）
+
+		// 从欧洲战场返回时，恢复英雄状态
+		(function restoreHeroesFromEurope() {
+			try {
+				const saved = JSON.parse(sessionStorage.getItem('warHeroes') || '{}');
+				if (saved.zhugeliang) {
+					wudangHut.owner = "ally";
+					wudangHut.captured = true;
+					zhugeliang = {
+						x: wudangHut.x, y: wudangHut.y - 20,
+						name: "诸葛亮", team: "ally",
+						hp: 260, maxHp: 260, speed: 205, dir: Math.PI,
+						radius: 11, attackRange: 310, attackCd: 0,
+						hitFlash: 0, dead: false
+					};
+				}
+				if (saved.lancelot) {
+					lancelot_ally = {
+						x: player.x + 50, y: player.y + 20,
+						name: "兰斯洛特", team: "ally",
+						hp: 320, maxHp: 320,
+						speed: 230, dir: Math.PI,
+						radius: 12, glowPhase: 0
+					};
+				}
+				sessionStorage.removeItem('warHeroes');
+			} catch(e) {}
+		})();
 
 		function viewToWorld(cx, cy) {
 			return { x: cx + camera.x, y: cy + camera.y };
@@ -950,6 +987,110 @@
 			return pts;
 		}
 
+		function jiayuguanSystem() {
+			if (player.dead || jiayuguan._triggered) return;
+			jiayuguan.pulse = Math.max(0, jiayuguan.pulse - 0.02);
+			const d = dist(player, jiayuguan);
+			if (d < 80) {
+				jiayuguan._triggered = true;
+				player.target = { x: player.x, y: player.y };
+				try {
+					sessionStorage.setItem('warHeroes', JSON.stringify({
+						zhugeliang: !!(zhugeliang && !zhugeliang.dead),
+						lancelot:   !!(lancelot_ally)
+					}));
+				} catch(e) {}
+				window.location.href = "europe.html";
+			}
+		}
+
+		function drawJiayuguan() {
+			const jy = jiayuguan;
+			if (jy.x + 100 < camera.x || jy.x - 100 > camera.x + canvas.width) return;
+			if (jy.y + 80 < camera.y || jy.y - 80 > camera.y + canvas.height) return;
+			const sx2 = jy.x - canvas.width / 2 + camera.x; // unused
+
+			const hw = jy.w / 2;
+			const hh = jy.h / 2;
+
+			// Drop shadow
+			ctx.fillStyle = "rgba(30,22,10,0.30)";
+			ctx.beginPath();
+			ctx.ellipse(jy.x + 10, jy.y + hh + 10, hw * 1.1, 14, 0, 0, Math.PI * 2);
+			ctx.fill();
+
+			// Wall body
+			ctx.fillStyle = "#b8a07a";
+			ctx.fillRect(jy.x - hw, jy.y - hh, jy.w, jy.h);
+			ctx.fillStyle = "#d9c49a";
+			ctx.fillRect(jy.x - hw + 3, jy.y - hh + 3, jy.w - 6, jy.h * 0.38);
+
+			// Battlements top row
+			ctx.fillStyle = "#c8b085";
+			for (let i = -3; i <= 3; i++) {
+				if (i === 0) continue;
+				ctx.fillRect(jy.x + i * 12 - 4, jy.y - hh - 10, 8, 10);
+			}
+
+			// Gate arch
+			ctx.fillStyle = "#2a1e0e";
+			ctx.beginPath();
+			ctx.arc(jy.x, jy.y + 4, 13, Math.PI, 0);
+			ctx.rect(jy.x - 13, jy.y + 4, 26, hh - 2);
+			ctx.fill();
+
+			// Gate door planks
+			ctx.fillStyle = "#4a3218";
+			ctx.fillRect(jy.x - 12, jy.y + 4, 11, hh - 4);
+			ctx.fillRect(jy.x + 1, jy.y + 4, 11, hh - 4);
+			ctx.strokeStyle = "#2a1a08";
+			ctx.lineWidth = 1.2;
+			for (let i = 1; i < 4; i++) {
+				ctx.beginPath();
+				ctx.moveTo(jy.x - 12, jy.y + 4 + i * (hh - 4) / 4);
+				ctx.lineTo(jy.x - 1, jy.y + 4 + i * (hh - 4) / 4);
+				ctx.moveTo(jy.x + 1, jy.y + 4 + i * (hh - 4) / 4);
+				ctx.lineTo(jy.x + 12, jy.y + 4 + i * (hh - 4) / 4);
+				ctx.stroke();
+			}
+
+			// Watchtower
+			ctx.fillStyle = "#c09f70";
+			ctx.fillRect(jy.x - 18, jy.y - hh - 28, 36, 22);
+			ctx.fillStyle = "#a07840";
+			ctx.beginPath();
+			ctx.moveTo(jy.x - 22, jy.y - hh - 28);
+			ctx.lineTo(jy.x, jy.y - hh - 50);
+			ctx.lineTo(jy.x + 22, jy.y - hh - 28);
+			ctx.closePath();
+			ctx.fill();
+
+			// Glowing portal aura in archway
+			const t = performance.now() * 0.002;
+			const aura = 0.28 + 0.14 * Math.sin(t);
+			const grad = ctx.createRadialGradient(jy.x, jy.y + 2, 2, jy.x, jy.y + 2, 18);
+			grad.addColorStop(0, `rgba(220,210,130,${aura + 0.25})`);
+			grad.addColorStop(1, "rgba(200,180,80,0)");
+			ctx.fillStyle = grad;
+			ctx.beginPath();
+			ctx.arc(jy.x, jy.y + 2, 18, Math.PI, 0);
+			ctx.rect(jy.x - 18, jy.y + 2, 36, hh);
+			ctx.fill();
+
+			// Name label
+			ctx.fillStyle = "rgba(248,238,210,0.95)";
+			ctx.font = "bold 14px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText(jy.name, jy.x, jy.y - hh - 56);
+
+			// Proximity hint
+			if (!player.dead && dist(player, jy) < jy.portalR + 80) {
+				ctx.fillStyle = "rgba(255,245,190,0.92)";
+				ctx.font = "12px Microsoft YaHei";
+				ctx.fillText("进入嘉峪关 → 西方大陆", jy.x, jy.y - hh - 70);
+			}
+		}
+
 		function wudangHutSystem() {
 			if (wudangHut.captured || player.dead) return;
 			const inRange = dist(player, wudangHut) < wudangHut.r + 55 ||
@@ -1135,6 +1276,74 @@
 			ctx.textAlign = "center";
 			ctx.fillText(zg.name, zg.x, zg.y - 31);
 			drawHealthBar(zg.x, zg.y - 26, 40, zg.hp, zg.maxHp, "#6ab8ff");
+		}
+
+		function updateLancelotAlly(dt) {
+			if (!lancelot_ally) return;
+			const dx = player.x - lancelot_ally.x, dy = player.y - lancelot_ally.y;
+			const d  = Math.hypot(dx, dy);
+			if (d > 70) {
+				lancelot_ally.x += (dx / d) * Math.min(lancelot_ally.speed * dt, d - 55);
+				lancelot_ally.y += (dy / d) * Math.min(lancelot_ally.speed * dt, d - 55);
+				lancelot_ally.x = clamp(lancelot_ally.x, 20, CFG.worldW - 20);
+				lancelot_ally.y = clamp(lancelot_ally.y, 20, CFG.worldH - 20);
+				pushOutMountains(lancelot_ally);
+				lancelot_ally.dir = Math.atan2(dy, dx);
+			}
+		}
+
+		function drawLancelotAlly() {
+			if (!lancelot_ally) return;
+			const l = lancelot_ally;
+			const t = performance.now() * 0.001;
+			ctx.save();
+			ctx.translate(l.x, l.y);
+			ctx.scale(1.15, 1.15);
+			// Surcoat (red-cross knight)
+			ctx.fillStyle = "#c8c0b0";
+			ctx.fillRect(-4.5, -8, 9, 12);
+			ctx.fillStyle = "#cc2222";
+			ctx.fillRect(-1.5, -8, 3, 12);  // vertical stripe
+			ctx.fillRect(-4.5, -3, 9, 3);   // horizontal stripe
+			// Arms
+			ctx.fillStyle = "#a0a8b8";
+			ctx.fillRect(-7, -6, 2.5, 8); ctx.fillRect(4.5, -6, 2.5, 8);
+			// Legs
+			ctx.strokeStyle = "#2a2838"; ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.moveTo(-2.5, 4); ctx.lineTo(-3, 12);
+			ctx.moveTo(2.5, 4);  ctx.lineTo(3, 12);
+			ctx.stroke();
+			// Head
+			ctx.fillStyle = "#e8c89a";
+			ctx.beginPath(); ctx.arc(0, -12, 4.8, 0, Math.PI * 2); ctx.fill();
+			// Full helm
+			ctx.fillStyle = "#909aaa";
+			ctx.fillRect(-5, -16.5, 10, 5.5);
+			ctx.fillStyle = "#4e5860";
+			ctx.fillRect(-3, -14.5, 6, 2);
+			// Sword
+			ctx.save();
+			ctx.rotate(l.dir + 0.5);
+			ctx.strokeStyle = "#d8e4ff"; ctx.lineWidth = 2;
+			ctx.beginPath(); ctx.moveTo(6, -16); ctx.lineTo(6, 10); ctx.stroke();
+			ctx.strokeStyle = "#c09030"; ctx.lineWidth = 3.5;
+			ctx.beginPath(); ctx.moveTo(2, -6); ctx.lineTo(10, -6); ctx.stroke();
+			ctx.fillStyle = "#ecf4ff";
+			ctx.beginPath();
+			ctx.moveTo(6, -18); ctx.lineTo(4, -12); ctx.lineTo(8, -12);
+			ctx.closePath(); ctx.fill();
+			ctx.restore();
+			// Silver-blue aura
+			const g2 = 0.40 + 0.35 * Math.sin(t * 2.4);
+			ctx.strokeStyle = `rgba(140,190,255,${g2})`; ctx.lineWidth = 1.8;
+			ctx.beginPath(); ctx.arc(0, -2, 17 + Math.sin(t * 3.5) * 1.5, 0, Math.PI * 2); ctx.stroke();
+			ctx.restore();
+			ctx.fillStyle = "#b8d8ff";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText("兰斯洛特", l.x, l.y - 33);
+			drawHealthBar(l.x, l.y - 28, 44, l.hp, l.maxHp, "#70a8ff");
 		}
 
 		function drawLightningBolts() {
@@ -1684,6 +1893,8 @@
 
 			// 武当山茅屋
 			drawWudangHut();
+			// 嘉峪关隘口
+			drawJiayuguan();
 
 			for (const mine of mines) {
 				if (mine.x + 70 < camera.x || mine.x - 70 > camera.x + canvas.width) continue;
@@ -1887,6 +2098,7 @@
 			}
 
 			drawZhugeliang();
+			drawLancelotAlly();
 
 			if (!player.dead) {
 				drawSoldier(player, true, "#cfad5b", "#ffe7a5");
@@ -1932,11 +2144,34 @@
 
 		function drawMini() {
 			miniCtx.clearRect(0, 0, mini.width, mini.height);
-			miniCtx.fillStyle = "#2f492e";
-			miniCtx.fillRect(0, 0, mini.width, mini.height);
 
 			const sx = mini.width / CFG.worldW;
 			const sy = mini.height / CFG.worldH;
+
+			// 海洋背景
+			miniCtx.fillStyle = "#2e5a78";
+			miniCtx.fillRect(0, 0, mini.width, mini.height);
+
+			// 中国大陆轮廓（world 坐标系）
+			const chinaOutline = [
+				[380,100],[800,50],[1200,80],[1600,60],[2000,80],
+				[2400,60],[2800,80],[3200,60],[3600,100],[3800,240],
+				[4000,380],[4200,540],[4380,820],[4480,1100],[4480,1420],
+				[4360,1720],[4200,2000],[3980,2200],[3700,2440],[3400,2620],
+				[3000,2760],[2600,2800],[2200,2680],[1900,2500],[1600,2280],
+				[1380,2060],[1160,1860],[940,1640],[740,1420],[560,1180],
+				[440,960],[380,700],[380,100]
+			];
+			miniCtx.fillStyle = "#3e6a32";
+			miniCtx.beginPath();
+			miniCtx.moveTo(chinaOutline[0][0] * sx, chinaOutline[0][1] * sy);
+			for (let i = 1; i < chinaOutline.length; i++)
+				miniCtx.lineTo(chinaOutline[i][0] * sx, chinaOutline[i][1] * sy);
+			miniCtx.closePath();
+			miniCtx.fill();
+			miniCtx.strokeStyle = "rgba(92,155,200,0.4)";
+			miniCtx.lineWidth = 0.8;
+			miniCtx.stroke();
 
 			for (const b of biomes) {
 				miniCtx.fillStyle = b.type === "wet" ? "rgba(100, 146, 153, 0.24)" : b.type === "hill" ? "rgba(170, 154, 116, 0.22)" : "rgba(78, 114, 68, 0.22)";
@@ -1991,6 +2226,10 @@
 			miniCtx.beginPath();
 			miniCtx.arc(player.x * sx, player.y * sy, 3.2, 0, Math.PI * 2);
 			miniCtx.fill();
+
+			// 嘉峪关 on minimap
+			miniCtx.fillStyle = "#d4c07a";
+			miniCtx.fillRect(jiayuguan.x * sx - 3, jiayuguan.y * sy - 2, 6, 4);
 
 			// 武当山茅屋
 			miniCtx.fillStyle = wudangHut.captured ? "#cfb35e" : "#9e84d4";
@@ -2290,6 +2529,8 @@
 				clinicSystem(dt, dtMs);
 				wudangHutSystem();
 				updateZhugeliang(dt);
+				updateLancelotAlly(dt);
+				jiayuguanSystem();
 				cleanup();
 
 				// Charge cooldown
