@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-	<title>三国战场</title>
+	<title>时空战场</title>
 	<style>
 		:root {
 			--sky: #9ec7da;
@@ -63,52 +63,27 @@
 
 		#pauseBtn,
 		#musicBtn,
+		#cardsBtn,
 		#labBtn {
 			position: fixed;
 			top: 14px;
 			z-index: 4;
-			border: 1px solid rgba(255, 255, 255, 0.35);
-			color: #f2f5ee;
-			height: 36px;
-			padding: 0 14px;
-			border-radius: 8px;
-			font-size: 13px;
-			font-weight: 600;
-			line-height: 1;
-			box-sizing: border-box;
-			display: inline-flex;
-			align-items: center;
-			justify-content: center;
-			text-decoration: none;
 		}
 
 		#pauseBtn {
 			right: 14px;
-			background: rgba(26, 34, 26, 0.85);
-			cursor: pointer;
-		}
-
-		#pauseBtn:hover {
-			background: rgba(45, 58, 45, 0.9);
 		}
 
 		#labBtn {
-			right: 172px;
-			background: rgba(34, 28, 22, 0.85);
+			right: 178px;
 		}
 
-		#labBtn:hover {
-			background: rgba(58, 47, 35, 0.92);
+		#cardsBtn {
+			right: 262px;
 		}
 
 		#musicBtn {
 			right: 92px;
-			background: rgba(24, 30, 44, 0.86);
-			cursor: pointer;
-		}
-
-		#musicBtn:hover {
-			background: rgba(37, 47, 67, 0.92);
 		}
 
 		#chargeBtn {
@@ -131,11 +106,212 @@
 			opacity: 0.58;
 		}
 
+		#bydTestBtn {
+			position: fixed;
+			left: calc(50% + 110px);
+			bottom: 16px;
+			z-index: 4;
+			border: 1px solid rgba(168, 234, 255, 0.62);
+			background: rgba(18, 68, 88, 0.85);
+			color: #d9f4ff;
+			padding: 10px 14px;
+			border-radius: 999px;
+			font-size: 13px;
+			font-weight: 700;
+			cursor: pointer;
+		}
+
+		#continueGameBtn {
+			position: fixed;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, 54px);
+			z-index: 9;
+			display: none;
+			border: 1px solid rgba(255, 227, 139, 0.72);
+			background: linear-gradient(180deg, rgba(132, 92, 24, 0.95), rgba(94, 62, 15, 0.95));
+			color: #fff2c0;
+			padding: 10px 22px;
+			border-radius: 999px;
+			font-size: 14px;
+			font-weight: 800;
+			letter-spacing: 1px;
+			cursor: pointer;
+			box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+		}
+
+		#continueGameBtn:hover {
+			filter: brightness(1.08);
+		}
+
+		#cityBuildDialog {
+			position: fixed;
+			z-index: 12;
+			display: none;
+			min-width: 220px;
+			max-width: 320px;
+			padding: 10px 12px;
+			border-radius: 10px;
+			background: rgba(12, 10, 8, 0.92);
+			border: 1px solid rgba(255, 228, 160, 0.5);
+			box-shadow: 0 8px 26px rgba(0, 0, 0, 0.5);
+			pointer-events: auto;
+		}
+
+		#cityBuildTitle {
+			font-size: 13px;
+			font-weight: 700;
+			color: #f6df9a;
+			margin-bottom: 6px;
+		}
+
+		#cityBuildText {
+			font-size: 12px;
+			line-height: 1.45;
+			color: #f3efe3;
+			margin-bottom: 10px;
+		}
+
+		#cityBuildActions {
+			display: flex;
+			gap: 8px;
+			justify-content: flex-end;
+		}
+
+		#cityBuildOk,
+		#cityBuildCancel {
+			height: 30px;
+			padding: 0 10px;
+			border-radius: 7px;
+			font-size: 12px;
+			font-weight: 700;
+			cursor: pointer;
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			color: #f6f2e6;
+		}
+
+		#cityBuildOk {
+			background: rgba(120, 92, 28, 0.88);
+		}
+
+		#cityBuildCancel {
+			background: rgba(54, 52, 48, 0.85);
+		}
+
+		#shipGateDialog {
+			position: fixed;
+			z-index: 13;
+			display: none;
+			min-width: 240px;
+			max-width: 360px;
+			padding: 12px;
+			border-radius: 11px;
+			background: rgba(10, 15, 22, 0.94);
+			border: 1px solid rgba(143, 206, 255, 0.62);
+			box-shadow: 0 10px 28px rgba(0, 0, 0, 0.56);
+		}
+
+		#shipGateTitle {
+			font-size: 13px;
+			font-weight: 700;
+			color: #bfe6ff;
+			margin-bottom: 6px;
+		}
+
+		#shipGateText {
+			font-size: 12px;
+			line-height: 1.45;
+			color: #e7f3ff;
+			margin-bottom: 10px;
+		}
+
+		#shipGateActions {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 7px;
+		}
+
+		#shipGateToJapan,
+		#shipGateToSouth,
+		#shipGateCancel {
+			height: 32px;
+			border-radius: 8px;
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			font-size: 12px;
+			font-weight: 700;
+			cursor: pointer;
+			color: #f2f8ff;
+		}
+
+		#shipGateToJapan {
+			background: rgba(28, 74, 110, 0.9);
+		}
+
+		#shipGateToSouth {
+			background: rgba(25, 97, 86, 0.9);
+		}
+
+		#shipGateCancel {
+			background: rgba(50, 56, 66, 0.88);
+		}
+
+		#tavernDialog {
+			position: fixed;
+			z-index: 14;
+			display: none;
+			min-width: 280px;
+			max-width: 360px;
+			padding: 12px;
+			border-radius: 11px;
+			background: rgba(34, 21, 16, 0.95);
+			border: 1px solid rgba(255, 209, 140, 0.62);
+			box-shadow: 0 10px 28px rgba(0, 0, 0, 0.56);
+		}
+
+		#tavernTitle {
+			font-size: 13px;
+			font-weight: 700;
+			color: #ffdca2;
+			margin-bottom: 6px;
+		}
+
+		#tavernText {
+			font-size: 12px;
+			line-height: 1.45;
+			color: #f9efdf;
+			margin-bottom: 10px;
+		}
+
+		#tavernActions {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 7px;
+		}
+
+		#tavernRecruitSun,
+		#tavernRecruitDa,
+		#tavernRecruitXiao,
+		#tavernClose {
+			height: 32px;
+			border-radius: 8px;
+			border: 1px solid rgba(255, 255, 255, 0.28);
+			font-size: 12px;
+			font-weight: 700;
+			cursor: pointer;
+			color: #fff7ea;
+		}
+
+		#tavernRecruitSun { background: rgba(147, 66, 45, 0.9); }
+		#tavernRecruitDa { background: rgba(72, 97, 138, 0.9); }
+		#tavernRecruitXiao { background: rgba(108, 72, 138, 0.9); }
+		#tavernClose { background: rgba(56, 53, 47, 0.88); }
+
 		@media (max-width: 900px), (pointer: coarse) {
 			#pauseBtn,
-			#labBtn,
+			#cardsBtn,
 			#musicBtn,
-			#chargeBtn {
+			#chargeBtn,
+			#bydTestBtn {
 				font-size: 14px;
 				height: 40px;
 				padding: 0 14px;
@@ -151,6 +327,11 @@
 				right: calc(max(8px, env(safe-area-inset-right)) + 164px);
 			}
 
+			#cardsBtn {
+				top: max(8px, env(safe-area-inset-top));
+				right: calc(max(8px, env(safe-area-inset-right)) + 246px);
+			}
+
 			#musicBtn {
 				top: max(8px, env(safe-area-inset-top));
 				right: calc(max(8px, env(safe-area-inset-right)) + 82px);
@@ -158,6 +339,11 @@
 
 			#chargeBtn {
 				left: max(10px, env(safe-area-inset-left));
+				bottom: max(10px, env(safe-area-inset-bottom));
+			}
+
+			#bydTestBtn {
+				left: calc(max(10px, env(safe-area-inset-left)) + 98px);
 				bottom: max(10px, env(safe-area-inset-bottom));
 			}
 
@@ -171,23 +357,113 @@
 	</style>
 </head>
 <body>
-	<a id="labBtn" href="https://gameart.top/time">返回实验室</a>
-	<button id="musicBtn">音乐: 开</button>
-	<button id="pauseBtn">暂停</button>
+	<a id="cardsBtn" class="sense-panel-btn" href="hero-cards.html">英雄展示</a>
+	<a id="labBtn" class="sense-panel-btn" href="https://gameart.top">首页</a>
+	<button id="musicBtn" class="sense-panel-btn">音乐: 开</button>
+	<button id="pauseBtn" class="sense-panel-btn">暂停</button>
 	<button id="chargeBtn">大喝</button>
+	<button id="bydTestBtn">测试-比亚迪</button>
+	<button id="continueGameBtn" type="button">继续游戏</button>
 	<canvas id="game"></canvas>
+	<div id="cityBuildDialog">
+		<div id="cityBuildTitle">城建</div>
+		<div id="cityBuildText">-</div>
+		<div id="cityBuildActions">
+			<button id="cityBuildCancel" type="button">取消</button>
+			<button id="cityBuildOk" type="button">确定</button>
+		</div>
+	</div>
+	<div id="shipGateDialog">
+		<div id="shipGateTitle">远洋船厂关口</div>
+		<div id="shipGateText">请选择航线</div>
+		<div id="shipGateActions">
+			<button id="shipGateToJapan" type="button">去往日本</button>
+			<button id="shipGateToSouth" type="button">去往南美</button>
+			<button id="shipGateCancel" type="button">取消</button>
+		</div>
+	</div>
+	<div id="tavernDialog">
+		<div id="tavernTitle">江东酒馆</div>
+		<div id="tavernText">招募江东名将</div>
+		<div id="tavernActions">
+			<button id="tavernRecruitSun" type="button">招募孙尚香（-2000金）</button>
+			<button id="tavernRecruitDa" type="button">招募大乔（-2500金）</button>
+			<button id="tavernRecruitXiao" type="button">招募小乔（曹操人头）</button>
+			<button id="tavernClose" type="button">关闭</button>
+		</div>
+	</div>
 	<div id="miniWrap">
 		<canvas id="mini"></canvas>
 	</div>
 
+	<script src="heroes.js"></script>
+	<script src="sense.js"></script>
 	<script>
 		const canvas = document.getElementById("game");
 		const ctx = canvas.getContext("2d");
 		const mini = document.getElementById("mini");
 		const miniCtx = mini.getContext("2d");
+		const miniMapImage = new Image();
+		let miniMapImageReady = false;
+		miniMapImage.onload = () => { miniMapImageReady = true; };
+		miniMapImage.onerror = () => { miniMapImageReady = false; };
+		miniMapImage.src = "img/china-map.png";
 		const pauseBtn = document.getElementById("pauseBtn");
 		const musicBtn = document.getElementById("musicBtn");
 		const chargeBtn = document.getElementById("chargeBtn");
+		const bydTestBtn = document.getElementById("bydTestBtn");
+		const continueGameBtn = document.getElementById("continueGameBtn");
+		const cityBuildDialog = document.getElementById("cityBuildDialog");
+		const cityBuildTitle = document.getElementById("cityBuildTitle");
+		const cityBuildText = document.getElementById("cityBuildText");
+		const cityBuildOk = document.getElementById("cityBuildOk");
+		const cityBuildCancel = document.getElementById("cityBuildCancel");
+		const shipGateDialog = document.getElementById("shipGateDialog");
+		const shipGateTitle = document.getElementById("shipGateTitle");
+		const shipGateText = document.getElementById("shipGateText");
+		const shipGateToJapan = document.getElementById("shipGateToJapan");
+		const shipGateToSouth = document.getElementById("shipGateToSouth");
+		const shipGateCancel = document.getElementById("shipGateCancel");
+		const tavernDialog = document.getElementById("tavernDialog");
+		const tavernTitle = document.getElementById("tavernTitle");
+		const tavernText = document.getElementById("tavernText");
+		const tavernRecruitSun = document.getElementById("tavernRecruitSun");
+		const tavernRecruitDa = document.getElementById("tavernRecruitDa");
+		const tavernRecruitXiao = document.getElementById("tavernRecruitXiao");
+		const tavernClose = document.getElementById("tavernClose");
+		const sharedUI = window.WarSense
+			? window.WarSense.initSharedUI({
+				addPauseMusic: false,
+				pauseButtonId: "pauseBtn",
+				musicButtonId: "musicBtn",
+				miniWrapId: "miniWrap",
+				rightStart: 14,
+				top: 14
+			})
+			: null;
+		function applyTopPanelLayout() {
+			if (!window.WarSense || !window.WarSense.layoutTopPanelButtons) return;
+			const compact = window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
+			window.WarSense.layoutTopPanelButtons({
+				ids: ["pauseBtn", "musicBtn", "labBtn", "cardsBtn"],
+				rightStart: compact ? 8 : 14,
+				top: compact ? 8 : 14,
+				gap: compact ? 6 : 8,
+				compact
+			});
+		}
+		applyTopPanelLayout();
+		const cityBuildDialogState = {
+			open: false,
+			outpost: null,
+			mode: "none"
+		};
+		const shipGateDialogState = {
+			open: false
+		};
+		const tavernDialogState = {
+			open: false
+		};
 
 		// Procedural royalty-free BGM (single-tone synth loop)
 		let audioCtx = null;
@@ -227,8 +503,25 @@
 
 		function startSynthBgm() {
 			if (!audioCtx || musicTimer) return;
-			const melody = [64, 67, 69, 71, 72, 71, 69, 67, 64, 67, 69, 72, 71, 69, 67, 66];
-			const bass = [40, 40, 43, 43, 45, 45, 43, 43, 40, 40, 43, 43, 47, 45, 43, 42];
+			// 64-step structure: A(16) + A'(16) + B(16) + C(16)
+			const melody = [
+				64,67,69,71,72,71,69,67,64,67,69,72,71,69,67,66,
+				64,67,69,71,74,72,71,69,67,69,71,72,74,72,69,67,
+				62,64,66,67,69,67,66,64,62,64,66,69,67,66,64,62,
+				60,62,64,66,67,66,64,62,60,62,64,67,66,64,62,60
+			];
+			const bass = [
+				40,40,43,43,45,45,43,43,40,40,43,43,47,45,43,42,
+				40,40,43,43,47,47,45,45,43,43,45,45,47,45,43,42,
+				38,38,41,41,43,43,41,41,38,38,41,41,45,43,41,40,
+				36,36,40,40,41,41,40,40,36,36,40,40,43,41,40,38
+			];
+			const pad = [
+				52,52,52,52,55,55,55,55,57,57,57,57,55,55,55,55,
+				52,52,52,52,55,55,55,55,59,59,59,59,57,57,57,57,
+				50,50,50,50,53,53,53,53,55,55,55,55,53,53,53,53,
+				48,48,48,48,52,52,52,52,53,53,53,53,52,52,52,52
+			];
 			const beat = 0.28;
 
 			musicTimer = setInterval(() => {
@@ -240,7 +533,16 @@
 					playTone(bass[i], beat * 1.8, 0.058, "sine", when);
 				}
 				if (musicStep % 4 === 0) {
-					playTone(melody[(i + 4) % melody.length], beat * 0.45, 0.04, "square", when + 0.06);
+					playTone(melody[(i + 5) % melody.length], beat * 0.45, 0.04, "square", when + 0.06);
+				}
+				// every 8th step: soft pad harmonic layer
+				if (musicStep % 8 === 0) {
+					playTone(pad[i], beat * 3.2, 0.028, "sawtooth", when);
+				}
+				// phrase ending fill every 16th step
+				if (musicStep % 16 === 15) {
+					playTone(melody[(i + 2) % melody.length], beat * 0.28, 0.05, "square", when + 0.03);
+					playTone(melody[(i + 4) % melody.length], beat * 0.22, 0.045, "triangle", when + 0.1);
 				}
 				musicStep += 1;
 			}, beat * 1000);
@@ -336,6 +638,10 @@
 			});
 		}
 
+		const heroStore = window.WarHeroes;
+		const renderStd = window.WarSense || null;
+		const heroDetailRuntime = heroStore && heroStore.detailRuntime ? heroStore.detailRuntime : null;
+
 		function createLeader(x, y, team) {
 			return {
 				x,
@@ -379,6 +685,24 @@
 		}
 
 		const player = createLeader(CFG.worldW * 0.5, CFG.worldH * 0.5, "ally");
+		if (heroStore && heroStore.createMainPlayer) {
+			const mainPlayer = heroStore.createMainPlayer(player.x, player.y);
+			player.heroId = mainPlayer.heroId;
+			player.name = mainPlayer.name;
+			player.hp = mainPlayer.hp;
+			player.maxHp = mainPlayer.maxHp;
+			player.speed = mainPlayer.speed;
+			player.radius = mainPlayer.radius;
+			player.attackRange = mainPlayer.attackRange;
+			player.body = mainPlayer.body;
+			player.head = mainPlayer.head;
+			player.accent = mainPlayer.accent;
+			player.weaponType = (mainPlayer.skill && mainPlayer.skill.key) ? mainPlayer.skill.key : "saber";
+		}
+		player.isShip = false;
+		player.onByd = false;
+		player.shipModeLock = 0;
+		player.prevX = player.x;
 		const enemies = [
 			createLeader(700, 620, "enemy"),
 			createLeader(CFG.worldW - 800, 700, "enemy"),
@@ -388,7 +712,7 @@
 		enemies[0].name = "夏侯惇";
 		enemies[1].name = "张辽";
 		enemies[2].name = "许褚";
-		enemies[3].name = "曹仁";
+		enemies[3].name = "曹操";
 		enemies[0].weaponType = "saber";
 		enemies[1].weaponType = "spear";
 		enemies[2].weaponType = "hammer";
@@ -414,12 +738,21 @@
 		const outposts = [
 				{ x: 1300, y: 860,  owner: "neutral", tick: 0, r: 62, name: "许昌", breakParts: [] },
 				{ x: 2550, y: 640,  owner: "neutral", tick: 0, r: 62, name: "邺城", breakParts: [] },
-				{ x: 3880, y: 940,  owner: "neutral", tick: 0, r: 62, name: "北平", breakParts: [] },
+				{ x: 3680, y: 940,  owner: "neutral", tick: 0, r: 62, name: "北平", breakParts: [] },
 				{ x: 2550, y: 1880, owner: "neutral", tick: 0, r: 62, name: "汉阳", breakParts: [] },
 				{ x: 1470, y: 2480, owner: "neutral", tick: 0, r: 62, name: "江陵", breakParts: [] },
 				{ x: 2650, y: 2730, owner: "neutral", tick: 0, r: 62, name: "襄阳", breakParts: [] },
-				{ x: 3920, y: 2500, owner: "neutral", tick: 0, r: 62, name: "建业", breakParts: [] }
+				{ x: 3680, y: 2500, owner: "neutral", tick: 0, r: 62, name: "建业", breakParts: [] }
 		];
+		for (const o of outposts) {
+			o.wallBuilt = false;
+			o.wallLevel = 0;
+			o.wallMaxHp = 520;
+			o.wallHp = 0;
+			o._insideBuildArea = false;
+		}
+		const WALL_BUILD_COST = 800;
+		const WALL_UPGRADE_COST = 1200;
 
 		const mines = [
 			{ x: 2425, y: 485, r: 34, name: "金矿", resource: "gold", outpost: outposts[1], tick: 0, sparkle: 0 },
@@ -440,7 +773,59 @@
 			pulse: 0,
 			tick: 0
 		};
-		const stable = { x: 4065, y: 822, r: 42, name: "马场", outpost: outposts[2] };
+		const stable = { x: 3820, y: 822, r: 42, name: "马场", outpost: outposts[2] };
+		const initialPlayerState = loadPlayerState();
+		const unlockedPlayerState = {
+			mounted: !!initialPlayerState.mounted,
+			goldBlade: !!initialPlayerState.goldBlade
+		};
+		player.mounted = unlockedPlayerState.mounted;
+		player.goldBlade = unlockedPlayerState.goldBlade;
+		let lastSharedPlayerState = "";
+
+		function syncMainPlayerState(force) {
+			const mountedUnlocked = unlockedPlayerState.mounted || stable.outpost.owner === "ally";
+			const goldBladeUnlocked = unlockedPlayerState.goldBlade || hanyangOutpost.owner === "ally";
+			const changed = mountedUnlocked !== unlockedPlayerState.mounted || goldBladeUnlocked !== unlockedPlayerState.goldBlade;
+			unlockedPlayerState.mounted = mountedUnlocked;
+			unlockedPlayerState.goldBlade = goldBladeUnlocked;
+			player.mounted = unlockedPlayerState.mounted;
+			player.goldBlade = unlockedPlayerState.goldBlade;
+			const sig = `${unlockedPlayerState.mounted ? 1 : 0}-${unlockedPlayerState.goldBlade ? 1 : 0}`;
+			if (force || changed || sig !== lastSharedPlayerState) {
+				savePlayerState(unlockedPlayerState);
+				lastSharedPlayerState = sig;
+			}
+		}
+		syncMainPlayerState(true);
+		const jiangdongTavern = {
+			x: outposts[6].x - 220,
+			y: outposts[6].y + 28,
+			r: 46,
+			name: "江东酒馆",
+			insideArea: false,
+			pulse: 0,
+			msgTimer: 0,
+			msgText: ""
+		};
+		const shipyard = {
+			x: outposts[6].x + 170,
+			y: outposts[6].y - 180,
+			r: 48,
+			name: "远洋船厂",
+			unlocked: false,
+			portalR: 76,
+			insidePortalArea: false,
+			pulse: 0
+		};
+		const bydCar = {
+			active: false,
+			mounted: false,
+			x: player.x + 72,
+			y: player.y,
+			r: 26,
+			speedMul: 2.9
+		};
 
 		const xiahouDunGuardOutpost = outposts[0];
 		const xiahouDunGuardPos = {
@@ -491,7 +876,10 @@
 			{ x: 165, y: 100,  r: 168 },
 			{ x: 195, y: 375,  r: 178 },
 			{ x: 155, y: 655,  r: 172 },
-			// [3] & [4] removed — replaced by 嘉峪关隘口
+			// 嘉峪关上方补山，减少上方空白
+			{ x: 170, y: 900,  r: 132 },
+			// 嘉峪关下方补山，收窄隘口
+			{ x: 168, y: 1250, r: 136 },
 			{ x: 180, y: 1490, r: 175 },
 			{ x: 158, y: 1770, r: 168 },
 			{ x: 192, y: 2050, r: 176 },
@@ -505,6 +893,16 @@
 			{ x: 2080, y: 1960, r: 122 },
 			{ x: 1940, y: 2140, r: 118 }
 		];
+
+		// 东部海洋禁行区（北平、建业以东）
+		const eastSeaWallX = 3970;
+		const eastSeaZones = [
+			{ x: 4300, y: 620,  r: 520 },
+			{ x: 4480, y: 1320, r: 620 },
+			{ x: 4460, y: 2140, r: 640 },
+			{ x: 4380, y: 2860, r: 520 }
+		];
+
 
 		// 嘉峪关隘口 — sits in the gap between mountain[2] (y=655) and mountain[3-now] (y=1490)
 		const jiayuguan = {
@@ -528,32 +926,162 @@
 		let zhugeliang = null;
 		const lightningBolts = []; // { tx, ty, segs, life, splashR }
 		let lancelot_ally = null; // 兰斯洛特骑士（从欧洲战场带回）
+		let sunshangxiang = null;
+		let daqiao = null;
+		let xiaoqiao = null;
+		const sunArrows = []; // { x,y,vx,vy,life,damage }
+		const goldPopups = []; // { x,y,text,life,color }
+		const RETURN_POINT_KEY = "warReturnPoint";
+
+		function loadHeroFlags() {
+			if (!heroStore) return {
+				zhugeliang: false,
+				lancelot: false,
+				sanada: false,
+				sunshangxiang: false,
+				daqiao: false,
+				xiaoqiao: false
+			};
+			return heroStore.loadFlags();
+		}
+
+		function saveHeroFlags(patch) {
+			if (!heroStore) return;
+			heroStore.saveFlags(patch || {});
+		}
+
+		function loadPlayerState() {
+			if (!heroStore || !heroStore.loadPlayerState) return { mounted: false, goldBlade: false };
+			return heroStore.loadPlayerState();
+		}
+
+		function savePlayerState(patch) {
+			if (!heroStore || !heroStore.savePlayerState) return;
+			heroStore.savePlayerState(patch || {});
+		}
+
+		function consumeReturnPoint() {
+			try {
+				const raw = localStorage.getItem(RETURN_POINT_KEY) || sessionStorage.getItem(RETURN_POINT_KEY);
+				if (!raw) return null;
+				localStorage.removeItem(RETURN_POINT_KEY);
+				sessionStorage.removeItem(RETURN_POINT_KEY);
+				return JSON.parse(raw);
+			} catch (_e) {
+				localStorage.removeItem(RETURN_POINT_KEY);
+				sessionStorage.removeItem(RETURN_POINT_KEY);
+				return null;
+			}
+		}
+
+		(function applyReturnSpawnPoint() {
+			const rp = consumeReturnPoint();
+			if (!rp) return;
+			if (rp.point === "oceanShipyard") {
+				player.x = shipyard.x - 88;
+				player.y = shipyard.y + 26;
+			} else if (rp.point === "jiayuguan") {
+				player.x = jiayuguan.x + 86;
+				player.y = jiayuguan.y + 12;
+			} else {
+				return;
+			}
+			player.target = { x: player.x, y: player.y };
+			player.prevX = player.x;
+			camera.x = clamp(player.x - window.innerWidth / 2, 0, CFG.worldW - window.innerWidth);
+			camera.y = clamp(player.y - window.innerHeight / 2, 0, CFG.worldH - window.innerHeight);
+		})();
 
 		// 从欧洲战场返回时，恢复英雄状态
 		(function restoreHeroesFromEurope() {
 			try {
-				const saved = JSON.parse(sessionStorage.getItem('warHeroes') || '{}');
+				const saved = loadHeroFlags();
 				if (saved.zhugeliang) {
+					const zDef = heroStore ? heroStore.getHeroDefinition("zhugeliang") : null;
 					wudangHut.owner = "ally";
 					wudangHut.captured = true;
 					zhugeliang = {
 						x: wudangHut.x, y: wudangHut.y - 20,
 						name: "诸葛亮", team: "ally",
-						hp: 260, maxHp: 260, speed: 205, dir: Math.PI,
-						radius: 11, attackRange: 310, attackCd: 0,
+						hp: zDef ? zDef.stats.hp : 260,
+						maxHp: zDef ? zDef.stats.hp : 260,
+						speed: zDef ? zDef.stats.speed : 205,
+						dir: Math.PI,
+						radius: zDef ? zDef.stats.radius : 11,
+						attackRange: zDef ? zDef.stats.attackRange : 310,
+						attackCd: 0,
 						hitFlash: 0, dead: false
 					};
 				}
 				if (saved.lancelot) {
+					const lDef = heroStore ? heroStore.getHeroDefinition("lancelot") : null;
 					lancelot_ally = {
 						x: player.x + 50, y: player.y + 20,
 						name: "兰斯洛特", team: "ally",
-						hp: 320, maxHp: 320,
-						speed: 230, dir: Math.PI,
-						radius: 12, glowPhase: 0
+						hp: lDef ? lDef.stats.hp : 320,
+						maxHp: lDef ? lDef.stats.hp : 320,
+						speed: lDef ? lDef.stats.speed : 230,
+						dir: Math.PI,
+						radius: lDef ? lDef.stats.radius : 12,
+						glowPhase: 0,
+						attackRange: lDef ? lDef.stats.attackRange : 38,
+						attackCd: 0,
+						slashTimer: 0
 					};
 				}
-				sessionStorage.removeItem('warHeroes');
+				if (saved.sunshangxiang) {
+					const sDef = heroStore ? heroStore.getHeroDefinition("sunshangxiang") : null;
+					sunshangxiang = {
+						x: player.x - 84,
+						y: player.y + 36,
+						name: "孙尚香",
+						team: "ally",
+						hp: sDef ? sDef.stats.hp : 280,
+						maxHp: sDef ? sDef.stats.hp : 280,
+						speed: sDef ? sDef.stats.speed : 216,
+						dir: Math.PI,
+						radius: sDef ? sDef.stats.radius : 11,
+						attackRange: sDef ? sDef.stats.attackRange : 285,
+						attackCd: 0,
+						hitFlash: 0,
+						dead: false
+					};
+				}
+				if (saved.daqiao) {
+					const dDef = heroStore ? heroStore.getHeroDefinition("daqiao") : null;
+					daqiao = {
+						x: player.x - 112,
+						y: player.y + 10,
+						name: "大乔",
+						team: "ally",
+						hp: dDef ? dDef.stats.hp : 250,
+						maxHp: dDef ? dDef.stats.hp : 250,
+						speed: dDef ? dDef.stats.speed : 204,
+						dir: Math.PI,
+						radius: dDef ? dDef.stats.radius : 11,
+						goldCd: 0,
+						hitFlash: 0,
+						dead: false
+					};
+				}
+				if (saved.xiaoqiao) {
+					const xDef = heroStore ? heroStore.getHeroDefinition("xiaoqiao") : null;
+					xiaoqiao = {
+						x: player.x - 132,
+						y: player.y - 18,
+						name: "小乔",
+						team: "ally",
+						hp: xDef ? xDef.stats.hp : 240,
+						maxHp: xDef ? xDef.stats.hp : 240,
+						speed: xDef ? xDef.stats.speed : 208,
+						dir: Math.PI,
+						radius: xDef ? xDef.stats.radius : 11,
+						attackRange: xDef ? xDef.stats.attackRange : 120,
+						attackCd: 0,
+						hitFlash: 0,
+						dead: false
+					};
+				}
 			} catch(e) {}
 		})();
 
@@ -615,6 +1143,25 @@
 					const ny = d > 0.001 ? dy / d : 0;
 					entity.x = m.x + nx * minD;
 					entity.y = m.y + ny * minD;
+				}
+			}
+		}
+
+		function pushOutEastSea(entity) {
+			const r = entity.radius || 7;
+			if (entity.x > eastSeaWallX - r) {
+				entity.x = eastSeaWallX - r;
+			}
+			for (const sea of eastSeaZones) {
+				const dx = entity.x - sea.x;
+				const dy = entity.y - sea.y;
+				const d = Math.hypot(dx, dy);
+				const minD = sea.r + r;
+				if (d < minD) {
+					const nx = d > 0.001 ? dx / d : -1;
+					const ny = d > 0.001 ? dy / d : 0;
+					entity.x = sea.x + nx * minD;
+					entity.y = sea.y + ny * minD;
 				}
 			}
 		}
@@ -684,7 +1231,11 @@
 
 		function updatePlayer(dt) {
 			if (player.dead) return;
-			const mountSpeed = stable.outpost.owner === "ally" ? CFG.heroSpeed * 1.55 : CFG.heroSpeed;
+			player.prevX = player.x;
+			player.shipModeLock = Math.max(0, (player.shipModeLock || 0) - dt);
+			const stableBoost = stable.outpost.owner === "ally" ? CFG.heroSpeed * 1.55 : CFG.heroSpeed;
+			const bydBoost = player.onByd ? bydCar.speedMul : 1;
+			const mountSpeed = stableBoost * bydBoost;
 			const moveScale = (player.attackLock > 0 || player.hitStop > 0) ? 0.18 : player.recoverTimer > 0 ? 0.52 : 1;
 			const moveSpeed = mountSpeed * moveScale;
 			const mx = (moveInput.right ? 1 : 0) - (moveInput.left ? 1 : 0);
@@ -704,6 +1255,29 @@
 			player.x = clamp(player.x, 50, CFG.worldW - 50);
 			player.y = clamp(player.y, 50, CFG.worldH - 50);
 			pushOutMountains(player);
+			pushOutEastSea(player);
+		}
+
+		function spawnBydCarNearPlayer() {
+			if (player.dead) return;
+			bydCar.active = true;
+			bydCar.mounted = false;
+			player.onByd = false;
+			bydCar.x = clamp(player.x + 78, 80, CFG.worldW - 80);
+			bydCar.y = clamp(player.y + 8, 80, CFG.worldH - 80);
+		}
+
+		function bydCarSystem() {
+			if (!bydCar.active || player.dead) return;
+			if (!bydCar.mounted) {
+				if (dist(player, bydCar) < bydCar.r + player.radius + 8) {
+					bydCar.mounted = true;
+					player.onByd = true;
+				}
+				return;
+			}
+			bydCar.x = player.x + Math.cos(player.dir || 0) * 8;
+			bydCar.y = player.y + Math.sin(player.dir || 0) * 8;
 		}
 
 		function applyKnockback(src, target, power) {
@@ -771,6 +1345,7 @@
 				e.x = clamp(e.x, 60, CFG.worldW - 60);
 				e.y = clamp(e.y, 60, CFG.worldH - 60);
 				pushOutMountains(e);
+				pushOutEastSea(e);
 				if (dist(e, player) < 116 && e.slashCd <= 0) triggerLeaderSlash(e, player);
 			}
 		}
@@ -821,6 +1396,7 @@
 				u.x = clamp(u.x, 20, CFG.worldW - 20);
 				u.y = clamp(u.y, 20, CFG.worldH - 20);
 				pushOutMountains(u);
+				pushOutEastSea(u);
 				if (u.hp <= 0) u.dead = true;
 			}
 		}
@@ -872,10 +1448,37 @@
 				const nearAlly = dist(player, o) < o.r + 24 || allies.some((u) => !u.dead && dist(u, o) < o.r + 10);
 				const nearEnemy = enemies.some((e) => e.active && !e.dead && dist(e, o) < o.r + 24) || enemyUnits.some((u) => !u.dead && dist(u, o) < o.r + 10);
 
+				// 已建设城墙时，敌军先打城墙，城墙未破前不易失城
+				if (o.owner === "ally" && o.wallBuilt && o.wallHp > 0) {
+					const dmgRate = o.wallLevel >= 2 ? 0.045 : 0.065;
+					const regenRate = o.wallLevel >= 2 ? 0.03 : 0.02;
+					if (nearEnemy) {
+						o.wallHp = Math.max(0, o.wallHp - dtMs * dmgRate);
+					}
+					if (!nearEnemy && nearAlly) {
+						o.wallHp = Math.min(o.wallMaxHp, o.wallHp + dtMs * regenRate);
+					}
+					if (o.wallHp <= 0) {
+						o.wallBuilt = false;
+						o.wallLevel = 0;
+						o.wallMaxHp = 520;
+						o.wallHp = 0;
+					}
+				}
+
 				const oldOwner = o.owner;
-				if (nearAlly && !nearEnemy) o.owner = "ally";
-				else if (nearEnemy && !nearAlly) o.owner = "enemy";
+				const allyWallHolding = o.owner === "ally" && o.wallBuilt && o.wallHp > 0 && nearEnemy;
+				if (!allyWallHolding) {
+					if (nearAlly && !nearEnemy) o.owner = "ally";
+					else if (nearEnemy && !nearAlly) o.owner = "enemy";
+				}
 				if (o.owner !== oldOwner) triggerBreakAnim(o);
+				if (o.owner !== "ally") {
+					o.wallBuilt = false;
+					o.wallLevel = 0;
+					o.wallMaxHp = 520;
+					o.wallHp = 0;
+				}
 
 				o.tick += dtMs;
 				if (o.tick >= CFG.neutralTickMs) {
@@ -890,6 +1493,164 @@
 					}
 				}
 			}
+		}
+
+		function outpostBuildSystem() {
+			if (player.dead) return;
+
+			if (cityBuildDialogState.open) {
+				positionCityBuildDialog(cityBuildDialogState.outpost);
+				lockPlayerForCityDialog();
+				return;
+			}
+
+			for (const o of outposts) {
+				const inside = o.owner === "ally" && dist(player, o) < o.r + 70;
+				if (inside && !o._insideBuildArea) {
+					o._insideBuildArea = true;
+					if (!o.wallBuilt || o.wallLevel <= 0) {
+						openCityBuildDialog(o, "build");
+						break;
+					} else if (o.wallLevel === 1) {
+						openCityBuildDialog(o, "upgrade");
+						break;
+					}
+				} else if (!inside) {
+					o._insideBuildArea = false;
+				}
+			}
+		}
+
+		function resetMoveInput() {
+			moveInput.up = false;
+			moveInput.down = false;
+			moveInput.left = false;
+			moveInput.right = false;
+		}
+
+		function isAnyModalOpen() {
+			return cityBuildDialogState.open || shipGateDialogState.open || tavernDialogState.open;
+		}
+
+		function lockPlayerForCityDialog() {
+			resetMoveInput();
+			player.target = { x: player.x, y: player.y };
+		}
+
+		function positionCityBuildDialog(outpost) {
+			if (!outpost || !cityBuildDialogState.open) return;
+			const dialogW = cityBuildDialog.offsetWidth || 240;
+			const dialogH = cityBuildDialog.offsetHeight || 100;
+			const x = outpost.x - camera.x - dialogW / 2;
+			const y = outpost.y - camera.y - outpost.r - dialogH - 12;
+			const left = clamp(x, 8, canvas.width - dialogW - 8);
+			const top = clamp(y, 8, canvas.height - dialogH - 8);
+			cityBuildDialog.style.left = `${left}px`;
+			cityBuildDialog.style.top = `${top}px`;
+		}
+
+		function setCityBuildDialogContent(title, text, okLabel, cancelLabel) {
+			cityBuildTitle.textContent = title;
+			cityBuildText.textContent = text;
+			cityBuildOk.textContent = okLabel;
+			cityBuildCancel.textContent = cancelLabel;
+		}
+
+		function openCityBuildDialog(outpost, mode) {
+			cityBuildDialogState.open = true;
+			cityBuildDialogState.outpost = outpost;
+			cityBuildDialogState.mode = mode;
+			if (mode === "build") {
+				setCityBuildDialogContent("城市建设", `${outpost.name}：建设城墙（花费 ${WALL_BUILD_COST} 金）？`, "建设", "取消");
+			} else if (mode === "upgrade") {
+				setCityBuildDialogContent("城市升级", `${outpost.name}：升级城墙到二级（花费 ${WALL_UPGRADE_COST} 金）？`, "升级", "取消");
+			}
+			cityBuildDialog.style.display = "block";
+			positionCityBuildDialog(outpost);
+			lockPlayerForCityDialog();
+		}
+
+		function closeCityBuildDialog() {
+			cityBuildDialogState.open = false;
+			cityBuildDialogState.outpost = null;
+			cityBuildDialogState.mode = "none";
+			cityBuildDialog.style.display = "none";
+			resetMoveInput();
+		}
+
+		function applyCityBuildDialogAction() {
+			const o = cityBuildDialogState.outpost;
+			if (!o) {
+				closeCityBuildDialog();
+				return;
+			}
+
+			if (cityBuildDialogState.mode === "build") {
+				if (playerGold >= WALL_BUILD_COST) {
+					playerGold -= WALL_BUILD_COST;
+					o.wallBuilt = true;
+					o.wallLevel = 1;
+					o.wallMaxHp = 520;
+					o.wallHp = o.wallMaxHp;
+					closeCityBuildDialog();
+				} else {
+					setCityBuildDialogContent("资金不足", "金钱不足，无法建设城墙。", "知道了", "关闭");
+					cityBuildDialogState.mode = "none";
+				}
+				return;
+			}
+
+			if (cityBuildDialogState.mode === "upgrade") {
+				if (playerGold >= WALL_UPGRADE_COST) {
+					playerGold -= WALL_UPGRADE_COST;
+					o.wallLevel = 2;
+					o.wallMaxHp = 980;
+					o.wallHp = o.wallMaxHp;
+					closeCityBuildDialog();
+				} else {
+					setCityBuildDialogContent("资金不足", "金钱不足，无法升级城墙。", "知道了", "关闭");
+					cityBuildDialogState.mode = "none";
+				}
+				return;
+			}
+
+			closeCityBuildDialog();
+		}
+
+		function positionShipGateDialog() {
+			const dialogW = shipGateDialog.offsetWidth || 250;
+			const dialogH = shipGateDialog.offsetHeight || 135;
+			const x = shipyard.x - camera.x - dialogW / 2;
+			const y = shipyard.y - camera.y - shipyard.r - dialogH - 14;
+			const left = clamp(x, 8, canvas.width - dialogW - 8);
+			const top = clamp(y, 8, canvas.height - dialogH - 8);
+			shipGateDialog.style.left = `${left}px`;
+			shipGateDialog.style.top = `${top}px`;
+		}
+
+		function openShipGateDialog() {
+			shipGateDialogState.open = true;
+			shipGateTitle.textContent = "远洋船厂关口";
+			shipGateText.textContent = "请选择航线";
+			shipGateDialog.style.display = "block";
+			positionShipGateDialog();
+			lockPlayerForCityDialog();
+		}
+
+		function closeShipGateDialog() {
+			shipGateDialogState.open = false;
+			shipGateDialog.style.display = "none";
+			resetMoveInput();
+		}
+
+		function jumpFromShipGate(targetPage) {
+			syncMainPlayerState(true);
+			const flags = loadHeroFlags();
+			saveHeroFlags({
+				zhugeliang: flags.zhugeliang || !!(zhugeliang && !zhugeliang.dead),
+				lancelot: flags.lancelot || !!lancelot_ally
+			});
+			window.location.href = targetPage;
 		}
 
 		function mineSystem(dt, dtMs) {
@@ -923,6 +1684,7 @@
 				worker.x = clamp(worker.x, 16, CFG.worldW - 16);
 				worker.y = clamp(worker.y, 16, CFG.worldH - 16);
 				pushOutMountains(worker);
+				pushOutEastSea(worker);
 			}
 
 			for (const mine of mines) {
@@ -993,14 +1755,300 @@
 			const d = dist(player, jiayuguan);
 			if (d < 80) {
 				jiayuguan._triggered = true;
+				syncMainPlayerState(true);
 				player.target = { x: player.x, y: player.y };
-				try {
-					sessionStorage.setItem('warHeroes', JSON.stringify({
-						zhugeliang: !!(zhugeliang && !zhugeliang.dead),
-						lancelot:   !!(lancelot_ally)
-					}));
-				} catch(e) {}
+				const marker = JSON.stringify({ point: "jiayuguan", from: "europe" });
+				localStorage.setItem(RETURN_POINT_KEY, marker);
+				sessionStorage.setItem(RETURN_POINT_KEY, marker);
+				const flags = loadHeroFlags();
+				saveHeroFlags({
+					zhugeliang: flags.zhugeliang || !!(zhugeliang && !zhugeliang.dead),
+					lancelot: flags.lancelot || !!(lancelot_ally)
+				});
 				window.location.href = "europe.html";
+			}
+		}
+
+		function shipyardSystem(dt) {
+			if (player.dead) return;
+			shipyard.pulse = Math.max(0, shipyard.pulse - dt * 1.7);
+			if (shipGateDialogState.open) {
+				positionShipGateDialog();
+				lockPlayerForCityDialog();
+				return;
+			}
+
+			const nearPortal = dist(player, shipyard) < shipyard.portalR;
+			if (nearPortal && !shipyard.insidePortalArea) {
+				shipyard.insidePortalArea = true;
+				shipyard.unlocked = true;
+				shipyard.pulse = 1;
+				openShipGateDialog();
+			}
+			if (!nearPortal) {
+				shipyard.insidePortalArea = false;
+			}
+		}
+
+		function hasCaocaoHead() {
+			return enemies.some((e) => e.name === "曹操" && e.dead);
+		}
+
+		function showTavernHint(text) {
+			jiangdongTavern.msgText = text;
+			jiangdongTavern.msgTimer = 2.2;
+		}
+
+		function spawnGoldPopup(x, y, text, color) {
+			goldPopups.push({ x, y, text, life: 1.2, color: color || "#f5d464" });
+		}
+
+		function createJiangdongHero(id, x, y) {
+			const def = heroStore ? heroStore.getHeroDefinition(id) : null;
+			if (!def) return null;
+			if (id === "sunshangxiang") {
+				return {
+					x, y, name: def.name, team: "ally",
+					hp: def.stats.hp, maxHp: def.stats.hp,
+					speed: def.stats.speed, dir: Math.PI,
+					radius: def.stats.radius, attackRange: def.stats.attackRange,
+					attackCd: 0, hitFlash: 0, dead: false
+				};
+			}
+			if (id === "daqiao") {
+				return {
+					x, y, name: def.name, team: "ally",
+					hp: def.stats.hp, maxHp: def.stats.hp,
+					speed: def.stats.speed, dir: Math.PI,
+					radius: def.stats.radius,
+					goldCd: 0, hitFlash: 0, dead: false
+				};
+			}
+			return {
+				x, y, name: def.name, team: "ally",
+				hp: def.stats.hp, maxHp: def.stats.hp,
+				speed: def.stats.speed, dir: Math.PI,
+				radius: def.stats.radius, attackRange: def.stats.attackRange,
+				attackCd: 0, hitFlash: 0, dead: false
+			};
+		}
+
+		function positionTavernDialog() {
+			const dW = tavernDialog.offsetWidth || 300;
+			const dH = tavernDialog.offsetHeight || 188;
+			const x = jiangdongTavern.x - camera.x - dW / 2;
+			const y = jiangdongTavern.y - camera.y - jiangdongTavern.r - dH - 12;
+			tavernDialog.style.left = `${clamp(x, 8, canvas.width - dW - 8)}px`;
+			tavernDialog.style.top = `${clamp(y, 8, canvas.height - dH - 8)}px`;
+		}
+
+		function refreshTavernButtons() {
+			const caocaoReady = hasCaocaoHead();
+			tavernRecruitSun.disabled = !!sunshangxiang;
+			tavernRecruitDa.disabled = !!daqiao;
+			tavernRecruitXiao.disabled = !!xiaoqiao || !caocaoReady;
+			tavernRecruitXiao.textContent = xiaoqiao
+				? "小乔已入队"
+				: caocaoReady
+					? "招募小乔（曹操人头）"
+					: "招募小乔（需曹操人头）";
+		}
+
+		function openTavernDialog() {
+			tavernDialogState.open = true;
+			tavernTitle.textContent = "江东酒馆";
+			tavernText.textContent = "可招募：孙尚香（弓箭手）、大乔（生财）、小乔（曹操人头）";
+			refreshTavernButtons();
+			tavernDialog.style.display = "block";
+			positionTavernDialog();
+			lockPlayerForCityDialog();
+		}
+
+		function closeTavernDialog() {
+			tavernDialogState.open = false;
+			tavernDialog.style.display = "none";
+			resetMoveInput();
+		}
+
+		function recruitSunshangxiang() {
+			if (sunshangxiang) return;
+			if (playerGold < 2000) {
+				showTavernHint("金钱不足，无法招募孙尚香");
+				return;
+			}
+			playerGold -= 2000;
+			sunshangxiang = createJiangdongHero("sunshangxiang", jiangdongTavern.x + 28, jiangdongTavern.y - 16);
+			saveHeroFlags({ sunshangxiang: true });
+			showTavernHint("孙尚香加入！");
+			refreshTavernButtons();
+		}
+
+		function recruitDaqiao() {
+			if (daqiao) return;
+			if (playerGold < 2500) {
+				showTavernHint("金钱不足，无法招募大乔");
+				return;
+			}
+			playerGold -= 2500;
+			daqiao = createJiangdongHero("daqiao", jiangdongTavern.x + 12, jiangdongTavern.y + 10);
+			saveHeroFlags({ daqiao: true });
+			showTavernHint("大乔加入！将持续生财");
+			refreshTavernButtons();
+		}
+
+		function recruitXiaoqiao() {
+			if (xiaoqiao) return;
+			if (!hasCaocaoHead()) {
+				showTavernHint("尚未取得曹操人头");
+				return;
+			}
+			xiaoqiao = createJiangdongHero("xiaoqiao", jiangdongTavern.x - 6, jiangdongTavern.y - 20);
+			saveHeroFlags({ xiaoqiao: true });
+			showTavernHint("小乔加入！");
+			refreshTavernButtons();
+		}
+
+		function jiangdongTavernSystem(dt) {
+			if (player.dead) return;
+			jiangdongTavern.pulse = Math.max(0, jiangdongTavern.pulse - dt * 1.8);
+			jiangdongTavern.msgTimer = Math.max(0, jiangdongTavern.msgTimer - dt);
+			if (tavernDialogState.open) {
+				positionTavernDialog();
+				lockPlayerForCityDialog();
+				refreshTavernButtons();
+				return;
+			}
+			const near = dist(player, jiangdongTavern) < jiangdongTavern.r + 72;
+			if (near && !jiangdongTavern.insideArea) {
+				jiangdongTavern.insideArea = true;
+				jiangdongTavern.pulse = 1;
+				openTavernDialog();
+			} else if (!near) {
+				jiangdongTavern.insideArea = false;
+			}
+		}
+
+		function updateSunArrows(dt) {
+			for (let i = sunArrows.length - 1; i >= 0; i--) {
+				const a = sunArrows[i];
+				a.x += a.vx * dt;
+				a.y += a.vy * dt;
+				a.life -= dt;
+				let hit = false;
+				for (const u of enemyUnits) {
+					if (u.dead) continue;
+					if (Math.hypot(a.x - u.x, a.y - u.y) < (u.radius || 7) + 6) {
+						u.hp -= a.damage;
+						hit = true;
+						break;
+					}
+				}
+				if (!hit) {
+					for (const e of enemies) {
+						if (!e.active || e.dead) continue;
+						if (Math.hypot(a.x - e.x, a.y - e.y) < (e.radius || 12) + 7) {
+							e.hp -= a.damage;
+							e.hitFlash = Math.max(e.hitFlash || 0, 0.4);
+							hit = true;
+							break;
+						}
+					}
+				}
+				if (hit || a.life <= 0) sunArrows.splice(i, 1);
+			}
+		}
+
+		function nearestEnemyForHero(hero, range) {
+			let best = null;
+			let bestD = Infinity;
+			for (const u of enemyUnits) {
+				if (u.dead) continue;
+				const d = dist(hero, u);
+				if (d < range && d < bestD) { best = u; bestD = d; }
+			}
+			for (const e of enemies) {
+				if (!e.active || e.dead) continue;
+				const d = dist(hero, e);
+				if (d < range && d < bestD) { best = e; bestD = d; }
+			}
+			return { target: best, d: bestD };
+		}
+
+		function updateSunshangxiang(dt) {
+			if (!sunshangxiang || sunshangxiang.dead) return;
+			if (heroDetailRuntime && heroDetailRuntime.updateSunshangxiang) {
+				heroDetailRuntime.updateSunshangxiang({
+					hero: sunshangxiang,
+					dt,
+					player,
+					dist,
+					moveToward: moveTo,
+					nearestEnemy: nearestEnemyForHero,
+					fireArrow: function (hero, target, damage) {
+						const angle = Math.atan2(target.y - hero.y, target.x - hero.x);
+						const spd = 520;
+						sunArrows.push({
+							x: hero.x + Math.cos(angle) * 10,
+							y: hero.y + Math.sin(angle) * 10,
+							vx: Math.cos(angle) * spd,
+							vy: Math.sin(angle) * spd,
+							life: 0.85,
+							damage: damage
+						});
+					}
+				});
+			}
+			sunshangxiang.x = clamp(sunshangxiang.x, 20, CFG.worldW - 20);
+			sunshangxiang.y = clamp(sunshangxiang.y, 20, CFG.worldH - 20);
+			pushOutMountains(sunshangxiang);
+			pushOutEastSea(sunshangxiang);
+		}
+
+		function updateDaqiao(dt) {
+			if (!daqiao || daqiao.dead) return;
+			if (heroDetailRuntime && heroDetailRuntime.updateDaqiao) {
+				heroDetailRuntime.updateDaqiao({
+					hero: daqiao,
+					dt,
+					player,
+					dist,
+					moveToward: moveTo,
+					onGoldTick: function (amount, x, y) {
+						playerGold += amount;
+						spawnGoldPopup(x, y, "+" + amount, "#f2d66f");
+					}
+				});
+			}
+			daqiao.x = clamp(daqiao.x, 20, CFG.worldW - 20);
+			daqiao.y = clamp(daqiao.y, 20, CFG.worldH - 20);
+			pushOutMountains(daqiao);
+			pushOutEastSea(daqiao);
+		}
+
+		function updateXiaoqiao(dt) {
+			if (!xiaoqiao || xiaoqiao.dead) return;
+			if (heroDetailRuntime && heroDetailRuntime.updateXiaoqiao) {
+				heroDetailRuntime.updateXiaoqiao({
+					hero: xiaoqiao,
+					dt,
+					player,
+					dist,
+					moveToward: moveTo,
+					nearestEnemy: nearestEnemyForHero
+				});
+			}
+			xiaoqiao.x = clamp(xiaoqiao.x, 20, CFG.worldW - 20);
+			xiaoqiao.y = clamp(xiaoqiao.y, 20, CFG.worldH - 20);
+			pushOutMountains(xiaoqiao);
+			pushOutEastSea(xiaoqiao);
+		}
+
+		function updateGoldPopups(dt) {
+			for (let i = goldPopups.length - 1; i >= 0; i--) {
+				const g = goldPopups[i];
+				g.life -= dt;
+				g.y -= 22 * dt;
+				if (g.life <= 0) goldPopups.splice(i, 1);
 			}
 		}
 
@@ -1091,6 +2139,200 @@
 			}
 		}
 
+		function drawShipyard() {
+			const s = shipyard;
+			if (s.x + 90 < camera.x || s.x - 90 > camera.x + canvas.width) return;
+			if (s.y + 70 < camera.y || s.y - 70 > camera.y + canvas.height) return;
+
+			ctx.fillStyle = "rgba(0,0,0,0.24)";
+			ctx.beginPath();
+			ctx.ellipse(s.x + 4, s.y + 24, 42, 12, 0, 0, Math.PI * 2);
+			ctx.fill();
+
+			ctx.fillStyle = "#7d654a";
+			ctx.fillRect(s.x - 36, s.y - 18, 72, 36);
+			ctx.fillStyle = "#5f4a34";
+			ctx.fillRect(s.x - 10, s.y - 8, 20, 26);
+
+			ctx.fillStyle = "#a58a65";
+			ctx.beginPath();
+			ctx.moveTo(s.x - 42, s.y - 18);
+			ctx.lineTo(s.x, s.y - 42);
+			ctx.lineTo(s.x + 42, s.y - 18);
+			ctx.closePath();
+			ctx.fill();
+
+			ctx.strokeStyle = "rgba(230,215,170,0.9)";
+			ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(s.x + 18, s.y + 12);
+			ctx.bezierCurveTo(s.x + 35, s.y + 4, s.x + 42, s.y + 18, s.x + 28, s.y + 24);
+			ctx.stroke();
+
+			if (s.pulse > 0) {
+				ctx.strokeStyle = `rgba(135,210,255,${s.pulse * 0.8})`;
+				ctx.lineWidth = 2.2;
+				ctx.beginPath();
+				ctx.arc(s.x, s.y, 26 + (1 - s.pulse) * 18, 0, Math.PI * 2);
+				ctx.stroke();
+			}
+
+			ctx.fillStyle = "#f6ead6";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText(s.name, s.x, s.y - 50);
+
+			if (dist(player, s) < s.r + 130) {
+				ctx.fillStyle = "rgba(220,245,255,0.95)";
+				ctx.font = "12px Microsoft YaHei";
+				ctx.fillText("进入关口可选择去往日本或南美", s.x, s.y - 64);
+			}
+		}
+
+		function drawJiangdongTavern() {
+			const t = jiangdongTavern;
+			if (t.x + 86 < camera.x || t.x - 86 > camera.x + canvas.width) return;
+			if (t.y + 74 < camera.y || t.y - 74 > camera.y + canvas.height) return;
+
+			ctx.fillStyle = "rgba(0,0,0,0.26)";
+			ctx.beginPath();
+			ctx.ellipse(t.x + 5, t.y + 25, 44, 13, 0, 0, Math.PI * 2);
+			ctx.fill();
+
+			ctx.fillStyle = "#6e4a37";
+			ctx.fillRect(t.x - 39, t.y - 16, 78, 40);
+			ctx.fillStyle = "#8e5f45";
+			ctx.beginPath();
+			ctx.moveTo(t.x - 46, t.y - 16);
+			ctx.lineTo(t.x, t.y - 44);
+			ctx.lineTo(t.x + 46, t.y - 16);
+			ctx.closePath();
+			ctx.fill();
+
+			ctx.fillStyle = "#3f2a20";
+			ctx.fillRect(t.x - 8, t.y + 1, 16, 23);
+			ctx.fillStyle = "#c9a36e";
+			ctx.fillRect(t.x + 26, t.y - 36, 4, 20);
+			ctx.beginPath();
+			ctx.moveTo(t.x + 30, t.y - 36);
+			ctx.lineTo(t.x + 48, t.y - 30);
+			ctx.lineTo(t.x + 30, t.y - 23);
+			ctx.closePath();
+			ctx.fill();
+
+			if (t.pulse > 0) {
+				ctx.strokeStyle = `rgba(255, 214, 142, ${t.pulse * 0.8})`;
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.arc(t.x, t.y, 30 + (1 - t.pulse) * 20, 0, Math.PI * 2);
+				ctx.stroke();
+			}
+
+			ctx.fillStyle = "#f6ead6";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText(t.name, t.x, t.y - 54);
+			if (dist(player, t) < t.r + 120) {
+				ctx.fillStyle = "rgba(255,236,196,0.95)";
+				ctx.font = "12px Microsoft YaHei";
+				ctx.fillText("靠近可招募江东英雄", t.x, t.y - 68);
+			}
+			if (t.msgTimer > 0 && t.msgText) {
+				ctx.fillStyle = "rgba(255, 236, 185, 0.96)";
+				ctx.font = "700 12px Microsoft YaHei";
+				ctx.fillText(t.msgText, t.x, t.y - 82);
+			}
+		}
+
+		function drawPlayerShip() {
+			ctx.save();
+			ctx.translate(player.x, player.y);
+			ctx.rotate(player.dir || 0);
+			ctx.fillStyle = "#7fc4ea";
+			ctx.beginPath();
+			ctx.moveTo(-14, 6);
+			ctx.lineTo(14, 6);
+			ctx.lineTo(9, 12);
+			ctx.lineTo(-9, 12);
+			ctx.closePath();
+			ctx.fill();
+			ctx.fillStyle = "#e8f3fb";
+			ctx.fillRect(-1.2, -13, 2.4, 16);
+			ctx.beginPath();
+			ctx.moveTo(1.2, -13);
+			ctx.lineTo(11, -6);
+			ctx.lineTo(1.2, 1);
+			ctx.closePath();
+			ctx.fill();
+			ctx.strokeStyle = "rgba(210,240,255,0.85)";
+			ctx.lineWidth = 1.6;
+			ctx.beginPath();
+			ctx.arc(0, 8, 15.5, 0.15, Math.PI - 0.15);
+			ctx.stroke();
+			ctx.restore();
+		}
+
+		function drawBydCar() {
+			if (!bydCar.active) return;
+			if (bydCar.x + 78 < camera.x || bydCar.x - 78 > camera.x + canvas.width) return;
+			if (bydCar.y + 58 < camera.y || bydCar.y - 58 > camera.y + canvas.height) return;
+
+			ctx.save();
+			ctx.translate(bydCar.x, bydCar.y);
+			ctx.rotate(bydCar.mounted ? (player.dir || 0) : 0);
+
+			ctx.fillStyle = "rgba(0,0,0,0.24)";
+			ctx.beginPath();
+			ctx.ellipse(7, 22, 46, 12, 0, 0, Math.PI * 2);
+			ctx.fill();
+
+			// SUV body (longer + taller)
+			ctx.fillStyle = "#12161b";
+			ctx.fillRect(-38, -15, 76, 24);
+			ctx.fillStyle = "#0c1014";
+			ctx.fillRect(-24, -31, 50, 17);
+			ctx.fillStyle = "#1e242b";
+			ctx.fillRect(-42, -10, 4, 10); // rear bumper
+			ctx.fillRect(38, -10, 4, 10);  // front bumper
+
+			ctx.fillStyle = "rgba(255,255,255,0.16)";
+			ctx.fillRect(-35, -12, 68, 2);
+			ctx.fillRect(-18, -29, 36, 1.5);
+
+			// Roof rails
+			ctx.fillStyle = "#3c434d";
+			ctx.fillRect(-15, -33, 10, 1.8);
+			ctx.fillRect(5, -33, 10, 1.8);
+
+			ctx.fillStyle = "#c8d4de";
+			ctx.fillRect(-18, -27, 14, 11);
+			ctx.fillRect(4, -27, 14, 11);
+
+			// Headlights
+			ctx.fillStyle = "#f2f7ff";
+			ctx.fillRect(33, -8, 5, 2.4);
+			ctx.fillRect(33, -2, 5, 2.4);
+
+			ctx.fillStyle = "#0a0d11";
+			ctx.beginPath();
+			ctx.arc(-24, 11, 7.4, 0, Math.PI * 2);
+			ctx.arc(24, 11, 7.4, 0, Math.PI * 2);
+			ctx.fill();
+
+			ctx.fillStyle = "#e9edf2";
+			ctx.font = "700 9px Segoe UI";
+			ctx.textAlign = "center";
+			ctx.fillText("BYD", 21, -2);
+			ctx.restore();
+
+			if (!bydCar.mounted && dist(player, bydCar) < bydCar.r + 72) {
+				ctx.fillStyle = "rgba(214, 245, 255, 0.96)";
+				ctx.font = "12px Microsoft YaHei";
+				ctx.textAlign = "center";
+				ctx.fillText("靠近可上车加速", bydCar.x, bydCar.y - 34);
+			}
+		}
+
 		function wudangHutSystem() {
 			if (wudangHut.captured || player.dead) return;
 			const inRange = dist(player, wudangHut) < wudangHut.r + 55 ||
@@ -1115,40 +2357,37 @@
 				hitFlash: 0,
 				dead: false
 			};
+			saveHeroFlags({ zhugeliang: true });
 		}
 
 		function updateZhugeliang(dt) {
 			if (!zhugeliang || zhugeliang.dead) return;
-			zhugeliang.hitFlash = Math.max(0, zhugeliang.hitFlash - dt * 1.6);
 			zhugeliang.attackCd = Math.max(0, zhugeliang.attackCd - dt);
-			if (!player.dead && dist(zhugeliang, player) > 80) {
+			if (heroDetailRuntime && heroDetailRuntime.updateZhugeliangAlly) {
+				heroDetailRuntime.updateZhugeliangAlly({
+					hero: zhugeliang,
+					dt,
+					player,
+					enemyUnits,
+					enemyLeaders: enemies.filter((e) => e.active && !e.dead),
+					dist,
+					moveToward: moveTo,
+					createLightningFx: (_x1, _y1, x2, y2) => ({
+						tx: x2,
+						ty: y2,
+						segs: generateLightningSegs(x2, y2 - 280, x2, y2, 40),
+						life: 1,
+						splashR: 52
+					}),
+					skillFx: lightningBolts
+				});
+			} else if (!player.dead && dist(zhugeliang, player) > 80) {
 				moveTo(zhugeliang, player.x, player.y, zhugeliang.speed, dt);
 			}
 			zhugeliang.x = clamp(zhugeliang.x, 20, CFG.worldW - 20);
 			zhugeliang.y = clamp(zhugeliang.y, 20, CFG.worldH - 20);
 			pushOutMountains(zhugeliang);
-			if (zhugeliang.attackCd > 0) return;
-			let bestTarget = null, bestD = Infinity;
-			for (const u of enemyUnits) {
-				if (u.dead) continue;
-				const d = dist(zhugeliang, u);
-				if (d < zhugeliang.attackRange && d < bestD) { bestTarget = u; bestD = d; }
-			}
-			for (const e of enemies) {
-				if (!e.active || e.dead) continue;
-				const d = dist(zhugeliang, e);
-				if (d < zhugeliang.attackRange && d < bestD) { bestTarget = e; bestD = d; }
-			}
-			if (!bestTarget) return;
-			zhugeliang.attackCd = 2.8;
-			zhugeliang.dir = Math.atan2(bestTarget.y - zhugeliang.y, bestTarget.x - zhugeliang.x);
-			bestTarget.hp -= 55;
-			if (bestTarget.hitFlash !== undefined) bestTarget.hitFlash = Math.max(bestTarget.hitFlash || 0, 0.7);
-			for (const u of enemyUnits) {
-				if (!u.dead && u !== bestTarget && dist(u, bestTarget) < 52) u.hp -= 24;
-			}
-			const segs = generateLightningSegs(bestTarget.x, bestTarget.y - 280, bestTarget.x, bestTarget.y, 40);
-			lightningBolts.push({ tx: bestTarget.x, ty: bestTarget.y, segs, life: 1, splashR: 52 });
+			pushOutEastSea(zhugeliang);
 		}
 
 		function drawWudangHut() {
@@ -1211,139 +2450,148 @@
 
 		function drawZhugeliang() {
 			if (!zhugeliang || zhugeliang.dead) return;
-			const zg = zhugeliang;
-			ctx.save();
-			ctx.translate(zg.x, zg.y);
-			ctx.scale(1.18, 1.18);
-			// Robe
-			ctx.fillStyle = "#d8eeff";
-			ctx.fillRect(-5, -8, 10, 14);
-			ctx.fillStyle = "#aac8e8";
-			ctx.fillRect(-6.5, -6.5, 2, 7.5);
-			ctx.fillRect(4.5, -6.5, 2, 7.5);
-			ctx.fillStyle = "#7a9ec0";
-			ctx.fillRect(-5.5, 2, 11, 2.5);
-			ctx.fillStyle = "#c2d8f0";
-			ctx.fillRect(-3.2, 6, 2.8, 5);
-			ctx.fillRect(0.5, 6, 2.8, 5);
-			// Head
-			ctx.fillStyle = "#e8c89a";
-			ctx.beginPath();
-			ctx.arc(0, -12, 4.5, 0, Math.PI * 2);
-			ctx.fill();
-			// Scholar hat
-			ctx.fillStyle = "#394e6a";
-			ctx.fillRect(-5, -15.8, 10, 3);
-			ctx.fillStyle = "#28374e";
-			ctx.fillRect(-3.8, -17.6, 7.6, 2.2);
-			// Feather fan
-			ctx.save();
-			ctx.rotate(zg.dir + 0.35);
-			ctx.strokeStyle = "#7a5c38";
-			ctx.lineWidth = 1.6;
-			ctx.beginPath();
-			ctx.moveTo(1, -8);
-			ctx.lineTo(9, -5);
-			ctx.stroke();
-			ctx.fillStyle = "rgba(228,248,210,0.92)";
-			ctx.beginPath();
-			ctx.ellipse(13, -3.5, 7.5, 4.2, -0.3, 0, Math.PI * 2);
-			ctx.fill();
-			ctx.strokeStyle = "rgba(140,190,110,0.7)";
-			ctx.lineWidth = 0.7;
-			for (let i = -3; i <= 3; i++) {
-				ctx.beginPath();
-				ctx.moveTo(8, -3.5 + i * 0.55);
-				ctx.lineTo(19, -3.5 + i * 0.65);
-				ctx.stroke();
+			if (heroDetailRuntime && heroDetailRuntime.drawZhugeliangHero) {
+				heroDetailRuntime.drawZhugeliangHero({ hero: zhugeliang, ctx, drawHealthBar });
+				return;
 			}
-			ctx.restore();
-			// Aura
-			ctx.strokeStyle = `rgba(130,195,255,${0.14 + 0.07 * Math.sin(performance.now() * 0.005)})`;
-			ctx.lineWidth = 1.8;
-			ctx.beginPath();
-			ctx.arc(0, -4, 14.5 + Math.sin(performance.now() * 0.008) * 1.2, 0, Math.PI * 2);
-			ctx.stroke();
-			if (zg.hitFlash > 0) {
-				ctx.fillStyle = `rgba(190,220,255,${zg.hitFlash * 0.45})`;
-				ctx.beginPath();
-				ctx.ellipse(0, -4, 11, 14, 0, 0, Math.PI * 2);
-				ctx.fill();
-			}
-			ctx.restore();
+			drawSoldier(zhugeliang, true, "#bddcf4", "#7fa9d0");
 			ctx.fillStyle = "#c8e8ff";
 			ctx.font = "700 12px Microsoft YaHei";
 			ctx.textAlign = "center";
-			ctx.fillText(zg.name, zg.x, zg.y - 31);
-			drawHealthBar(zg.x, zg.y - 26, 40, zg.hp, zg.maxHp, "#6ab8ff");
+			ctx.fillText(zhugeliang.name, zhugeliang.x, zhugeliang.y - 31);
+			drawHealthBar(zhugeliang.x, zhugeliang.y - 26, 40, zhugeliang.hp, zhugeliang.maxHp, "#6ab8ff");
 		}
 
 		function updateLancelotAlly(dt) {
 			if (!lancelot_ally) return;
-			const dx = player.x - lancelot_ally.x, dy = player.y - lancelot_ally.y;
-			const d  = Math.hypot(dx, dy);
-			if (d > 70) {
-				lancelot_ally.x += (dx / d) * Math.min(lancelot_ally.speed * dt, d - 55);
-				lancelot_ally.y += (dy / d) * Math.min(lancelot_ally.speed * dt, d - 55);
-				lancelot_ally.x = clamp(lancelot_ally.x, 20, CFG.worldW - 20);
-				lancelot_ally.y = clamp(lancelot_ally.y, 20, CFG.worldH - 20);
-				pushOutMountains(lancelot_ally);
-				lancelot_ally.dir = Math.atan2(dy, dx);
+			const l = lancelot_ally;
+			l.attackCd = Math.max(0, (l.attackCd || 0) - dt);
+			l.slashTimer = Math.max(0, (l.slashTimer || 0) - dt);
+			if (heroDetailRuntime && heroDetailRuntime.updateLancelotAlly) {
+				heroDetailRuntime.updateLancelotAlly({
+					hero: l,
+					dt,
+					player,
+					enemyUnits,
+					enemyLeaders: enemies.filter((e) => e.active && !e.dead),
+					dist,
+					moveToward: moveTo
+				});
+			} else {
+				const dx = player.x - l.x;
+				const dy = player.y - l.y;
+				const d = Math.hypot(dx, dy);
+				if (d > 70) {
+					l.x += (dx / d) * Math.min(l.speed * dt, d - 55);
+					l.y += (dy / d) * Math.min(l.speed * dt, d - 55);
+					l.dir = Math.atan2(dy, dx);
+				}
 			}
+
+			l.x = clamp(l.x, 20, CFG.worldW - 20);
+			l.y = clamp(l.y, 20, CFG.worldH - 20);
+			pushOutMountains(l);
+			pushOutEastSea(l);
 		}
 
 		function drawLancelotAlly() {
 			if (!lancelot_ally) return;
-			const l = lancelot_ally;
-			const t = performance.now() * 0.001;
-			ctx.save();
-			ctx.translate(l.x, l.y);
-			ctx.scale(1.15, 1.15);
-			// Surcoat (red-cross knight)
-			ctx.fillStyle = "#c8c0b0";
-			ctx.fillRect(-4.5, -8, 9, 12);
-			ctx.fillStyle = "#cc2222";
-			ctx.fillRect(-1.5, -8, 3, 12);  // vertical stripe
-			ctx.fillRect(-4.5, -3, 9, 3);   // horizontal stripe
-			// Arms
-			ctx.fillStyle = "#a0a8b8";
-			ctx.fillRect(-7, -6, 2.5, 8); ctx.fillRect(4.5, -6, 2.5, 8);
-			// Legs
-			ctx.strokeStyle = "#2a2838"; ctx.lineWidth = 2.2;
-			ctx.beginPath();
-			ctx.moveTo(-2.5, 4); ctx.lineTo(-3, 12);
-			ctx.moveTo(2.5, 4);  ctx.lineTo(3, 12);
-			ctx.stroke();
-			// Head
-			ctx.fillStyle = "#e8c89a";
-			ctx.beginPath(); ctx.arc(0, -12, 4.8, 0, Math.PI * 2); ctx.fill();
-			// Full helm
-			ctx.fillStyle = "#909aaa";
-			ctx.fillRect(-5, -16.5, 10, 5.5);
-			ctx.fillStyle = "#4e5860";
-			ctx.fillRect(-3, -14.5, 6, 2);
-			// Sword
-			ctx.save();
-			ctx.rotate(l.dir + 0.5);
-			ctx.strokeStyle = "#d8e4ff"; ctx.lineWidth = 2;
-			ctx.beginPath(); ctx.moveTo(6, -16); ctx.lineTo(6, 10); ctx.stroke();
-			ctx.strokeStyle = "#c09030"; ctx.lineWidth = 3.5;
-			ctx.beginPath(); ctx.moveTo(2, -6); ctx.lineTo(10, -6); ctx.stroke();
-			ctx.fillStyle = "#ecf4ff";
-			ctx.beginPath();
-			ctx.moveTo(6, -18); ctx.lineTo(4, -12); ctx.lineTo(8, -12);
-			ctx.closePath(); ctx.fill();
-			ctx.restore();
-			// Silver-blue aura
-			const g2 = 0.40 + 0.35 * Math.sin(t * 2.4);
-			ctx.strokeStyle = `rgba(140,190,255,${g2})`; ctx.lineWidth = 1.8;
-			ctx.beginPath(); ctx.arc(0, -2, 17 + Math.sin(t * 3.5) * 1.5, 0, Math.PI * 2); ctx.stroke();
-			ctx.restore();
+			if (heroDetailRuntime && heroDetailRuntime.drawLancelotHero) {
+				heroDetailRuntime.drawLancelotHero({ hero: lancelot_ally, ctx, drawHealthBar });
+				return;
+			}
+			drawSoldier(lancelot_ally, true, "#d3d6df", "#c53131");
 			ctx.fillStyle = "#b8d8ff";
 			ctx.font = "700 12px Microsoft YaHei";
 			ctx.textAlign = "center";
-			ctx.fillText("兰斯洛特", l.x, l.y - 33);
-			drawHealthBar(l.x, l.y - 28, 44, l.hp, l.maxHp, "#70a8ff");
+			ctx.fillText("兰斯洛特", lancelot_ally.x, lancelot_ally.y - 33);
+			drawHealthBar(lancelot_ally.x, lancelot_ally.y - 28, 44, lancelot_ally.hp, lancelot_ally.maxHp, "#70a8ff");
+		}
+
+		function drawSunshangxiang() {
+			if (!sunshangxiang || sunshangxiang.dead) return;
+			if (heroDetailRuntime && heroDetailRuntime.drawSunshangxiang) {
+				heroDetailRuntime.drawSunshangxiang({
+					hero: sunshangxiang,
+					ctx,
+					drawHealthBar,
+					getFacing: renderStd && renderStd.getFacing ? renderStd.getFacing : null
+				});
+				return;
+			}
+			drawSoldier(sunshangxiang, true, "#5f88d8", "#f0d78d");
+			ctx.fillStyle = "#e7f2ff";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText("孙尚香", sunshangxiang.x, sunshangxiang.y - 33);
+			drawHealthBar(sunshangxiang.x, sunshangxiang.y - 28, 42, sunshangxiang.hp, sunshangxiang.maxHp, "#7fc7ff");
+		}
+
+		function drawDaqiao() {
+			if (!daqiao || daqiao.dead) return;
+			if (heroDetailRuntime && heroDetailRuntime.drawDaqiao) {
+				heroDetailRuntime.drawDaqiao({
+					hero: daqiao,
+					ctx,
+					drawHealthBar,
+					getFacing: renderStd && renderStd.getFacing ? renderStd.getFacing : null
+				});
+				return;
+			}
+			drawSoldier(daqiao, true, daqiao.body || "#e9a8b4", daqiao.accent || "#ffe6ec");
+			ctx.fillStyle = "#ffeaf0";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText("大乔", daqiao.x, daqiao.y - 33);
+			drawHealthBar(daqiao.x, daqiao.y - 28, 40, daqiao.hp, daqiao.maxHp, "#89c2ff");
+		}
+
+		function drawXiaoqiao() {
+			if (!xiaoqiao || xiaoqiao.dead) return;
+			if (heroDetailRuntime && heroDetailRuntime.drawXiaoqiao) {
+				heroDetailRuntime.drawXiaoqiao({ hero: xiaoqiao, ctx, drawSoldier, drawHealthBar });
+				return;
+			}
+			drawSoldier(xiaoqiao, true, "#cda3e3", "#f6e9ff");
+			ctx.fillStyle = "#f8e7ff";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText("小乔", xiaoqiao.x, xiaoqiao.y - 33);
+			drawHealthBar(xiaoqiao.x, xiaoqiao.y - 28, 40, xiaoqiao.hp, xiaoqiao.maxHp, "#dfa9ff");
+		}
+
+		function drawSunArrows() {
+			for (const a of sunArrows) {
+				const ang = Math.atan2(a.vy, a.vx);
+				ctx.save();
+				ctx.translate(a.x, a.y);
+				ctx.rotate(ang);
+				ctx.strokeStyle = "#f3dfb1";
+				ctx.lineWidth = 2;
+				ctx.beginPath();
+				ctx.moveTo(-7, 0);
+				ctx.lineTo(7, 0);
+				ctx.stroke();
+				ctx.fillStyle = "#d5e3ef";
+				ctx.beginPath();
+				ctx.moveTo(7, 0);
+				ctx.lineTo(2, -2.5);
+				ctx.lineTo(2, 2.5);
+				ctx.closePath();
+				ctx.fill();
+				ctx.restore();
+			}
+		}
+
+		function drawGoldPopups() {
+			for (const g of goldPopups) {
+				ctx.fillStyle = g.color;
+				ctx.globalAlpha = Math.min(1, g.life);
+				ctx.font = "700 12px Microsoft YaHei";
+				ctx.textAlign = "center";
+				ctx.fillText(g.text, g.x, g.y);
+			}
+			ctx.globalAlpha = 1;
 		}
 
 		function drawLightningBolts() {
@@ -1380,11 +2628,14 @@
 				if (!l.dead && l.hp <= 0) l.dead = true;
 			}
 			if (zhugeliang && !zhugeliang.dead && zhugeliang.hp <= 0) zhugeliang.dead = true;
+			if (sunshangxiang && !sunshangxiang.dead && sunshangxiang.hp <= 0) sunshangxiang.dead = true;
+			if (daqiao && !daqiao.dead && daqiao.hp <= 0) daqiao.dead = true;
+			if (xiaoqiao && !xiaoqiao.dead && xiaoqiao.hp <= 0) xiaoqiao.dead = true;
 			const allyOut = outposts.filter((o) => o.owner === "ally").length;
 			const deadEnemyGenerals = enemies.filter((e) => e.dead).length;
 			const aliveEnemies = enemies.filter((e) => e.active && !e.dead).length;
 			const missionDone = allyOut >= MISSION.needOutposts && deadEnemyGenerals >= MISSION.needGenerals;
-			if (missionDone || aliveEnemies === 0) gameState.result = "游戏通关";
+			if (!gameState.freePlay && (missionDone || aliveEnemies === 0)) gameState.result = "游戏通关";
 			if (player.dead) gameState.result = "失败";
 			if (gameState.result) gameState.over = true;
 		}
@@ -1414,7 +2665,7 @@
 			ctx.scale(scale, scale);
 
 			// mounted horse body
-			if (isLeader && entity === player && stable.outpost.owner === "ally") {
+			if (isLeader && entity === player && player.mounted) {
 				ctx.fillStyle = "#8b5e3c";
 				ctx.beginPath();
 				ctx.ellipse(0, 13, 14, 7.5, 0, 0, Math.PI * 2);
@@ -1458,7 +2709,7 @@
 			ctx.lineTo(2.5, 11);
 			ctx.stroke();
 
-			ctx.fillStyle = "#e7c59e";
+			ctx.fillStyle = isLeader && entity.head ? entity.head : "#e7c59e";
 			ctx.beginPath();
 			ctx.arc(0, -11.5, 4.6, 0, Math.PI * 2);
 			ctx.fill();
@@ -1467,7 +2718,7 @@
 			ctx.fillRect(-5, -14.8, 10, 2.8);
 
 			if (isLeader) {
-				const empoweredBlade = entity === player && hanyangOutpost.owner === "ally";
+				const empoweredBlade = entity === player && !!player.goldBlade;
 				const weaponType = entity.weaponType || "saber";
 				ctx.save();
 				ctx.rotate((entity.dir || 0) + 0.06);
@@ -1839,46 +3090,92 @@
 				ctx.fillRect(r.x - r.w * 0.42, r.y - r.h * 0.42, r.w * 0.48, r.h * 0.36);
 			}
 
+			// 东部海洋可视化（不透明覆盖，彻底隐藏海面道路与树木）
+			ctx.save();
+			ctx.beginPath();
+			ctx.moveTo(eastSeaWallX, -120);
+			ctx.lineTo(CFG.worldW + 260, -120);
+			ctx.lineTo(CFG.worldW + 260, CFG.worldH + 120);
+			ctx.lineTo(eastSeaWallX, CFG.worldH + 120);
+			ctx.closePath();
+			const seaGradMain = ctx.createLinearGradient(eastSeaWallX, 0, CFG.worldW + 120, 0);
+			seaGradMain.addColorStop(0, "rgba(66, 135, 178, 0.98)");
+			seaGradMain.addColorStop(1, "rgba(36, 90, 128, 1)");
+			ctx.fillStyle = seaGradMain;
+			ctx.fill();
+			ctx.strokeStyle = "rgba(196, 230, 244, 0.76)";
+			ctx.lineWidth = 3;
+			ctx.stroke();
+			ctx.restore();
+
 			// ===== WESTERN MOUNTAIN RANGE =====
+			const mountainVisualAnchors = [];
 			for (const m of mountainZones) {
 				if (m.x + m.r < camera.x || m.x - m.r > camera.x + canvas.width) continue;
 				if (m.y + m.r < camera.y || m.y - m.r > camera.y + canvas.height) continue;
 
-				// Drop shadow
-				ctx.fillStyle = "rgba(30, 26, 20, 0.32)";
+				const baseY = m.y + m.r * 0.66;
+				const left = m.x - m.r * 0.92;
+				const right = m.x + m.r * 0.94;
+				const peaks = m.name ? 8 : 6;
+				const ridge = [];
+
+				for (let i = 0; i <= peaks; i++) {
+					const t = i / peaks;
+					const px = left + (right - left) * t;
+					const seed = (m.x * 0.013 + m.y * 0.017 + i * 1.73);
+					const n1 = Math.sin(seed) * 0.5 + 0.5;
+					const n2 = Math.cos(seed * 1.9) * 0.5 + 0.5;
+					const shoulder = 1 - Math.abs(t * 2 - 1);
+					const height = m.r * (0.56 + shoulder * 0.50 + n1 * 0.20 + n2 * 0.12);
+					ridge.push({ x: px, y: baseY - height });
+				}
+
+				ctx.fillStyle = "rgba(28, 24, 20, 0.30)";
 				ctx.beginPath();
-				ctx.ellipse(m.x + 22, m.y + 20, m.r * 0.95, m.r * 0.55, 0, 0, Math.PI * 2);
+				ctx.moveTo(left + m.r * 0.16, baseY + m.r * 0.24);
+				for (const p of ridge) ctx.lineTo(p.x + m.r * 0.18, p.y + m.r * 0.2);
+				ctx.lineTo(right + m.r * 0.2, baseY + m.r * 0.24);
+				ctx.closePath();
 				ctx.fill();
 
-				// Rock body
-				const mg = ctx.createRadialGradient(m.x - m.r * 0.28, m.y - m.r * 0.32, m.r * 0.04, m.x, m.y, m.r * 1.06);
-				mg.addColorStop(0,   "#d2c9af");
-				mg.addColorStop(0.38,"#a89470");
-				mg.addColorStop(0.75,"#7a6a54");
-				mg.addColorStop(1,   "rgba(58, 50, 40, 0)");
+				const mg = ctx.createLinearGradient(m.x, baseY - m.r * 1.12, m.x, baseY + m.r * 0.34);
+				mg.addColorStop(0, "#d4ccb2");
+				mg.addColorStop(0.42, "#a28f6c");
+				mg.addColorStop(1, "#6d5f4c");
 				ctx.fillStyle = mg;
 				ctx.beginPath();
-				ctx.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+				ctx.moveTo(left, baseY);
+				for (const p of ridge) ctx.lineTo(p.x, p.y);
+				ctx.lineTo(right, baseY);
+				ctx.closePath();
 				ctx.fill();
 
-				// Snow cap
-				ctx.fillStyle = "rgba(242, 240, 234, 0.86)";
+				ctx.fillStyle = "rgba(77, 66, 52, 0.18)";
 				ctx.beginPath();
-				ctx.arc(m.x - m.r * 0.07, m.y - m.r * 0.36, m.r * 0.30, 0, Math.PI * 2);
-				ctx.fill();
-				ctx.fillStyle = "rgba(255, 255, 255, 0.55)";
-				ctx.beginPath();
-				ctx.arc(m.x - m.r * 0.09, m.y - m.r * 0.40, m.r * 0.16, 0, Math.PI * 2);
+				ctx.ellipse(m.x, baseY + m.r * 0.08, m.r * 0.86, m.r * 0.19, 0, 0, Math.PI * 2);
 				ctx.fill();
 
-				// Cliff crack lines
-				ctx.strokeStyle = "rgba(55, 46, 34, 0.20)";
-				ctx.lineWidth = 1.5;
-				for (let i = 0; i < 5; i++) {
-					const ox = m.x - m.r * 0.4 + i * m.r * 0.22;
+				ctx.fillStyle = "rgba(236, 233, 224, 0.85)";
+				ctx.beginPath();
+				const snowEnd = Math.max(2, Math.floor(ridge.length * 0.55));
+				ctx.moveTo(ridge[1].x, ridge[1].y + m.r * 0.1);
+				for (let i = 2; i < snowEnd; i++) {
+					ctx.lineTo(ridge[i].x, ridge[i].y + m.r * 0.08 + Math.sin(i * 1.3) * m.r * 0.03);
+				}
+				ctx.lineTo(ridge[snowEnd].x, ridge[snowEnd].y + m.r * 0.16);
+				ctx.lineTo(ridge[1].x + m.r * 0.18, ridge[1].y + m.r * 0.24);
+				ctx.closePath();
+				ctx.fill();
+
+				ctx.strokeStyle = "rgba(53, 44, 34, 0.24)";
+				ctx.lineWidth = 1.3;
+				for (let i = 1; i < ridge.length - 1; i++) {
+					const rp = ridge[i];
+					const lineH = m.r * (0.2 + (i % 3) * 0.12);
 					ctx.beginPath();
-					ctx.moveTo(ox, m.y - m.r * 0.12);
-					ctx.lineTo(ox + m.r * 0.12, m.y + m.r * 0.28);
+					ctx.moveTo(rp.x, rp.y + m.r * 0.06);
+					ctx.lineTo(rp.x + m.r * 0.09, Math.min(baseY - 4, rp.y + lineH));
 					ctx.stroke();
 				}
 
@@ -1887,14 +3184,65 @@
 					ctx.fillStyle = "rgba(248, 240, 220, 0.88)";
 					ctx.font = "bold 15px Microsoft YaHei";
 					ctx.textAlign = "center";
-					ctx.fillText(m.name, m.x, m.y - m.r * 0.52);
+					ctx.fillText(m.name, m.x, baseY - m.r * 1.02);
 				}
+
+				mountainVisualAnchors.push({
+					x: m.x,
+					y: m.y,
+					r: m.r,
+					baseY,
+					topY: baseY - m.r * 1.12,
+					left: m.x - m.r * 0.92,
+					right: m.x + m.r * 0.94
+				});
+			}
+
+			// Connect adjacent mountains vertically so visual wall matches collision wall.
+			const chainAnchors = mountainVisualAnchors
+				.filter((a) => a.x < 420)
+				.sort((a, b) => a.y - b.y);
+			for (let i = 0; i < chainAnchors.length - 1; i++) {
+				const a = chainAnchors[i];
+				const b = chainAnchors[i + 1];
+				const midY = (a.y + b.y) * 0.5;
+				const inJiayuguanBand = Math.abs(midY - jiayuguan.y) < 170;
+				if (inJiayuguanBand) continue; // Keep intentional pass opening near 嘉峪关.
+
+				const gapY = b.topY - a.baseY;
+				if (gapY <= 10) continue;
+				if (gapY > 420) continue;
+
+				const left = Math.min(a.left, b.left) + 8;
+				const right = Math.max(a.right, b.right) - 8;
+				const top = a.baseY - 6;
+				const bottom = b.topY + 8;
+
+				const cg = ctx.createLinearGradient(0, top, 0, bottom);
+				cg.addColorStop(0, "rgba(103, 89, 69, 0.74)");
+				cg.addColorStop(1, "rgba(78, 67, 52, 0.84)");
+				ctx.fillStyle = cg;
+				ctx.beginPath();
+				ctx.moveTo(left, top);
+				ctx.lineTo(right, top + 4);
+				ctx.lineTo(right - 10, bottom);
+				ctx.lineTo(left + 10, bottom + 2);
+				ctx.closePath();
+				ctx.fill();
+
+				ctx.fillStyle = "rgba(48, 41, 33, 0.24)";
+				ctx.fillRect(left + 6, (top + bottom) * 0.5, right - left - 12, 10);
 			}
 
 			// 武当山茅屋
 			drawWudangHut();
 			// 嘉峪关隘口
 			drawJiayuguan();
+			// 江东酒馆
+			drawJiangdongTavern();
+			// 建业东侧船厂
+			drawShipyard();
+			drawBydCar();
 
 			for (const mine of mines) {
 				if (mine.x + 70 < camera.x || mine.x - 70 > camera.x + canvas.width) continue;
@@ -2037,6 +3385,23 @@
 			for (const o of outposts) {
 				const wall = o.owner === "ally" ? "#b59b57" : o.owner === "enemy" ? "#b15b4a" : "#7b6aa8";
 				const gate = o.owner === "ally" ? "#d7c079" : o.owner === "enemy" ? "#d68170" : "#9f8bcc";
+
+				if (o.wallBuilt && o.wallHp > 0) {
+					ctx.strokeStyle = o.wallLevel >= 2 ? "#d8d9de" : "#cbbd97";
+					ctx.lineWidth = o.wallLevel >= 2 ? 7 : 6;
+					ctx.strokeRect(o.x - 52, o.y - 46, 104, 92);
+					ctx.strokeStyle = "rgba(62,49,34,0.45)";
+					ctx.lineWidth = 2;
+					ctx.strokeRect(o.x - 55, o.y - 49, 110, 98);
+					drawHealthBar(o.x, o.y - 62, 64, o.wallHp, o.wallMaxHp, o.wallLevel >= 2 ? "#a8ddff" : "#88d0ff");
+					if (o.wallLevel >= 2) {
+						ctx.fillStyle = "#e7eef8";
+						ctx.font = "700 10px Microsoft YaHei";
+						ctx.textAlign = "center";
+						ctx.fillText("二级城墙", o.x, o.y - 74);
+					}
+				}
+
 				ctx.fillStyle = "rgba(0,0,0,0.22)";
 				ctx.fillRect(o.x - 44, o.y - 38, 88, 76);
 
@@ -2099,9 +3464,13 @@
 
 			drawZhugeliang();
 			drawLancelotAlly();
+			drawSunshangxiang();
+			drawDaqiao();
+			drawXiaoqiao();
 
 			if (!player.dead) {
-				drawSoldier(player, true, "#cfad5b", "#ffe7a5");
+				if (player.isShip) drawPlayerShip();
+				else drawSoldier(player, true, player.body || "#cfad5b", player.accent || "#ffe7a5");
 
 				ctx.fillStyle = "#fff4c8";
 				ctx.font = "700 13px Microsoft YaHei";
@@ -2138,102 +3507,228 @@
 
 			// 诸葛亮雷电效果
 			drawLightningBolts();
+			drawSunArrows();
+			drawGoldPopups();
 
 			ctx.restore();
 		}
 
 		function drawMini() {
 			miniCtx.clearRect(0, 0, mini.width, mini.height);
-
 			const sx = mini.width / CFG.worldW;
 			const sy = mini.height / CFG.worldH;
+			const mw = mini.width;
+			const mh = mini.height;
 
-			// 海洋背景
-			miniCtx.fillStyle = "#2e5a78";
-			miniCtx.fillRect(0, 0, mini.width, mini.height);
-
-			// 中国大陆轮廓（world 坐标系）
-			const chinaOutline = [
-				[380,100],[800,50],[1200,80],[1600,60],[2000,80],
-				[2400,60],[2800,80],[3200,60],[3600,100],[3800,240],
-				[4000,380],[4200,540],[4380,820],[4480,1100],[4480,1420],
-				[4360,1720],[4200,2000],[3980,2200],[3700,2440],[3400,2620],
-				[3000,2760],[2600,2800],[2200,2680],[1900,2500],[1600,2280],
-				[1380,2060],[1160,1860],[940,1640],[740,1420],[560,1180],
-				[440,960],[380,700],[380,100]
-			];
-			miniCtx.fillStyle = "#3e6a32";
-			miniCtx.beginPath();
-			miniCtx.moveTo(chinaOutline[0][0] * sx, chinaOutline[0][1] * sy);
-			for (let i = 1; i < chinaOutline.length; i++)
-				miniCtx.lineTo(chinaOutline[i][0] * sx, chinaOutline[i][1] * sy);
-			miniCtx.closePath();
-			miniCtx.fill();
-			miniCtx.strokeStyle = "rgba(92,155,200,0.4)";
-			miniCtx.lineWidth = 0.8;
-			miniCtx.stroke();
-
-			for (const b of biomes) {
-				miniCtx.fillStyle = b.type === "wet" ? "rgba(100, 146, 153, 0.24)" : b.type === "hill" ? "rgba(170, 154, 116, 0.22)" : "rgba(78, 114, 68, 0.22)";
+			if (miniMapImageReady) {
+				miniCtx.drawImage(miniMapImage, 0, 0, mw, mh);
+			} else {
+				// fallback: no image file found yet
+				miniCtx.fillStyle = "#18364c";
+				miniCtx.fillRect(0, 0, mw, mh);
+				miniCtx.fillStyle = "#6d9a57";
 				miniCtx.beginPath();
-				miniCtx.arc(b.x * sx, b.y * sy, b.r * sx, 0, Math.PI * 2);
+				miniCtx.moveTo(mw * 0.58, mh * 0.05);
+				miniCtx.lineTo(mw * 0.75, mh * 0.06);
+				miniCtx.lineTo(mw * 0.9, mh * 0.13);
+				miniCtx.lineTo(mw * 0.86, mh * 0.33);
+				miniCtx.lineTo(mw * 0.74, mh * 0.45);
+				miniCtx.lineTo(mw * 0.76, mh * 0.66);
+				miniCtx.lineTo(mw * 0.68, mh * 0.84);
+				miniCtx.lineTo(mw * 0.52, mh * 0.95);
+				miniCtx.lineTo(mw * 0.28, mh * 0.99);
+				miniCtx.lineTo(mw * 0.26, mh * 0.96);
+				miniCtx.lineTo(mw * 0.42, mh * 0.9);
+				miniCtx.lineTo(mw * 0.58, mh * 0.72);
+				miniCtx.lineTo(mw * 0.62, mh * 0.52);
+				miniCtx.lineTo(mw * 0.58, mh * 0.36);
+				miniCtx.lineTo(mw * 0.52, mh * 0.24);
+				miniCtx.lineTo(mw * 0.58, mh * 0.05);
 				miniCtx.fill();
 			}
 
-			// Mountains on minimap
-			miniCtx.fillStyle = "#9a8e7a";
-			for (const m of mountainZones) {
-				miniCtx.beginPath();
-				miniCtx.arc(m.x * sx, m.y * sy, m.r * sx * 0.85, 0, Math.PI * 2);
-				miniCtx.fill();
+			// 底图进一步压暗，显著提高标记对比
+			miniCtx.fillStyle = "rgba(0, 0, 0, 0.44)";
+			miniCtx.fillRect(0, 0, mw, mh);
+			const focusLight = miniCtx.createRadialGradient(mw * 0.53, mh * 0.55, mw * 0.06, mw * 0.53, mh * 0.55, mw * 0.6);
+			focusLight.addColorStop(0, "rgba(255,255,255,0.10)");
+			focusLight.addColorStop(1, "rgba(255,255,255,0)");
+			miniCtx.fillStyle = focusLight;
+			miniCtx.fillRect(0, 0, mw, mh);
+
+			// 取消据点黄圈高亮，仅保留图标本体高亮
+
+			// ── 据点：按资源/功能图标显示（不再使用圆圈）────────────────────
+			function drawMiniLabel(text, x, y) {
+				miniCtx.font = "700 9px Microsoft YaHei";
+				miniCtx.textAlign = "left";
+				miniCtx.textBaseline = "middle";
+				miniCtx.strokeStyle = "rgba(0, 0, 0, 0.88)";
+				miniCtx.lineWidth = 2.2;
+				miniCtx.strokeText(text, x + 7, y - 7);
+				miniCtx.fillStyle = "rgba(255, 242, 185, 0.98)";
+				miniCtx.fillText(text, x + 7, y - 7);
 			}
 
-			for (const o of outposts) {
-				miniCtx.fillStyle = o.owner === "ally" ? "#dbc16c" : o.owner === "enemy" ? "#d66b54" : "#9e84d4";
-				miniCtx.beginPath();
-				miniCtx.arc(o.x * sx, o.y * sy, 3, 0, Math.PI * 2);
-				miniCtx.fill();
+			function drawMiniOutpostLabel(text, x, y) {
+				miniCtx.font = "700 9px Microsoft YaHei";
+				miniCtx.textAlign = "center";
+				miniCtx.textBaseline = "middle";
+				miniCtx.strokeStyle = "rgba(0, 0, 0, 0.88)";
+				miniCtx.lineWidth = 2.2;
+				miniCtx.strokeText(text, x, y - 8);
+				miniCtx.fillStyle = "rgba(255, 242, 185, 0.98)";
+				miniCtx.fillText(text, x, y - 8);
 			}
 
-			for (const mine of mines) {
-				miniCtx.fillStyle = mine.resource === "iron" ? "#c4cfdb" : "#f1c952";
-				miniCtx.fillRect(mine.x * sx - 1.5, mine.y * sy - 1.5, 3, 3);
+			function drawOutpostIcon(outpost) {
+				const x = outpost.x * sx;
+				const y = outpost.y * sy;
+				const iconY = y + 7;
+				const s = 1.35;
+
+				function drawGlowGoldMineIcon() {
+					miniCtx.fillStyle = "rgba(255, 220, 108, 0.36)";
+					miniCtx.beginPath();
+					miniCtx.arc(0, 0, 6.2, 0, Math.PI * 2);
+					miniCtx.fill();
+					miniCtx.fillStyle = "#ffe27a";
+					miniCtx.beginPath();
+					miniCtx.moveTo(-3.8, 2.3);
+					miniCtx.lineTo(-1.8, -2.6);
+					miniCtx.lineTo(2.1, -2.1);
+					miniCtx.lineTo(4.1, 2.0);
+					miniCtx.closePath();
+					miniCtx.fill();
+					miniCtx.stroke();
+					miniCtx.strokeStyle = "rgba(95,62,24,0.95)";
+					miniCtx.lineWidth = 1;
+					miniCtx.beginPath();
+					miniCtx.moveTo(-3.2, -3.2);
+					miniCtx.lineTo(1.8, 2.6);
+					miniCtx.moveTo(-0.8, -3.0);
+					miniCtx.lineTo(2.2, -3.8);
+					miniCtx.stroke();
+				}
+
+				miniCtx.save();
+				miniCtx.translate(x, iconY);
+				miniCtx.scale(s, s);
+
+				// 根据归属轻微描边，避免和底图混在一起
+				miniCtx.strokeStyle = outpost.owner === "ally" ? "rgba(255,240,170,0.9)" : outpost.owner === "enemy" ? "rgba(255,150,130,0.9)" : "rgba(205,190,240,0.9)";
+				miniCtx.lineWidth = 1.1;
+
+				if (outpost.name === "江陵") {
+					// 绿色十字（医馆资源）
+					miniCtx.fillStyle = "#66f3a0";
+					miniCtx.fillRect(-4, -1, 8, 2);
+					miniCtx.fillRect(-1, -4, 2, 8);
+					miniCtx.strokeRect(-4.5, -1.5, 9, 3);
+					miniCtx.strokeRect(-1.5, -4.5, 3, 9);
+					miniCtx.restore();
+					drawMiniOutpostLabel(outpost.name, x, y);
+					return;
+				}
+
+				if (outpost.name === "北平") {
+					// 马（简化图标）
+					miniCtx.fillStyle = "#ffcc7d";
+					miniCtx.fillRect(-4, -2, 7, 4);      // body
+					miniCtx.fillRect(2, -4, 3, 3);      // head
+					miniCtx.fillRect(-3.5, 1.8, 1, 2.5); // leg1
+					miniCtx.fillRect(-1, 1.8, 1, 2.5);   // leg2
+					miniCtx.fillRect(1.5, 1.8, 1, 2.5); // leg3
+					miniCtx.restore();
+					drawMiniOutpostLabel(outpost.name, x, y);
+					return;
+				}
+
+				if (outpost.name === "建业") {
+					// 船（港口资源）
+					miniCtx.fillStyle = "#b9e7ff";
+					miniCtx.beginPath();
+					miniCtx.moveTo(-4.5, 1.8);
+					miniCtx.lineTo(4.5, 1.8);
+					miniCtx.lineTo(2.5, 4);
+					miniCtx.lineTo(-2.5, 4);
+					miniCtx.closePath();
+					miniCtx.fill();
+					miniCtx.fillRect(-0.3, -4.8, 0.9, 6); // mast
+					miniCtx.beginPath();
+					miniCtx.moveTo(0.6, -4.5);
+					miniCtx.lineTo(3.4, -2.2);
+					miniCtx.lineTo(0.6, -0.2);
+					miniCtx.closePath();
+					miniCtx.fill();
+					miniCtx.restore();
+					drawMiniOutpostLabel(outpost.name, x, y);
+					return;
+				}
+
+				if (outpost.name === "邺城" || outpost.name === "襄阳") {
+					// 发光金矿（统一样式）
+					drawGlowGoldMineIcon();
+					miniCtx.restore();
+					drawMiniOutpostLabel(outpost.name, x, y);
+					return;
+				}
+
+				if (outpost.name === "汉阳") {
+					// 铁（锭块）
+					miniCtx.fillStyle = "#ecf6ff";
+					miniCtx.beginPath();
+					miniCtx.moveTo(-4, 2.2);
+					miniCtx.lineTo(-2.5, -2.6);
+					miniCtx.lineTo(2.5, -2.6);
+					miniCtx.lineTo(4, 2.2);
+					miniCtx.closePath();
+					miniCtx.fill();
+					miniCtx.stroke();
+					miniCtx.fillStyle = "rgba(255,255,255,0.60)";
+					miniCtx.fillRect(-1.8, -1.4, 3.6, 0.9);
+					miniCtx.restore();
+					drawMiniOutpostLabel(outpost.name, x, y);
+					return;
+				}
+
+				// 其他据点：小方块（非圆形）
+				miniCtx.fillStyle = outpost.owner === "ally" ? "#dbc16c" : outpost.owner === "enemy" ? "#d66b54" : "#9e84d4";
+				miniCtx.fillRect(-2.2, -2.2, 4.4, 4.4);
+				miniCtx.strokeRect(-2.6, -2.6, 5.2, 5.2);
+				miniCtx.restore();
+				drawMiniOutpostLabel(outpost.name, x, y);
 			}
 
-// clinic cross on minimap
-				const ccx = clinic.x * sx, ccy = clinic.y * sy;
-				miniCtx.fillStyle = "#4ddd80";
-				miniCtx.fillRect(ccx - 4, ccy - 1, 8, 2);
-				miniCtx.fillRect(ccx - 1, ccy - 4, 2, 8);
-				// stable marker on minimap
-				const smx = stable.x * sx, smy = stable.y * sy;
-				miniCtx.fillStyle = stable.outpost.owner === "ally" ? "#e8c04a" : stable.outpost.owner === "enemy" ? "#d06050" : "#a07840";
-				miniCtx.fillRect(smx - 2.5, smy - 2.5, 5, 5);
+			for (const o of outposts) drawOutpostIcon(o);
 
+			// ── 单位 ─────────────────────────────────────────────────────────
 			miniCtx.fillStyle = "#ffe7a5";
 			for (const u of allies) {
 				if (u.dead) continue;
 				miniCtx.fillRect(u.x * sx, u.y * sy, 1.8, 1.8);
 			}
-
 			miniCtx.fillStyle = "#f7a78f";
 			for (const u of enemyUnits) {
 				if (u.dead) continue;
 				miniCtx.fillRect(u.x * sx, u.y * sy, 1.8, 1.8);
 			}
 
+			// ── 玩家 ────────────────────────────────────────────────────────
 			miniCtx.fillStyle = "#f3d26b";
 			miniCtx.beginPath();
 			miniCtx.arc(player.x * sx, player.y * sy, 3.2, 0, Math.PI * 2);
 			miniCtx.fill();
 
-			// 嘉峪关 on minimap
+			// 嘉峪关
 			miniCtx.fillStyle = "#d4c07a";
 			miniCtx.fillRect(jiayuguan.x * sx - 3, jiayuguan.y * sy - 2, 6, 4);
+			drawMiniLabel(jiayuguan.name, jiayuguan.x * sx, jiayuguan.y * sy);
 
 			// 武当山茅屋
 			miniCtx.fillStyle = wudangHut.captured ? "#cfb35e" : "#9e84d4";
 			miniCtx.fillRect(wudangHut.x * sx - 2, wudangHut.y * sy - 2, 4, 4);
+
 			// 诸葛亮
 			if (zhugeliang && !zhugeliang.dead) {
 				miniCtx.fillStyle = "#78c0ff";
@@ -2241,8 +3736,36 @@
 				miniCtx.arc(zhugeliang.x * sx, zhugeliang.y * sy, 2.5, 0, Math.PI * 2);
 				miniCtx.fill();
 			}
+			if (sunshangxiang && !sunshangxiang.dead) {
+				miniCtx.fillStyle = "#7fc7ff";
+				miniCtx.fillRect(sunshangxiang.x * sx - 1.4, sunshangxiang.y * sy - 1.4, 2.8, 2.8);
+			}
+			if (daqiao && !daqiao.dead) {
+				miniCtx.fillStyle = "#89c2ff";
+				miniCtx.fillRect(daqiao.x * sx - 1.4, daqiao.y * sy - 1.4, 2.8, 2.8);
+			}
+			if (xiaoqiao && !xiaoqiao.dead) {
+				miniCtx.fillStyle = "#dfa9ff";
+				miniCtx.fillRect(xiaoqiao.x * sx - 1.4, xiaoqiao.y * sy - 1.4, 2.8, 2.8);
+			}
 
-			miniCtx.strokeStyle = "#fff4c8";
+			// 东海航线标注（类似城市名称样式）
+			miniCtx.font = "700 9px Microsoft YaHei";
+			miniCtx.textAlign = "right";
+			miniCtx.textBaseline = "middle";
+			miniCtx.strokeStyle = "rgba(0, 0, 0, 0.9)";
+			miniCtx.lineWidth = 2.2;
+			miniCtx.strokeText("去日本", mw - 7, mh * 0.52);
+			miniCtx.strokeText("去南美", mw - 7, mh * 0.74);
+			miniCtx.fillStyle = "rgba(197, 235, 255, 0.98)";
+			miniCtx.fillText("去日本", mw - 7, mh * 0.52);
+			miniCtx.fillText("去南美", mw - 7, mh * 0.74);
+			miniCtx.fillStyle = "rgba(161, 220, 255, 0.9)";
+			miniCtx.fillRect(mw - 13, mh * 0.52 - 4, 3, 3);
+			miniCtx.fillRect(mw - 13, mh * 0.74 - 4, 3, 3);
+
+			// ── 视口框 ──────────────────────────────────────────────────────
+			miniCtx.strokeStyle = "rgba(255,244,200,0.90)";
 			miniCtx.lineWidth = 1;
 			miniCtx.strokeRect(camera.x * sx, camera.y * sy, canvas.width * sx, canvas.height * sy);
 		}
@@ -2255,12 +3778,14 @@
 			mini.height = compactUI ? 118 : 160;
 			camera.x = clamp(camera.x, 0, CFG.worldW - canvas.width);
 			camera.y = clamp(camera.y, 0, CFG.worldH - canvas.height);
+			applyTopPanelLayout();
 		}
 
 		const gameState = {
 			over: false,
 			paused: false,
-			result: ""
+			result: "",
+			freePlay: false
 		};
 
 		const moveInput = {
@@ -2273,6 +3798,19 @@
 		function togglePause() {
 			gameState.paused = !gameState.paused;
 			pauseBtn.textContent = gameState.paused ? "继续" : "暂停";
+		}
+
+		function continueGame() {
+			if (!gameState.over || gameState.result !== "游戏通关") return;
+			gameState.over = false;
+			gameState.result = "";
+			gameState.freePlay = true;
+			gameState.paused = false;
+			pauseBtn.textContent = "暂停";
+			if (player.dead) {
+				player.dead = false;
+				player.hp = Math.max(player.maxHp * 0.55, 70);
+			}
 		}
 
 		function castCharge() {
@@ -2297,7 +3835,7 @@
 		}
 
 		function issueMoveCommand(clientX, clientY) {
-			if (gameState.over || gameState.paused || player.dead) return;
+			if (gameState.over || gameState.paused || player.dead || isAnyModalOpen()) return;
 			const p = viewToWorld(clientX, clientY);
 			player.target = {
 				x: clamp(p.x, 0, CFG.worldW),
@@ -2309,7 +3847,7 @@
 		}
 
 		function issueMiniMapCommand(clientX, clientY) {
-			if (gameState.over || gameState.paused || player.dead) return;
+			if (gameState.over || gameState.paused || player.dead || isAnyModalOpen()) return;
 			const p = miniToWorld(clientX, clientY);
 			player.target = {
 				x: clamp(p.x, 0, CFG.worldW),
@@ -2324,6 +3862,17 @@
 		window.addEventListener("keydown", (e) => {
 			tryStartBgm();
 			const key = e.key.toLowerCase();
+			if (isAnyModalOpen()) {
+				if (e.key === "Escape") {
+					if (tavernDialogState.open) closeTavernDialog();
+					else if (shipGateDialogState.open) closeShipGateDialog();
+					else closeCityBuildDialog();
+				}
+				if (key === "w" || key === "a" || key === "s" || key === "d" || e.key.startsWith("Arrow") || e.code === "Space" || key === "p" || key === "q") {
+					e.preventDefault();
+				}
+				return;
+			}
 			if (key === "w" || e.key === "ArrowUp") moveInput.up = true;
 			if (key === "s" || e.key === "ArrowDown") moveInput.down = true;
 			if (key === "a" || e.key === "ArrowLeft") moveInput.left = true;
@@ -2344,6 +3893,22 @@
 			if (key === "a" || e.key === "ArrowLeft") moveInput.left = false;
 			if (key === "d" || e.key === "ArrowRight") moveInput.right = false;
 		});
+		window.addEventListener("blur", () => {
+			resetMoveInput();
+		});
+		cityBuildOk.addEventListener("click", () => {
+			applyCityBuildDialogAction();
+		});
+		cityBuildCancel.addEventListener("click", () => {
+			closeCityBuildDialog();
+		});
+		shipGateToJapan.addEventListener("click", () => jumpFromShipGate("jap.html"));
+		shipGateToSouth.addEventListener("click", () => jumpFromShipGate("south.html"));
+		shipGateCancel.addEventListener("click", () => closeShipGateDialog());
+		tavernRecruitSun.addEventListener("click", () => recruitSunshangxiang());
+		tavernRecruitDa.addEventListener("click", () => recruitDaqiao());
+		tavernRecruitXiao.addEventListener("click", () => recruitXiaoqiao());
+		tavernClose.addEventListener("click", () => closeTavernDialog());
 		pauseBtn.addEventListener("click", () => {
 			tryStartBgm();
 			togglePause();
@@ -2359,6 +3924,10 @@
 			}
 		});
 		chargeBtn.addEventListener("click", () => castCharge());
+		bydTestBtn.addEventListener("click", () => {
+			spawnBydCarNearPlayer();
+		});
+		continueGameBtn.addEventListener("click", () => continueGame());
 		canvas.addEventListener("pointerdown", (e) => {
 			if (e.pointerType === "mouse" && e.button !== 0) return;
 			if (e.pointerType !== "mouse") e.preventDefault();
@@ -2498,6 +4067,24 @@
 					}
 				}
 
+				const jiangdongAllies = [sunshangxiang, daqiao, xiaoqiao].filter((h) => h && !h.dead);
+				for (const h of jiangdongAllies) {
+					for (const u of enemyUnits) {
+						if (u.dead) continue;
+						if (dist(h, u) < CFG.attackRange + 8) {
+							h.hp -= CFG.unitDps * dt;
+							h.hitFlash = Math.max(h.hitFlash || 0, 0.35);
+						}
+					}
+					for (const e of activeEnemyLeaders) {
+						if (e.dead) continue;
+						if (dist(h, e) < CFG.attackRange + 14) {
+							h.hp -= 20 * getTeamAttackMultiplier(e.team) * dt;
+							h.hitFlash = Math.max(h.hitFlash || 0, 0.55);
+						}
+					}
+				}
+
 				for (const e of activeEnemyLeaders) {
 					if (e.dead || player.dead) continue;
 					const d = dist(player, e);
@@ -2517,20 +4104,35 @@
 				applyCrowdCollision(allies, allies, true);
 				applyCrowdCollision(enemyUnits, enemyUnits, true);
 				applyCrowdCollision(allies, enemyUnits, false);
+				const specialAllies = [zhugeliang, lancelot_ally, sunshangxiang, daqiao, xiaoqiao].filter((x) => x && !x.dead);
+				applyCrowdCollision(specialAllies, allies, false);
+				applyCrowdCollision(specialAllies, enemyUnits, false);
 				applyCrowdCollision([player], allies, false);
 				applyCrowdCollision([player], enemyUnits, false);
+				applyCrowdCollision([player], specialAllies, false);
 				applyCrowdCollision(activeEnemyLeaders, allies, false);
+				applyCrowdCollision(activeEnemyLeaders, specialAllies, false);
 				applyCrowdCollision(activeEnemyLeaders, enemyUnits, false);
 				applyCrowdCollision(activeEnemyLeaders, [player], false);
 
 				spawnSystem(dtMs);
+				outpostBuildSystem();
 				outpostSystem(dtMs);
 				mineSystem(dt, dtMs);
 				clinicSystem(dt, dtMs);
 				wudangHutSystem();
+				jiangdongTavernSystem(dt);
 				updateZhugeliang(dt);
 				updateLancelotAlly(dt);
+				updateSunshangxiang(dt);
+				updateDaqiao(dt);
+				updateXiaoqiao(dt);
+				updateSunArrows(dt);
+				updateGoldPopups(dt);
 				jiayuguanSystem();
+				shipyardSystem(dt);
+				bydCarSystem();
+				syncMainPlayerState(false);
 				cleanup();
 
 				// Charge cooldown
@@ -2607,8 +4209,9 @@
 				ctx.fillText(gameState.result, canvas.width * 0.5, canvas.height * 0.5 - 8);
 				ctx.fillStyle = "#f2f2f2";
 				ctx.font = "500 18px Microsoft YaHei";
-				ctx.fillText("刷新页面可重新开始", canvas.width * 0.5, canvas.height * 0.5 + 34);
+				ctx.fillText(gameState.result === "游戏通关" ? "可点击继续游戏自由探索" : "刷新页面可重新开始", canvas.width * 0.5, canvas.height * 0.5 + 34);
 			}
+			continueGameBtn.style.display = gameState.over && gameState.result === "游戏通关" ? "block" : "none";
 			chargeBtn.disabled = gameState.paused || gameState.over || player.dead || player.chargeCool > 0;
 
 			requestAnimationFrame(loop);
