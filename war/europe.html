@@ -25,14 +25,6 @@
 			background: rgba(10,12,10,0.6); overflow: hidden;
 		}
 		#mini { width: 100%; height: 100%; display: block; cursor: pointer; }
-		#backBtn {
-			position: fixed; top: 14px; right: 14px; z-index: 4;
-			border: 1px solid rgba(255,255,255,0.35);
-			background: rgba(26,34,26,0.85); color: #f2f5ee;
-			height: 36px; padding: 0 16px; border-radius: 8px;
-			font-size: 13px; font-weight: 600; cursor: pointer;
-		}
-		#backBtn:hover { background: rgba(45,58,45,0.9); }
 		/* ── Quest dialog ─────────────────────────────────────────────────── */
 		#questDialog {
 			display: none;
@@ -69,6 +61,49 @@
 			pointer-events: none;
 		}
 		#questTracker .qtTitle { font-weight: 700; font-size: 12px; color: #f0d060; margin-bottom: 3px; }
+		#londonTavernDialog {
+			display: none;
+			position: fixed;
+			z-index: 12;
+			left: 50%;
+			bottom: 72px;
+			transform: translateX(-50%);
+			width: min(360px, 92vw);
+			padding: 12px;
+			border-radius: 11px;
+			background: rgba(18, 16, 22, 0.94);
+			border: 1px solid rgba(165, 198, 255, 0.55);
+			box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+		}
+		#londonTavernTitle {
+			font-size: 13px;
+			font-weight: 700;
+			color: #c9dcff;
+			margin-bottom: 6px;
+		}
+		#londonTavernText {
+			font-size: 12px;
+			line-height: 1.45;
+			color: #edf4ff;
+			margin-bottom: 9px;
+		}
+		#londonTavernActions {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 7px;
+		}
+		#recruitElizabethBtn,
+		#closeLondonTavernBtn {
+			height: 32px;
+			border-radius: 8px;
+			border: 1px solid rgba(255,255,255,0.28);
+			font-size: 12px;
+			font-weight: 700;
+			cursor: pointer;
+			color: #f2f8ff;
+		}
+		#recruitElizabethBtn { background: rgba(52, 78, 132, 0.9); }
+		#closeLondonTavernBtn { background: rgba(54, 56, 66, 0.88); }
 		#titleBar {
 			position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
 			z-index: 4; background: rgba(0,0,0,0.45);
@@ -80,7 +115,9 @@
 </head>
 <body>
 	<div id="titleBar">⚔ 西方大陆 — 欧洲战场</div>
-	<button id="backBtn" onclick="location.href='index.html'">← 返回东方</button>
+	<a id="cardsBtn" class="sense-panel-btn" href="hero-cards.html">英雄展示</a>
+	<a id="labBtn" class="sense-panel-btn" href="https://gameart.top">首页</a>
+	<button id="backBtn" class="sense-panel-btn" type="button" onclick="saveAndReturn()">返回中原</button>
 	<div id="questDialog">
 		<div class="qdSpeaker" id="qdSpeaker"></div>
 		<div class="qdText" id="qdText"></div>
@@ -90,14 +127,46 @@
 		<div class="qtTitle">📜 当前任务</div>
 		<div id="qtDesc">-</div>
 	</div>
+	<div id="londonTavernDialog">
+		<div id="londonTavernTitle">伦敦王室会馆</div>
+		<div id="londonTavernText">可招募伊丽莎白（-1500金），她不会攻击，但会持续治疗周围英雄。</div>
+		<div id="londonTavernActions">
+			<button id="recruitElizabethBtn" type="button">招募伊丽莎白（-1500金）</button>
+			<button id="closeLondonTavernBtn" type="button">暂不招募</button>
+		</div>
+	</div>
 	<canvas id="game"></canvas>
 	<div id="miniWrap"><canvas id="mini"></canvas></div>
 
+	<script src="heroes.js"></script>
+	<script src="sense.js"></script>
 	<script>
 	const canvas = document.getElementById("game");
 	const ctx = canvas.getContext("2d");
 	const mini = document.getElementById("mini");
 	const miniCtx = mini.getContext("2d");
+	const renderStd = window.WarSense || null;
+	const sharedUI = window.WarSense
+		? window.WarSense.initSharedUI({
+			addPauseMusic: true,
+			miniWrapId: "miniWrap",
+			rightStart: 14,
+			top: 14
+		})
+		: { isPaused: () => false, drawPauseOverlay: () => {} };
+
+	function applyTopPanelLayout() {
+		if (!window.WarSense || !window.WarSense.layoutTopPanelButtons) return;
+		const compact = window.matchMedia("(max-width: 900px),(pointer: coarse)").matches;
+		window.WarSense.layoutTopPanelButtons({
+			ids: ["pauseBtn", "musicBtn", "backBtn", "labBtn", "cardsBtn"],
+			rightStart: compact ? 8 : 14,
+			top: compact ? 8 : 14,
+			gap: compact ? 6 : 8,
+			compact
+		});
+	}
+	applyTopPanelLayout();
 
 	// ── World ─────────────────────────────────────────────────────────────────
 	const W = 1800, H = 1200;
@@ -186,6 +255,7 @@
 		{ x: 1080, y: 180,  name: "斯德哥尔摩", r: 30 },
 		{ x: 870,  y: 150,  name: "华沙",       r: 30 },
 	];
+	const londonCity = cities.find(c => c.name === "伦敦") || { x: 288, y: 150, r: 30, name: "伦敦" };
 
 	// ── 嘉峪关 return portal (RIGHT edge) ─────────────────────────────────────
 	const returnGate = {
@@ -228,6 +298,46 @@
 
 	// 兰斯洛特（成功后加入跟随队伍）
 	let lancelot = null;
+	let elizabeth = null;
+	const GOLD_STORE_KEY = "warSharedGold";
+	function loadSharedGold() {
+		const raw = localStorage.getItem(GOLD_STORE_KEY) || sessionStorage.getItem(GOLD_STORE_KEY);
+		const val = Number(raw);
+		return Number.isFinite(val) ? Math.max(0, val) : 5000;
+	}
+	function saveSharedGold(v) {
+		const safe = Math.max(0, Math.floor(Number.isFinite(v) ? v : 0));
+		localStorage.setItem(GOLD_STORE_KEY, String(safe));
+		sessionStorage.setItem(GOLD_STORE_KEY, String(safe));
+	}
+	let playerGold = loadSharedGold();
+	const heroStore = window.WarHeroes;
+	const heroDetailRuntime = heroStore && heroStore.detailRuntime ? heroStore.detailRuntime : null;
+
+	function loadHeroFlags() {
+		if (!heroStore) return { zhugeliang: false, lancelot: false, sanada: false, sunshangxiang: false, daqiao: false, xiaoqiao: false, elizabeth: false };
+		return heroStore.loadFlags();
+	}
+
+	function saveHeroFlags(patch) {
+		if (!heroStore) return;
+		heroStore.saveFlags(patch || {});
+	}
+
+	function syncPlayerState() {
+		if (heroStore && heroStore.syncPlayerState) heroStore.syncPlayerState();
+	}
+
+	function saveAndReturn() {
+		const flags = loadHeroFlags();
+		saveHeroFlags({
+			lancelot: flags.lancelot || !!lancelot,
+			elizabeth: flags.elizabeth || !!elizabeth
+		});
+		saveSharedGold(playerGold);
+		syncPlayerState();
+		window.location.href = "index.html";
+	}
 
 	/*
 	  quest.stage:
@@ -252,6 +362,11 @@
 	const qdText     = document.getElementById("qdText");
 	const qtTracker  = document.getElementById("questTracker");
 	const qtDesc     = document.getElementById("qtDesc");
+	const londonTavernDialog = document.getElementById("londonTavernDialog");
+	const londonTavernText = document.getElementById("londonTavernText");
+	const recruitElizabethBtn = document.getElementById("recruitElizabethBtn");
+	const closeLondonTavernBtn = document.getElementById("closeLondonTavernBtn");
+	const londonTavernState = { open: false, suppressUntil: 0 };
 
 	function showDialog(speaker, text) {
 		qdSpeaker.textContent = speaker;
@@ -263,6 +378,88 @@
 		qtTracker.style.display = text ? "block" : "none";
 		qtDesc.textContent = text || "";
 	}
+
+	function createElizabeth(x, y) {
+		if (heroStore && heroStore.createCompanion) {
+			const h = heroStore.createCompanion("elizabeth", x, y, { healPower: 20, healRange: 170 });
+			if (h) return h;
+		}
+		return {
+			heroId: "elizabeth",
+			name: "伊丽莎白",
+			x,
+			y,
+			speed: 198,
+			dir: 0,
+			radius: 11,
+			hp: 300,
+			maxHp: 300,
+			attackCd: 0,
+			body: "#4d5f9a",
+			head: "#f0d4b2",
+			accent: "#f1deb0",
+			healPower: 20,
+			healRange: 170,
+			dead: false,
+			skill: { key: "healAura", damage: 0, cooldown: 2.4, range: 170 }
+		};
+	}
+
+	function refreshLondonTavernText() {
+		if (!londonTavernText) return;
+		if (elizabeth) {
+			londonTavernText.textContent = "伊丽莎白已在队中，她会为周围英雄持续治疗。";
+			return;
+		}
+		londonTavernText.textContent = `可招募伊丽莎白（-1500金），她不会攻击，但会持续治疗周围英雄。当前资金：${Math.floor(playerGold)}金`;
+	}
+
+	function openLondonTavern() {
+		if (londonTavernState.open) return;
+		londonTavernState.open = true;
+		refreshLondonTavernText();
+		londonTavernDialog.style.display = "block";
+	}
+
+	function closeLondonTavern() {
+		if (!londonTavernState.open) return;
+		londonTavernState.open = false;
+		londonTavernState.suppressUntil = performance.now() + 900;
+		londonTavernDialog.style.display = "none";
+	}
+
+	function updateLondonTavern(nowMs) {
+		if (elizabeth) {
+			if (londonTavernState.open) closeLondonTavern();
+			return;
+		}
+		const near = dist(player, londonCity) < londonCity.r + 38;
+		if (!near) {
+			if (londonTavernState.open) closeLondonTavern();
+			return;
+		}
+		if (!londonTavernState.open && nowMs >= londonTavernState.suppressUntil) openLondonTavern();
+	}
+
+	recruitElizabethBtn.addEventListener("click", () => {
+		if (elizabeth) {
+			refreshLondonTavernText();
+			return;
+		}
+		if (playerGold < 1500) {
+			londonTavernText.textContent = `资金不足，当前仅有 ${Math.floor(playerGold)} 金。`;
+			return;
+		}
+		playerGold -= 1500;
+		saveSharedGold(playerGold);
+		elizabeth = createElizabeth(player.x - 68, player.y + 22);
+		saveHeroFlags({ elizabeth: true });
+		closeLondonTavern();
+	});
+
+	closeLondonTavernBtn.addEventListener("click", () => {
+		closeLondonTavern();
+	});
 
 	// ── Quest update (called every frame) ─────────────────────────────────────
 	function updateQuest(dt) {
@@ -368,20 +565,21 @@
 		// ── Stage 6: 兰斯洛特加入 ───────────────────────────────────────────
 		case 6:
 			if (!lancelot) {
+				const lDef = heroStore ? heroStore.getHeroDefinition("lancelot") : null;
 				lancelot = {
+					heroId: "lancelot",
 					x: camelot.x - 20, y: camelot.y + 40,
-					speed: 250, dir: 0, radius: 13,
+					speed: lDef ? lDef.stats.speed : 250,
+					dir: 0,
+					radius: lDef ? lDef.stats.radius : 13,
+					hp: lDef ? lDef.stats.hp : 360,
+					maxHp: lDef ? lDef.stats.hp : 360,
 					glowPhase: 0
 				};
 				showDialog("兰斯洛特",
 					"主公！兰斯洛特·迪·雷克效忠于你。东方或西方，吾剑所向，所向披靡！");
 				setTracker("✦ 兰斯洛特已加入队伍");
-				// 更新 sessionStorage，让返回时能带走
-				try {
-					const saved = JSON.parse(sessionStorage.getItem('warHeroes') || '{}');
-					saved.lancelot = true;
-					sessionStorage.setItem('warHeroes', JSON.stringify(saved));
-				} catch(e) {}
+				saveHeroFlags({ lancelot: true });
 			}
 			if (quest.timer <= 0) {
 				hideDialog();
@@ -676,26 +874,44 @@
 
 	function updateLancelot(dt) {
 		if (!lancelot) return;
-		const dx = player.x - lancelot.x, dy = player.y - lancelot.y;
-		const d  = Math.hypot(dx, dy);
-		if (d > 55) {
-			const step = lancelot.speed * dt;
-			lancelot.x += (dx / d) * Math.min(step, d - 45);
-			lancelot.y += (dy / d) * Math.min(step, d - 45);
-			lancelot.x = Math.max(20, Math.min(W - 20, lancelot.x));
-			lancelot.y = Math.max(20, Math.min(H - 20, lancelot.y));
-			lancelot.dir = Math.atan2(dy, dx);
+		if (heroDetailRuntime && heroDetailRuntime.updateCompanion) {
+			heroDetailRuntime.updateCompanion({
+				hero: lancelot,
+				dt,
+				player,
+				enemyUnits: [],
+				enemyLeaders: [],
+				dist,
+				moveToward: moveTo,
+				nearestEnemy: function () { return { target: null, d: Infinity }; }
+			});
+		} else {
+			const dx = player.x - lancelot.x, dy = player.y - lancelot.y;
+			const d  = Math.hypot(dx, dy);
+			if (d > 55) {
+				const step = lancelot.speed * dt;
+				lancelot.x += (dx / d) * Math.min(step, d - 45);
+				lancelot.y += (dy / d) * Math.min(step, d - 45);
+				lancelot.x = Math.max(20, Math.min(W - 20, lancelot.x));
+				lancelot.y = Math.max(20, Math.min(H - 20, lancelot.y));
+				lancelot.dir = Math.atan2(dy, dx);
+			}
 		}
 	}
 
 	// ── Simple player ─────────────────────────────────────────────────────────
-	const player = {
-		x: W * 0.9, y: H * 0.5,
-		speed: 260, dir: 0,
-		target: { x: W * 0.9, y: H * 0.5 },
-		radius: 12,
-		dead: false
-	};
+	const player = (heroStore && heroStore.createMainPlayer)
+		? heroStore.createMainPlayer(W * 0.9, H * 0.5, {
+			target: { x: W * 0.9, y: H * 0.5 },
+			dead: false
+		})
+		: {
+			x: W * 0.9, y: H * 0.5,
+			speed: 260, dir: 0,
+			target: { x: W * 0.9, y: H * 0.5 },
+			radius: 12,
+			dead: false
+		};
 
 	const moveInput = { up: false, down: false, left: false, right: false };
 	const clickMarker = { x: 0, y: 0, life: 0 };
@@ -704,30 +920,65 @@
 	let companion = null;
 	(function loadCompanion() {
 		try {
-			const saved = JSON.parse(sessionStorage.getItem('warHeroes') || '{}');
+			const saved = loadHeroFlags();
 			if (saved.zhugeliang) {
+				const zDef = heroStore ? heroStore.getHeroDefinition("zhugeliang") : null;
 				companion = {
+					heroId: "zhugeliang",
 					x: player.x + 40, y: player.y + 10,
 					name: "诸葛亮",
-					speed: 240,
+					speed: zDef ? zDef.stats.speed : 240,
 					dir: Math.PI,
-					radius: 11
+					radius: zDef ? zDef.stats.radius : 11,
+					hp: zDef ? zDef.stats.hp : 300,
+					maxHp: zDef ? zDef.stats.hp : 300
 				};
+			}
+			if (saved.lancelot) {
+				const lDef = heroStore ? heroStore.getHeroDefinition("lancelot") : null;
+				lancelot = {
+					heroId: "lancelot",
+					x: player.x + 50, y: player.y + 20,
+					speed: lDef ? lDef.stats.speed : 250,
+					dir: 0,
+					radius: lDef ? lDef.stats.radius : 13,
+					hp: lDef ? lDef.stats.hp : 360,
+					maxHp: lDef ? lDef.stats.hp : 360,
+					glowPhase: 0
+				};
+				quest.stage = 7; // 任务已完成，跳过重复流程
+				setTracker("✦ 兰斯洛特已加入队伍");
+			}
+			if (saved.elizabeth) {
+				elizabeth = createElizabeth(player.x - 68, player.y + 22);
 			}
 		} catch(e) {}
 	})();
 
 	function updateCompanion(dt) {
 		if (!companion) return;
-		const dx = player.x - companion.x, dy = player.y - companion.y;
-		const d = Math.hypot(dx, dy);
-		if (d > 60) {
-			companion.dir = Math.atan2(dy, dx);
-			const step = companion.speed * dt;
-			companion.x += (dx / d) * Math.min(step, d - 50);
-			companion.y += (dy / d) * Math.min(step, d - 50);
-			companion.x = Math.max(20, Math.min(W - 20, companion.x));
-			companion.y = Math.max(20, Math.min(H - 20, companion.y));
+		if (heroDetailRuntime && heroDetailRuntime.updateCompanion) {
+			heroDetailRuntime.updateCompanion({
+				hero: companion,
+				dt,
+				player,
+				enemyUnits: [],
+				enemyLeaders: [],
+				dist,
+				moveToward: moveTo,
+				nearestEnemy: function () { return { target: null, d: Infinity }; }
+			});
+		} else {
+			const dx = player.x - companion.x, dy = player.y - companion.y;
+			const d = Math.hypot(dx, dy);
+			if (d > 60) {
+				companion.dir = Math.atan2(dy, dx);
+				const step = companion.speed * dt;
+				companion.x += (dx / d) * Math.min(step, d - 50);
+				companion.y += (dy / d) * Math.min(step, d - 50);
+				companion.x = Math.max(20, Math.min(W - 20, companion.x));
+				companion.y = Math.max(20, Math.min(H - 20, companion.y));
+			}
 		}
 	}
 
@@ -769,6 +1020,93 @@
 		ctx.font = "bold 11px Microsoft YaHei";
 		ctx.textAlign = "center";
 		ctx.fillText("诸葛亮", c.x, c.y - 26);
+	}
+
+	function updateElizabeth(dt) {
+		if (!elizabeth || elizabeth.dead) return;
+		if (heroDetailRuntime && heroDetailRuntime.updateCompanion) {
+			heroDetailRuntime.updateCompanion({
+				hero: elizabeth,
+				dt,
+				player,
+				enemyUnits: [],
+				enemyLeaders: [],
+				dist,
+				moveToward: moveTo,
+				nearestEnemy: function () { return { target: null, d: Infinity }; },
+				healTargets: function () {
+					return [player, companion, lancelot, elizabeth].filter(Boolean);
+				},
+				onHealFx: function (healer, target) {
+					healer.healPulse = Math.max(healer.healPulse || 0, 0.24);
+					target.hitFlash = Math.max(target.hitFlash || 0, 0.4);
+				}
+			});
+		} else {
+			elizabeth.attackCd = Math.max(0, (elizabeth.attackCd || 0) - dt);
+			const dx = player.x - elizabeth.x;
+			const dy = player.y - elizabeth.y;
+			const d = Math.hypot(dx, dy);
+			if (d > 78) moveTo(elizabeth, player.x, player.y, elizabeth.speed * 0.94, dt);
+			if (elizabeth.attackCd <= 0) {
+				let healed = false;
+				for (const h of [player, companion, lancelot, elizabeth]) {
+					if (!h || h.dead || !h.maxHp) continue;
+					if ((h.hp || 0) >= h.maxHp) continue;
+					if (dist(elizabeth, h) > 170) continue;
+					h.hp = Math.min(h.maxHp, (h.hp || 0) + 20);
+					healed = true;
+				}
+				elizabeth.attackCd = healed ? 2.4 : 0.8;
+				if (healed) elizabeth.healPulse = Math.max(elizabeth.healPulse || 0, 0.24);
+			}
+		}
+		elizabeth.healPulse = Math.max(0, (elizabeth.healPulse || 0) - dt);
+		elizabeth.hitFlash = Math.max(0, (elizabeth.hitFlash || 0) - dt * 1.6);
+		elizabeth.x = clamp(elizabeth.x, 20, W - 20);
+		elizabeth.y = clamp(elizabeth.y, 20, H - 20);
+	}
+
+	function drawElizabeth() {
+		if (!elizabeth || elizabeth.dead) return;
+		if (heroDetailRuntime && heroDetailRuntime.drawElizabeth) {
+			heroDetailRuntime.drawElizabeth({ hero: elizabeth, ctx, drawHealthBar });
+		} else {
+			ctx.save();
+			ctx.translate(elizabeth.x, elizabeth.y);
+			ctx.scale(1.08, 1.08);
+			ctx.fillStyle = "#4d5f9a";
+			ctx.beginPath();
+			ctx.moveTo(0, -8);
+			ctx.lineTo(-7.5, 7.4);
+			ctx.lineTo(7.5, 7.4);
+			ctx.closePath();
+			ctx.fill();
+			ctx.fillStyle = "#f1deb0";
+			ctx.fillRect(-5.2, -8.8, 10.4, 7.6);
+			ctx.fillStyle = "#4f3a2f";
+			ctx.beginPath();
+			ctx.arc(0, -12.2, 5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#f0d4b2";
+			ctx.beginPath();
+			ctx.arc(0, -11.7, 4.1, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.restore();
+			ctx.fillStyle = "#dce8ff";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText("伊丽莎白", elizabeth.x, elizabeth.y - 33);
+			drawHealthBar(elizabeth.x, elizabeth.y - 28, 40, elizabeth.hp || 1, elizabeth.maxHp || 1, "#9dc1ff");
+		}
+
+		if ((elizabeth.healPulse || 0) > 0) {
+			ctx.strokeStyle = `rgba(175,210,255,${0.4 + elizabeth.healPulse})`;
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.arc(elizabeth.x, elizabeth.y - 3, 16 + (1 - elizabeth.healPulse) * 22, 0, Math.PI * 2);
+			ctx.stroke();
+		}
 	}
 
 	function pushOutMountains(entity) {
@@ -835,6 +1173,18 @@
 		}
 	}
 
+	function drawHealthBar(x, y, w, hp, maxHp, color) {
+		if (renderStd && renderStd.drawHealthBar) {
+			renderStd.drawHealthBar(ctx, x, y, w, hp, maxHp, color, "rgba(0,0,0,0.58)", 4);
+			return;
+		}
+		ctx.fillStyle = "rgba(0,0,0,0.58)";
+		ctx.fillRect(x - w / 2, y, w, 4);
+		ctx.fillStyle = color || "#9dc1ff";
+		const ratio = clamp((hp || 0) / Math.max(1, maxHp || 1), 0, 1);
+		ctx.fillRect(x - w / 2 + 1, y + 1, (w - 2) * ratio, 2);
+	}
+
 	function drawCity(c) {
 		// shadow
 		ctx.fillStyle = "rgba(0,0,0,0.20)";
@@ -862,6 +1212,11 @@
 		ctx.font = "700 12px Microsoft YaHei";
 		ctx.textAlign = "center";
 		ctx.fillText(c.name, c.x, c.y - 46);
+		if (c === londonCity) {
+			ctx.fillStyle = elizabeth ? "rgba(160, 220, 255, 0.92)" : "rgba(255, 226, 162, 0.95)";
+			ctx.font = "11px Microsoft YaHei";
+			ctx.fillText(elizabeth ? "（王室医官已随军）" : "（可招募伊丽莎白）", c.x, c.y - 58);
+		}
 	}
 
 	function drawReturnGate() {
@@ -914,13 +1269,35 @@
 
 	function drawPlayer() {
 		const p = player;
+		const facing = renderStd && renderStd.getFacing ? renderStd.getFacing(p.dir || 0) : (Math.cos(p.dir || 0) >= 0 ? 1 : -1);
+		const bodyColor = p.body || "#cfad5b";
+		const accentColor = p.accent || "#ffe7a5";
+		const headColor = p.head || "#e7c59e";
 		ctx.save();
 		ctx.translate(p.x, p.y);
-		ctx.scale(1.25, 1.25);
+		ctx.scale(1.25 * facing, 1.25);
+		if (p.mounted) {
+			ctx.fillStyle = "#8b5e3c";
+			ctx.beginPath();
+			ctx.ellipse(0, 13, 14, 7.5, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#7a4a24";
+			ctx.beginPath();
+			ctx.ellipse(10, 5, 6.5, 5, -0.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = "#5a3010";
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.moveTo(-9, 18); ctx.lineTo(-10, 26);
+			ctx.moveTo(-3, 20); ctx.lineTo(-3, 28);
+			ctx.moveTo(3, 20);  ctx.lineTo(4, 28);
+			ctx.moveTo(9, 17);  ctx.lineTo(10, 25);
+			ctx.stroke();
+		}
 		// Body
-		ctx.fillStyle = "#cfad5b";
+		ctx.fillStyle = bodyColor;
 		ctx.fillRect(-4.6, -8.2, 9.2, 12.2);
-		ctx.fillStyle = "#ffe7a5";
+		ctx.fillStyle = accentColor;
 		ctx.fillRect(-6.2, -6.8, 2.6, 6);
 		ctx.fillRect(3.6, -6.8, 2.6, 6);
 		// Legs
@@ -930,10 +1307,24 @@
 		ctx.moveTo(2, 4);  ctx.lineTo(2.5, 11);
 		ctx.stroke();
 		// Head
-		ctx.fillStyle = "#e7c59e";
+		ctx.fillStyle = headColor;
 		ctx.beginPath(); ctx.arc(0, -11.5, 4.6, 0, Math.PI * 2); ctx.fill();
 		ctx.fillStyle = "#2f1e16";
 		ctx.fillRect(-5, -14.8, 10, 2.8);
+		const goldBlade = !!p.goldBlade;
+		ctx.strokeStyle = goldBlade ? "#8a682a" : "#6b4c2d";
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-1, 2.5);
+		ctx.lineTo(15, -17.5);
+		ctx.stroke();
+		ctx.fillStyle = goldBlade ? "#f0cd60" : "#d7dfea";
+		ctx.beginPath();
+		ctx.moveTo(14.6, -17.8);
+		ctx.lineTo(21.8, -25.6);
+		ctx.lineTo(20.4, -12.8);
+		ctx.closePath();
+		ctx.fill();
 		// Aura ring
 		ctx.strokeStyle = "rgba(255,248,209,0.85)"; ctx.lineWidth = 2;
 		ctx.beginPath();
@@ -943,7 +1334,7 @@
 		ctx.fillStyle = "#fff4c8";
 		ctx.font = "700 13px Microsoft YaHei";
 		ctx.textAlign = "center";
-		ctx.fillText("张飞", p.x, p.y - 28);
+		ctx.fillText(p.name || "主公", p.x, p.y - 28);
 	}
 
 	function drawMap() {
@@ -1029,6 +1420,7 @@
 
 		// Companion
 		drawCompanion();
+		drawElizabeth();
 
 		// Click marker
 		if (clickMarker.life > 0) {
@@ -1047,7 +1439,7 @@
 		ctx.fillStyle = "#e8d8b0";
 		ctx.font = "600 14px Microsoft YaHei";
 		ctx.textAlign = "center";
-		ctx.fillText("⚔ 西方大陆 — 欧洲战场  |  接近嘉峪关可返回", canvas.width * 0.5, 28);
+		ctx.fillText(`⚔ 西方大陆 — 欧洲战场  |  金钱 ${Math.floor(playerGold)}  |  接近嘉峪关可返回`, canvas.width * 0.5, 28);
 	}
 
 	// Europe continent outline (world coords 3600×2400, clockwise from NW)
@@ -1124,6 +1516,10 @@
 			miniCtx.fillStyle = "#a0c8ff";
 			miniCtx.beginPath(); miniCtx.arc(lancelot.x * sx, lancelot.y * sy, 2.5, 0, Math.PI * 2); miniCtx.fill();
 		}
+		if (elizabeth && !elizabeth.dead) {
+			miniCtx.fillStyle = "#9dc1ff";
+			miniCtx.beginPath(); miniCtx.arc(elizabeth.x * sx, elizabeth.y * sy, 2.4, 0, Math.PI * 2); miniCtx.fill();
+		}
 
 		// Player dot
 		miniCtx.fillStyle = "#f3d26b";
@@ -1140,9 +1536,19 @@
 		mini.width = compact ? 176 : 240; mini.height = compact ? 118 : 160;
 		camera.x = clamp(camera.x, 0, W - canvas.width);
 		camera.y = clamp(camera.y, 0, H - canvas.height);
+		applyTopPanelLayout();
 	}
 	window.addEventListener("resize", resize);
 	resize();
+	window.addEventListener("beforeunload", () => {
+		const flags = loadHeroFlags();
+		saveHeroFlags({
+			lancelot: flags.lancelot || !!lancelot,
+			elizabeth: flags.elizabeth || !!elizabeth
+		});
+		saveSharedGold(playerGold);
+		syncPlayerState();
+	});
 
 	// ── Input ─────────────────────────────────────────────────────────────────
 	window.addEventListener("keydown", e => {
@@ -1194,6 +1600,14 @@
 		const dt = Math.min(0.033, (now - last) / 1000);
 		last = now;
 
+		if (sharedUI.isPaused()) {
+			drawMap();
+			drawMini();
+			sharedUI.drawPauseOverlay(ctx, canvas.width, canvas.height);
+			requestAnimationFrame(loop);
+			return;
+		}
+
 		// Player movement
 		const mx = (moveInput.right ? 1 : 0) - (moveInput.left ? 1 : 0);
 		const my = (moveInput.down  ? 1 : 0) - (moveInput.up   ? 1 : 0);
@@ -1209,20 +1623,24 @@
 		player.x = clamp(player.x, 30, W - 30);
 		player.y = clamp(player.y, 30, H - 30);
 		pushOutMountains(player);
+		updateLondonTavern(now);
 
 		// Portal: return gate
 		if (!returnGate._triggered && dist(player, returnGate) < returnGate.portalR - 10) {
 			returnGate._triggered = true;
-			try {
-				const saved = JSON.parse(sessionStorage.getItem('warHeroes') || '{}');
-				saved.lancelot = !!(lancelot);
-				sessionStorage.setItem('warHeroes', JSON.stringify(saved));
-			} catch(e) {}
+			const flags = loadHeroFlags();
+			saveHeroFlags({
+				lancelot: flags.lancelot || !!lancelot,
+				elizabeth: flags.elizabeth || !!elizabeth
+			});
+			saveSharedGold(playerGold);
+			syncPlayerState();
 			window.location.href = "index.html";
 		}
 
 		// Companion
 		updateCompanion(dt);
+		updateElizabeth(dt);
 
 		// Quest
 		updateQuest(dt);
