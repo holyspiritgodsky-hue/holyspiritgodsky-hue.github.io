@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>地狱深渊</title>
+	<style>
+		:root {
+			--bg-top: #25140f;
+			--bg-bottom: #090607;
+			--text: #f2e7da;
+			--panel-bg: rgba(0, 0, 0, 0.58);
+			--panel-border: rgba(255, 205, 170, 0.34);
+		}
+		html, body {
+			margin: 0;
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			background: #120b09;
+			color: var(--text);
+			font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+			user-select: none;
+		}
+		#game {
+			width: 100vw;
+			height: 100vh;
+			display: block;
+			cursor: crosshair;
+			touch-action: none;
+		}
+		#titleBar {
+			position: fixed;
+			left: 14px;
+			top: 14px;
+			z-index: 5;
+			padding: 6px 12px;
+			border: 1px solid var(--panel-border);
+			border-radius: 8px;
+			background: var(--panel-bg);
+			font-size: 13px;
+			font-weight: 700;
+			letter-spacing: 1px;
+		}
+		#backBtn {
+			position: fixed;
+			right: 14px;
+			top: 14px;
+			z-index: 6;
+			height: 34px;
+			padding: 0 12px;
+			font-size: 12px;
+			font-weight: 700;
+			border-radius: 999px;
+			border: 1px solid rgba(255, 225, 180, 0.45);
+			background: rgba(81, 46, 28, 0.85);
+			color: #ffe7cb;
+			cursor: pointer;
+		}
+		#hintBar {
+			position: fixed;
+			left: 50%;
+			bottom: 14px;
+			transform: translateX(-50%);
+			z-index: 5;
+			padding: 7px 12px;
+			border-radius: 999px;
+			border: 1px solid rgba(255, 214, 176, 0.35);
+			background: rgba(20, 10, 10, 0.62);
+			font-size: 12px;
+			color: #ffdaba;
+			pointer-events: none;
+		}
+		#altarDialog {
+			display: none;
+			position: fixed;
+			left: 50%;
+			top: 50%;
+			transform: translate(-50%, -50%);
+			z-index: 10;
+			width: min(360px, 92vw);
+			padding: 12px;
+			border-radius: 10px;
+			border: 1px solid rgba(255, 192, 152, 0.6);
+			background: rgba(18, 8, 8, 0.93);
+			box-shadow: 0 14px 36px rgba(0, 0, 0, 0.5);
+		}
+		#altarTitle {
+			font-size: 13px;
+			font-weight: 700;
+			margin-bottom: 7px;
+			color: #ffd7b6;
+		}
+		#altarText {
+			font-size: 12px;
+			line-height: 1.45;
+			color: #f4dfcd;
+			margin-bottom: 10px;
+		}
+		#altarActions {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 7px;
+		}
+		#altarReviveBtn,
+		#altarCloseBtn {
+			height: 32px;
+			font-size: 12px;
+			font-weight: 700;
+			border-radius: 8px;
+			border: 1px solid rgba(255, 255, 255, 0.26);
+			cursor: pointer;
+			color: #fff1e5;
+		}
+		#altarReviveBtn {
+			background: rgba(135, 57, 43, 0.9);
+		}
+		#altarCloseBtn {
+			background: rgba(52, 48, 46, 0.88);
+		}
+		@media (max-width: 900px), (pointer: coarse) {
+			#titleBar {
+				font-size: 12px;
+				padding: 5px 10px;
+				top: max(8px, env(safe-area-inset-top));
+				left: max(8px, env(safe-area-inset-left));
+			}
+			#backBtn {
+				top: max(8px, env(safe-area-inset-top));
+				right: max(8px, env(safe-area-inset-right));
+			}
+			#hintBar {
+				bottom: max(10px, env(safe-area-inset-bottom));
+				font-size: 11px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div id="titleBar">地狱深渊 · 向下探索</div>
+	<button id="backBtn" type="button">返回中原</button>
+	<canvas id="game"></canvas>
+	<div id="hintBar">WASD 或点击移动，向下深入深渊</div>
+	<div id="altarDialog">
+		<div id="altarTitle">深渊祭坛</div>
+		<div id="altarText">-</div>
+		<div id="altarActions">
+			<button id="altarReviveBtn" type="button">复活阵亡英雄</button>
+			<button id="altarCloseBtn" type="button">关闭</button>
+		</div>
+	</div>
+
+	<script src="heroes.js"></script>
+	<script>
+	const canvas = document.getElementById("game");
+	const ctx = canvas.getContext("2d");
+	const backBtn = document.getElementById("backBtn");
+	const hintBar = document.getElementById("hintBar");
+	const altarDialog = document.getElementById("altarDialog");
+	const altarText = document.getElementById("altarText");
+	const altarReviveBtn = document.getElementById("altarReviveBtn");
+	const altarCloseBtn = document.getElementById("altarCloseBtn");
+
+	const RETURN_POINT_KEY = "warReturnPoint";
+	const DEAD_HERO_STORE_KEY = "warDeadHeroes";
+	const WORLD = { w: 1800, h: 6200 };
+	const FOG_CELL = 86;
+	const player = { x: WORLD.w * 0.5, y: 170, speed: 240, r: 12, dir: Math.PI * 0.5, target: null };
+	const camera = { x: 0, y: 0 };
+	const altar = { x: WORLD.w * 0.5, y: WORLD.h - 220, r: 72, pulse: 0 };
+
+	const gridCols = Math.ceil(WORLD.w / FOG_CELL);
+	const gridRows = Math.ceil(WORLD.h / FOG_CELL);
+	const explored = new Uint8Array(gridCols * gridRows);
+	const keys = { w: false, a: false, s: false, d: false };
+	let altarOpen = false;
+	let last = performance.now();
+
+	const rocks = Array.from({ length: 1000 }, () => ({
+		x: 50 + Math.random() * (WORLD.w - 100),
+		y: 40 + Math.random() * (WORLD.h - 80),
+		w: 6 + Math.random() * 18,
+		h: 5 + Math.random() * 16,
+		t: Math.random()
+	}));
+	const embers = Array.from({ length: 560 }, () => ({
+		x: Math.random() * WORLD.w,
+		y: Math.random() * WORLD.h,
+		r: 0.8 + Math.random() * 1.8,
+		a: 0.2 + Math.random() * 0.5
+	}));
+
+	function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
+	function dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
+
+	function saveReturnMarker() {
+		const marker = JSON.stringify({ point: "hellGate", from: "hell" });
+		localStorage.setItem(RETURN_POINT_KEY, marker);
+		sessionStorage.setItem(RETURN_POINT_KEY, marker);
+	}
+
+	function loadDeadHeroIds() {
+		try {
+			const raw = localStorage.getItem(DEAD_HERO_STORE_KEY) || sessionStorage.getItem(DEAD_HERO_STORE_KEY) || "[]";
+			const arr = JSON.parse(raw);
+			if (!Array.isArray(arr)) return [];
+			return arr.filter((x) => typeof x === "string");
+		} catch (_e) {
+			return [];
+		}
+	}
+
+	function saveDeadHeroIds(ids) {
+		const raw = JSON.stringify(ids || []);
+		localStorage.setItem(DEAD_HERO_STORE_KEY, raw);
+		sessionStorage.setItem(DEAD_HERO_STORE_KEY, raw);
+	}
+
+	function heroName(id) {
+		if (window.WarHeroes && window.WarHeroes.getHeroDefinition) {
+			const def = window.WarHeroes.getHeroDefinition(id);
+			if (def && def.name) return def.name;
+		}
+		const fallback = {
+			zhugeliang: "诸葛亮",
+			lancelot: "兰斯洛特",
+			sunshangxiang: "孙尚香",
+			daqiao: "大乔",
+			xiaoqiao: "小乔",
+			elizabeth: "伊丽莎白"
+		};
+		return fallback[id] || id;
+	}
+
+	function revealNear(x, y, radius) {
+		const minC = clamp(Math.floor((x - radius) / FOG_CELL), 0, gridCols - 1);
+		const maxC = clamp(Math.floor((x + radius) / FOG_CELL), 0, gridCols - 1);
+		const minR = clamp(Math.floor((y - radius) / FOG_CELL), 0, gridRows - 1);
+		const maxR = clamp(Math.floor((y + radius) / FOG_CELL), 0, gridRows - 1);
+		const rr = radius * radius;
+		for (let r = minR; r <= maxR; r++) {
+			for (let c = minC; c <= maxC; c++) {
+				const cx = c * FOG_CELL + FOG_CELL * 0.5;
+				const cy = r * FOG_CELL + FOG_CELL * 0.5;
+				const dx = cx - x;
+				const dy = cy - y;
+				if (dx * dx + dy * dy <= rr) explored[r * gridCols + c] = 1;
+			}
+		}
+	}
+
+	function resize() {
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+	}
+
+	function moveToTarget(dt) {
+		if (!player.target || altarOpen) return;
+		const dx = player.target.x - player.x;
+		const dy = player.target.y - player.y;
+		const d = Math.hypot(dx, dy);
+		if (d < 1.2) return;
+		const step = player.speed * dt;
+		player.dir = Math.atan2(dy, dx);
+		if (d <= step) {
+			player.x = player.target.x;
+			player.y = player.target.y;
+			return;
+		}
+		player.x += (dx / d) * step;
+		player.y += (dy / d) * step;
+	}
+
+	function moveByKeys(dt) {
+		if (altarOpen) return;
+		let mx = 0;
+		let my = 0;
+		if (keys.a) mx -= 1;
+		if (keys.d) mx += 1;
+		if (keys.w) my -= 1;
+		if (keys.s) my += 1;
+		if (mx === 0 && my === 0) return;
+		player.target = null;
+		const len = Math.hypot(mx, my) || 1;
+		player.x += (mx / len) * player.speed * dt;
+		player.y += (my / len) * player.speed * dt;
+		player.dir = Math.atan2(my, mx);
+	}
+
+	function updateCamera(dt) {
+		const tx = player.x - canvas.width * 0.5;
+		const ty = player.y - canvas.height * 0.5;
+		const smooth = 1 - Math.pow(0.001, dt);
+		camera.x += (tx - camera.x) * smooth;
+		camera.y += (ty - camera.y) * smooth;
+		camera.x = clamp(camera.x, 0, WORLD.w - canvas.width);
+		camera.y = clamp(camera.y, 0, WORLD.h - canvas.height);
+	}
+
+	function drawBackground() {
+		const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+		grad.addColorStop(0, "#301812");
+		grad.addColorStop(1, "#120b09");
+		ctx.fillStyle = grad;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+		ctx.save();
+		ctx.translate(-camera.x, -camera.y);
+
+		for (const em of embers) {
+			if (em.x < camera.x - 20 || em.x > camera.x + canvas.width + 20) continue;
+			if (em.y < camera.y - 20 || em.y > camera.y + canvas.height + 20) continue;
+			ctx.fillStyle = "rgba(210,92,64," + em.a + ")";
+			ctx.beginPath();
+			ctx.arc(em.x, em.y, em.r, 0, Math.PI * 2);
+			ctx.fill();
+		}
+		for (const r of rocks) {
+			if (r.x + r.w < camera.x - 20 || r.x - r.w > camera.x + canvas.width + 20) continue;
+			if (r.y + r.h < camera.y - 20 || r.y - r.h > camera.y + canvas.height + 20) continue;
+			ctx.fillStyle = r.t > 0.5 ? "rgba(72,60,56,0.6)" : "rgba(56,46,44,0.64)";
+			ctx.fillRect(r.x - r.w * 0.5, r.y - r.h * 0.5, r.w, r.h);
+		}
+
+		const lineColor = "rgba(125,64,50,0.24)";
+		ctx.strokeStyle = lineColor;
+		ctx.lineWidth = 3;
+		for (let y = 200; y < WORLD.h; y += 320) {
+			ctx.beginPath();
+			ctx.moveTo(90, y);
+			ctx.bezierCurveTo(400, y - 40, 950, y + 60, WORLD.w - 90, y + 20);
+			ctx.stroke();
+		}
+
+		drawAltar();
+		drawPlayer();
+		ctx.restore();
+	}
+
+	function drawPlayer() {
+		ctx.save();
+		ctx.translate(player.x, player.y);
+		ctx.rotate(player.dir);
+		ctx.fillStyle = "#d0b488";
+		ctx.fillRect(-6, -9, 12, 18);
+		ctx.fillStyle = "#f0d4ac";
+		ctx.beginPath();
+		ctx.arc(0, -12, 4.6, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.strokeStyle = "rgba(255,218,160,0.72)";
+		ctx.lineWidth = 1.4;
+		ctx.beginPath();
+		ctx.arc(0, -4, 16, 0, Math.PI * 2);
+		ctx.stroke();
+		ctx.restore();
+	}
+
+	function drawAltar() {
+		altar.pulse = Math.max(0, altar.pulse - 0.015);
+		ctx.fillStyle = "rgba(0,0,0,0.36)";
+		ctx.beginPath();
+		ctx.ellipse(altar.x + 8, altar.y + 26, 72, 18, 0, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = "#6d3a30";
+		ctx.fillRect(altar.x - 62, altar.y - 16, 124, 44);
+		ctx.fillStyle = "#87463a";
+		ctx.beginPath();
+		ctx.moveTo(altar.x - 72, altar.y - 16);
+		ctx.lineTo(altar.x, altar.y - 58);
+		ctx.lineTo(altar.x + 72, altar.y - 16);
+		ctx.closePath();
+		ctx.fill();
+
+		const glow = 0.4 + Math.sin(performance.now() * 0.003) * 0.16 + altar.pulse * 0.4;
+		const g = ctx.createRadialGradient(altar.x, altar.y - 2, 10, altar.x, altar.y - 2, 54);
+		g.addColorStop(0, "rgba(255,120,82," + Math.min(0.95, glow + 0.2) + ")");
+		g.addColorStop(1, "rgba(255,80,50,0)");
+		ctx.fillStyle = g;
+		ctx.beginPath();
+		ctx.arc(altar.x, altar.y - 2, 54, 0, Math.PI * 2);
+		ctx.fill();
+
+		ctx.fillStyle = "rgba(255, 226, 206, 0.95)";
+		ctx.font = "700 13px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText("深渊祭坛", altar.x, altar.y - 72);
+	}
+
+	function drawFog() {
+		ctx.save();
+		ctx.translate(-camera.x, -camera.y);
+		const startCol = clamp(Math.floor(camera.x / FOG_CELL) - 1, 0, gridCols - 1);
+		const endCol = clamp(Math.ceil((camera.x + canvas.width) / FOG_CELL) + 1, 0, gridCols - 1);
+		const startRow = clamp(Math.floor(camera.y / FOG_CELL) - 1, 0, gridRows - 1);
+		const endRow = clamp(Math.ceil((camera.y + canvas.height) / FOG_CELL) + 1, 0, gridRows - 1);
+
+		for (let r = startRow; r <= endRow; r++) {
+			for (let c = startCol; c <= endCol; c++) {
+				if (explored[r * gridCols + c]) continue;
+				ctx.fillStyle = "rgba(0,0,0,0.98)";
+				ctx.fillRect(c * FOG_CELL, r * FOG_CELL, FOG_CELL + 1, FOG_CELL + 1);
+			}
+		}
+		ctx.restore();
+	}
+
+	function openAltarDialog() {
+		altarOpen = true;
+		altarDialog.style.display = "block";
+		const deadIds = loadDeadHeroIds();
+		if (deadIds.length === 0) {
+			altarText.textContent = "当前没有阵亡英雄可复活。";
+			altarReviveBtn.disabled = true;
+			return;
+		}
+		const names = deadIds.map(heroName);
+		altarText.textContent = "阵亡英雄: " + names.join("、") + "。是否在祭坛复活？";
+		altarReviveBtn.disabled = false;
+	}
+
+	function closeAltarDialog() {
+		altarOpen = false;
+		altarDialog.style.display = "none";
+	}
+
+	function reviveDeadHeroes() {
+		const deadIds = loadDeadHeroIds();
+		if (deadIds.length === 0) {
+			altarText.textContent = "当前没有阵亡英雄可复活。";
+			altarReviveBtn.disabled = true;
+			return;
+		}
+		saveDeadHeroIds([]);
+		if (window.WarHeroes && window.WarHeroes.loadFlags && window.WarHeroes.saveFlags) {
+			const flags = window.WarHeroes.loadFlags();
+			const patch = {};
+			for (const id of deadIds) {
+				if (Object.prototype.hasOwnProperty.call(flags, id) && flags[id]) patch[id] = true;
+			}
+			if (Object.keys(patch).length > 0) window.WarHeroes.saveFlags(patch);
+		}
+		altar.pulse = 1;
+		altarText.textContent = "复活完成: " + deadIds.map(heroName).join("、") + "。返回中原后生效。";
+		altarReviveBtn.disabled = true;
+	}
+
+	function updateHint() {
+		if (altarOpen) {
+			hintBar.textContent = "祭坛仪式进行中";
+			return;
+		}
+		const nearAltar = dist(player, altar) < altar.r + 85;
+		if (nearAltar) {
+			hintBar.textContent = "按 E 或靠近祭坛打开复活仪式";
+		} else {
+			hintBar.textContent = "WASD 或点击移动，向下深入深渊";
+		}
+	}
+
+	function update(now) {
+		const dt = Math.min(0.033, (now - last) / 1000);
+		last = now;
+
+		moveByKeys(dt);
+		moveToTarget(dt);
+		player.x = clamp(player.x, 24, WORLD.w - 24);
+		player.y = clamp(player.y, 24, WORLD.h - 24);
+
+		revealNear(player.x, player.y, 188);
+		updateCamera(dt);
+		updateHint();
+
+		drawBackground();
+		drawFog();
+
+		requestAnimationFrame(update);
+	}
+
+	function worldFromClient(clientX, clientY) {
+		return { x: clientX + camera.x, y: clientY + camera.y };
+	}
+
+	canvas.addEventListener("pointerdown", (e) => {
+		if (e.pointerType === "mouse" && e.button !== 0) return;
+		e.preventDefault();
+		if (altarOpen) return;
+		const p = worldFromClient(e.clientX, e.clientY);
+		if (dist(p, altar) < altar.r + 40 && dist(player, altar) < altar.r + 110) {
+			openAltarDialog();
+			return;
+		}
+		player.target = { x: clamp(p.x, 0, WORLD.w), y: clamp(p.y, 0, WORLD.h) };
+	}, { passive: false });
+
+	window.addEventListener("keydown", (e) => {
+		const key = e.key.toLowerCase();
+		if (key === "w") keys.w = true;
+		if (key === "a") keys.a = true;
+		if (key === "s") keys.s = true;
+		if (key === "d") keys.d = true;
+		if (key === "e" && !altarOpen && dist(player, altar) < altar.r + 85) openAltarDialog();
+		if (e.key === "Escape" && altarOpen) closeAltarDialog();
+	});
+	window.addEventListener("keyup", (e) => {
+		const key = e.key.toLowerCase();
+		if (key === "w") keys.w = false;
+		if (key === "a") keys.a = false;
+		if (key === "s") keys.s = false;
+		if (key === "d") keys.d = false;
+	});
+
+	altarReviveBtn.addEventListener("click", reviveDeadHeroes);
+	altarCloseBtn.addEventListener("click", closeAltarDialog);
+	backBtn.addEventListener("click", () => {
+		saveReturnMarker();
+		window.location.href = "index.html";
+	});
+	window.addEventListener("resize", resize);
+
+	resize();
+	revealNear(player.x, player.y, 188);
+	requestAnimationFrame(update);
+	</script>
+</body>
+</html>
