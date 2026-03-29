@@ -310,11 +310,12 @@
 			#pauseBtn,
 			#cardsBtn,
 			#musicBtn,
+			#labBtn,
 			#chargeBtn,
 			#bydTestBtn {
-				font-size: 14px;
-				height: 40px;
-				padding: 0 14px;
+				font-size: 12px;
+				height: 34px;
+				padding: 0 10px;
 			}
 
 			#pauseBtn {
@@ -340,10 +341,11 @@
 			#chargeBtn {
 				left: max(10px, env(safe-area-inset-left));
 				bottom: max(10px, env(safe-area-inset-bottom));
+				transform: none;
 			}
 
 			#bydTestBtn {
-				left: calc(max(10px, env(safe-area-inset-left)) + 98px);
+				left: calc(max(10px, env(safe-area-inset-left)) + 86px);
 				bottom: max(10px, env(safe-area-inset-bottom));
 			}
 
@@ -451,6 +453,19 @@
 				gap: compact ? 6 : 8,
 				compact
 			});
+		}
+
+		function getHudTopOffset() {
+			const compact = window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
+			if (!compact) return 10;
+			const topButtons = [pauseBtn, musicBtn, document.getElementById("labBtn"), document.getElementById("cardsBtn")];
+			let maxBottom = 0;
+			for (const btn of topButtons) {
+				if (!btn) continue;
+				const r = btn.getBoundingClientRect();
+				if (r.bottom > maxBottom) maxBottom = r.bottom;
+			}
+			return Math.max(10, Math.floor(maxBottom + 8));
 		}
 		applyTopPanelLayout();
 		const cityBuildDialogState = {
@@ -586,6 +601,65 @@
 		const rand = (min, max) => min + Math.random() * (max - min);
 		const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
 		const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+		const GOLD_STORE_KEY = "warSharedGold";
+		const IRON_STORE_KEY = "warSharedIron";
+		const DEAD_HERO_STORE_KEY = "warDeadHeroes";
+		const HELL_GATE_STORE_KEY = "warHellGateLevel";
+
+		function loadSharedGold() {
+			const raw = localStorage.getItem(GOLD_STORE_KEY) || sessionStorage.getItem(GOLD_STORE_KEY);
+			const val = Number(raw);
+			return Number.isFinite(val) ? Math.max(0, val) : 5000;
+		}
+
+		function saveSharedGold(v) {
+			const safe = Math.max(0, Math.floor(Number.isFinite(v) ? v : 0));
+			localStorage.setItem(GOLD_STORE_KEY, String(safe));
+			sessionStorage.setItem(GOLD_STORE_KEY, String(safe));
+		}
+
+		function loadSharedIron() {
+			const raw = localStorage.getItem(IRON_STORE_KEY) || sessionStorage.getItem(IRON_STORE_KEY);
+			const val = Number(raw);
+			return Number.isFinite(val) ? Math.max(0, val) : 0;
+		}
+
+		function saveSharedIron(v) {
+			const safe = Math.max(0, Math.floor(Number.isFinite(v) ? v : 0));
+			localStorage.setItem(IRON_STORE_KEY, String(safe));
+			sessionStorage.setItem(IRON_STORE_KEY, String(safe));
+		}
+
+		function loadDeadHeroIds() {
+			try {
+				const raw = localStorage.getItem(DEAD_HERO_STORE_KEY) || sessionStorage.getItem(DEAD_HERO_STORE_KEY) || "[]";
+				const parsed = JSON.parse(raw);
+				if (!Array.isArray(parsed)) return new Set();
+				return new Set(parsed.filter((id) => typeof id === "string"));
+			} catch (_e) {
+				return new Set();
+			}
+		}
+
+		function saveDeadHeroIds(idsSet) {
+			const list = Array.from(idsSet || []);
+			const raw = JSON.stringify(list);
+			localStorage.setItem(DEAD_HERO_STORE_KEY, raw);
+			sessionStorage.setItem(DEAD_HERO_STORE_KEY, raw);
+		}
+
+		function loadHellGateLevel() {
+			const raw = localStorage.getItem(HELL_GATE_STORE_KEY) || sessionStorage.getItem(HELL_GATE_STORE_KEY);
+			const val = Number(raw);
+			if (!Number.isFinite(val)) return 0;
+			return clamp(Math.floor(val), 0, 3);
+		}
+
+		function saveHellGateLevel(v) {
+			const safe = clamp(Math.floor(Number.isFinite(v) ? v : 0), 0, 3);
+			localStorage.setItem(HELL_GATE_STORE_KEY, String(safe));
+			sessionStorage.setItem(HELL_GATE_STORE_KEY, String(safe));
+		}
 
 		const camera = {
 			x: 0,
@@ -762,7 +836,9 @@
 		];
 		const mineWorkers = [];
 		let mineWorkerSeed = 0;
-		let playerGold = 5000; // 初始资金
+		let playerGold = loadSharedGold();
+		let playerIron = loadSharedIron();
+		const deadHeroIds = loadDeadHeroIds();
 		const hanyangOutpost = outposts[3];
 		const clinic = {
 			x: 1325,
@@ -818,6 +894,24 @@
 			insidePortalArea: false,
 			pulse: 0
 		};
+		const hellGate = {
+			x: 1768,
+			y: 1880,
+			r: 56,
+			name: "地狱入口",
+			level: 0,
+			maxLevel: 3,
+			insideBuildArea: false,
+			insidePortalArea: false,
+			portalR: 90,
+			pulse: 0
+		};
+		const HELL_GATE_UPGRADE_COSTS = [
+			{ gold: 900, iron: 120 },
+			{ gold: 1300, iron: 180 },
+			{ gold: 1700, iron: 260 }
+		];
+		hellGate.level = loadHellGateLevel();
 		const bydCar = {
 			active: false,
 			mounted: false,
@@ -929,6 +1023,7 @@
 		let sunshangxiang = null;
 		let daqiao = null;
 		let xiaoqiao = null;
+		let elizabeth = null;
 		const sunArrows = []; // { x,y,vx,vy,life,damage }
 		const goldPopups = []; // { x,y,text,life,color }
 		const RETURN_POINT_KEY = "warReturnPoint";
@@ -940,7 +1035,8 @@
 				sanada: false,
 				sunshangxiang: false,
 				daqiao: false,
-				xiaoqiao: false
+				xiaoqiao: false,
+				elizabeth: false
 			};
 			return heroStore.loadFlags();
 		}
@@ -948,6 +1044,30 @@
 		function saveHeroFlags(patch) {
 			if (!heroStore) return;
 			heroStore.saveFlags(patch || {});
+		}
+
+		function clearDeadHeroId(id) {
+			if (!id || !deadHeroIds.has(id)) return;
+			deadHeroIds.delete(id);
+			saveDeadHeroIds(deadHeroIds);
+		}
+
+		function syncDeadHeroIdsFromCurrentState() {
+			let changed = false;
+			const markDead = (id, heroObj) => {
+				if (!heroObj || !heroObj.dead) return;
+				if (!deadHeroIds.has(id)) {
+					deadHeroIds.add(id);
+					changed = true;
+				}
+			};
+			markDead("zhugeliang", zhugeliang);
+			markDead("lancelot", lancelot_ally);
+			markDead("sunshangxiang", sunshangxiang);
+			markDead("daqiao", daqiao);
+			markDead("xiaoqiao", xiaoqiao);
+			markDead("elizabeth", elizabeth);
+			if (changed) saveDeadHeroIds(deadHeroIds);
 		}
 
 		function loadPlayerState() {
@@ -983,6 +1103,9 @@
 			} else if (rp.point === "jiayuguan") {
 				player.x = jiayuguan.x + 86;
 				player.y = jiayuguan.y + 12;
+			} else if (rp.point === "hellGate") {
+				player.x = hellGate.x + 92;
+				player.y = hellGate.y + 18;
 			} else {
 				return;
 			}
@@ -996,7 +1119,7 @@
 		(function restoreHeroesFromEurope() {
 			try {
 				const saved = loadHeroFlags();
-				if (saved.zhugeliang) {
+				if (saved.zhugeliang && !deadHeroIds.has("zhugeliang")) {
 					const zDef = heroStore ? heroStore.getHeroDefinition("zhugeliang") : null;
 					wudangHut.owner = "ally";
 					wudangHut.captured = true;
@@ -1013,7 +1136,7 @@
 						hitFlash: 0, dead: false
 					};
 				}
-				if (saved.lancelot) {
+				if (saved.lancelot && !deadHeroIds.has("lancelot")) {
 					const lDef = heroStore ? heroStore.getHeroDefinition("lancelot") : null;
 					lancelot_ally = {
 						x: player.x + 50, y: player.y + 20,
@@ -1029,7 +1152,7 @@
 						slashTimer: 0
 					};
 				}
-				if (saved.sunshangxiang) {
+				if (saved.sunshangxiang && !deadHeroIds.has("sunshangxiang")) {
 					const sDef = heroStore ? heroStore.getHeroDefinition("sunshangxiang") : null;
 					sunshangxiang = {
 						x: player.x - 84,
@@ -1047,7 +1170,7 @@
 						dead: false
 					};
 				}
-				if (saved.daqiao) {
+				if (saved.daqiao && !deadHeroIds.has("daqiao")) {
 					const dDef = heroStore ? heroStore.getHeroDefinition("daqiao") : null;
 					daqiao = {
 						x: player.x - 112,
@@ -1064,7 +1187,7 @@
 						dead: false
 					};
 				}
-				if (saved.xiaoqiao) {
+				if (saved.xiaoqiao && !deadHeroIds.has("xiaoqiao")) {
 					const xDef = heroStore ? heroStore.getHeroDefinition("xiaoqiao") : null;
 					xiaoqiao = {
 						x: player.x - 132,
@@ -1080,6 +1203,29 @@
 						attackCd: 0,
 						hitFlash: 0,
 						dead: false
+					};
+				}
+				if (saved.elizabeth && !deadHeroIds.has("elizabeth")) {
+					const eDef = heroStore ? heroStore.getHeroDefinition("elizabeth") : null;
+					elizabeth = {
+						x: player.x - 160,
+						y: player.y + 22,
+						name: "伊丽莎白",
+						team: "ally",
+						hp: eDef ? eDef.stats.hp : 300,
+						maxHp: eDef ? eDef.stats.hp : 300,
+						speed: eDef ? eDef.stats.speed : 198,
+						dir: Math.PI,
+						radius: eDef ? eDef.stats.radius : 11,
+						healRange: eDef ? eDef.skill.range : 170,
+						healPower: 20,
+						attackCd: 0,
+						hitFlash: 0,
+						dead: false,
+						body: eDef && eDef.style ? eDef.style.body : "#4d5f9a",
+						head: eDef && eDef.style ? eDef.style.head : "#f0d4b2",
+						accent: eDef && eDef.style ? eDef.style.accent : "#f1deb0",
+						skill: eDef ? Object.assign({}, eDef.skill) : { key: "healAura", damage: 0, cooldown: 2.4, range: 170 }
 					};
 				}
 			} catch(e) {}
@@ -1521,6 +1667,24 @@
 			}
 		}
 
+		function openHellGateBuildDialog() {
+			cityBuildDialogState.open = true;
+			cityBuildDialogState.outpost = hellGate;
+			cityBuildDialogState.mode = "hellBuild";
+			const idx = Math.min(hellGate.level, HELL_GATE_UPGRADE_COSTS.length - 1);
+			const cost = HELL_GATE_UPGRADE_COSTS[idx];
+			const nextLevel = hellGate.level + 1;
+			setCityBuildDialogContent(
+				"地狱入口扩建",
+				`地狱入口：扩建阶段 ${nextLevel}/${hellGate.maxLevel}（消耗 ${cost.gold} 金 + ${cost.iron} 铁）？`,
+				"扩建",
+				"取消"
+			);
+			cityBuildDialog.style.display = "block";
+			positionCityBuildDialog(hellGate);
+			lockPlayerForCityDialog();
+		}
+
 		function resetMoveInput() {
 			moveInput.up = false;
 			moveInput.down = false;
@@ -1564,6 +1728,11 @@
 				setCityBuildDialogContent("城市建设", `${outpost.name}：建设城墙（花费 ${WALL_BUILD_COST} 金）？`, "建设", "取消");
 			} else if (mode === "upgrade") {
 				setCityBuildDialogContent("城市升级", `${outpost.name}：升级城墙到二级（花费 ${WALL_UPGRADE_COST} 金）？`, "升级", "取消");
+			} else if (mode === "hellBuild") {
+				const idx = Math.min(hellGate.level, HELL_GATE_UPGRADE_COSTS.length - 1);
+				const cost = HELL_GATE_UPGRADE_COSTS[idx];
+				const nextLevel = hellGate.level + 1;
+				setCityBuildDialogContent("地狱入口扩建", `地狱入口：扩建阶段 ${nextLevel}/${hellGate.maxLevel}（消耗 ${cost.gold} 金 + ${cost.iron} 铁）？`, "扩建", "取消");
 			}
 			cityBuildDialog.style.display = "block";
 			positionCityBuildDialog(outpost);
@@ -1614,6 +1783,28 @@
 				return;
 			}
 
+			if (cityBuildDialogState.mode === "hellBuild") {
+				if (hellGate.level >= hellGate.maxLevel) {
+					setCityBuildDialogContent("地狱入口", "地狱入口已经扩建完成。", "知道了", "关闭");
+					cityBuildDialogState.mode = "none";
+					return;
+				}
+				const idx = Math.min(hellGate.level, HELL_GATE_UPGRADE_COSTS.length - 1);
+				const cost = HELL_GATE_UPGRADE_COSTS[idx];
+				if (playerGold >= cost.gold && playerIron >= cost.iron) {
+					playerGold -= cost.gold;
+					playerIron -= cost.iron;
+					hellGate.level += 1;
+					saveHellGateLevel(hellGate.level);
+					hellGate.pulse = 1;
+					closeCityBuildDialog();
+				} else {
+					setCityBuildDialogContent("资源不足", `扩建需要 ${cost.gold} 金 + ${cost.iron} 铁。当前：${Math.floor(playerGold)} 金 / ${Math.floor(playerIron)} 铁`, "知道了", "关闭");
+					cityBuildDialogState.mode = "none";
+				}
+				return;
+			}
+
 			closeCityBuildDialog();
 		}
 
@@ -1645,12 +1836,60 @@
 
 		function jumpFromShipGate(targetPage) {
 			syncMainPlayerState(true);
+			saveSharedGold(playerGold);
+			saveSharedIron(playerIron);
+			syncDeadHeroIdsFromCurrentState();
 			const flags = loadHeroFlags();
 			saveHeroFlags({
 				zhugeliang: flags.zhugeliang || !!(zhugeliang && !zhugeliang.dead),
 				lancelot: flags.lancelot || !!lancelot_ally
 			});
 			window.location.href = targetPage;
+		}
+
+		function enterHellPage() {
+			syncMainPlayerState(true);
+			saveSharedGold(playerGold);
+			saveSharedIron(playerIron);
+			syncDeadHeroIdsFromCurrentState();
+			const flags = loadHeroFlags();
+			saveHeroFlags({
+				zhugeliang: flags.zhugeliang || !!(zhugeliang && !zhugeliang.dead),
+				lancelot: flags.lancelot || !!(lancelot_ally && !lancelot_ally.dead),
+				sunshangxiang: flags.sunshangxiang || !!(sunshangxiang && !sunshangxiang.dead),
+				daqiao: flags.daqiao || !!(daqiao && !daqiao.dead),
+				xiaoqiao: flags.xiaoqiao || !!(xiaoqiao && !xiaoqiao.dead),
+				elizabeth: flags.elizabeth || !!(elizabeth && !elizabeth.dead)
+			});
+			window.location.href = "hell.html";
+		}
+
+		function hellGateSystem(dt) {
+			if (player.dead) return;
+			hellGate.pulse = Math.max(0, hellGate.pulse - dt * 1.8);
+			if (cityBuildDialogState.open && cityBuildDialogState.mode === "hellBuild") {
+				positionCityBuildDialog(hellGate);
+				lockPlayerForCityDialog();
+				return;
+			}
+
+			const nearBuild = dist(player, hellGate) < hellGate.r + 80;
+			if (hellGate.level < hellGate.maxLevel) {
+				if (nearBuild && !hellGate.insideBuildArea) {
+					hellGate.insideBuildArea = true;
+					openHellGateBuildDialog();
+				}
+				if (!nearBuild) hellGate.insideBuildArea = false;
+				return;
+			}
+
+			const nearPortal = dist(player, hellGate) < hellGate.portalR;
+			if (nearPortal && !hellGate.insidePortalArea) {
+				hellGate.insidePortalArea = true;
+				hellGate.pulse = 1;
+				enterHellPage();
+			}
+			if (!nearPortal) hellGate.insidePortalArea = false;
 		}
 
 		function mineSystem(dt, dtMs) {
@@ -1679,6 +1918,11 @@
 					worker.wait = rand(0.2, 0.55);
 					if (worker.mine.resource === "gold" && worker.team === "ally") {
 						playerGold += 120;
+						spawnGoldPopup(worker.mine.outpost.x, worker.mine.outpost.y - 18, "+120金", "#f2d66f");
+					}
+					if (worker.mine.resource === "iron" && worker.team === "ally") {
+						playerIron += 45;
+						spawnGoldPopup(worker.mine.outpost.x, worker.mine.outpost.y - 18, "+45铁", "#d6e3f2");
 					}
 				}
 				worker.x = clamp(worker.x, 16, CFG.worldW - 16);
@@ -1756,6 +2000,9 @@
 			if (d < 80) {
 				jiayuguan._triggered = true;
 				syncMainPlayerState(true);
+				saveSharedGold(playerGold);
+				saveSharedIron(playerIron);
+				syncDeadHeroIdsFromCurrentState();
 				player.target = { x: player.x, y: player.y };
 				const marker = JSON.stringify({ point: "jiayuguan", from: "europe" });
 				localStorage.setItem(RETURN_POINT_KEY, marker);
@@ -1879,6 +2126,7 @@
 			playerGold -= 2000;
 			sunshangxiang = createJiangdongHero("sunshangxiang", jiangdongTavern.x + 28, jiangdongTavern.y - 16);
 			saveHeroFlags({ sunshangxiang: true });
+			clearDeadHeroId("sunshangxiang");
 			showTavernHint("孙尚香加入！");
 			refreshTavernButtons();
 		}
@@ -1892,6 +2140,7 @@
 			playerGold -= 2500;
 			daqiao = createJiangdongHero("daqiao", jiangdongTavern.x + 12, jiangdongTavern.y + 10);
 			saveHeroFlags({ daqiao: true });
+			clearDeadHeroId("daqiao");
 			showTavernHint("大乔加入！将持续生财");
 			refreshTavernButtons();
 		}
@@ -1904,6 +2153,7 @@
 			}
 			xiaoqiao = createJiangdongHero("xiaoqiao", jiangdongTavern.x - 6, jiangdongTavern.y - 20);
 			saveHeroFlags({ xiaoqiao: true });
+			clearDeadHeroId("xiaoqiao");
 			showTavernHint("小乔加入！");
 			refreshTavernButtons();
 		}
@@ -2043,6 +2293,31 @@
 			pushOutEastSea(xiaoqiao);
 		}
 
+		function updateElizabeth(dt) {
+			if (!elizabeth || elizabeth.dead) return;
+			if (heroDetailRuntime && heroDetailRuntime.updateElizabeth) {
+				heroDetailRuntime.updateElizabeth({
+					hero: elizabeth,
+					dt,
+					player,
+					dist,
+					moveToward: moveTo,
+					healTargets: function () {
+						return [player, zhugeliang, lancelot_ally, sunshangxiang, daqiao, xiaoqiao, elizabeth].filter((x) => x && !x.dead);
+					},
+					onHealFx: function (healer, target) {
+						healer.healPulse = Math.max(healer.healPulse || 0, 0.22);
+						target.hitFlash = Math.max(target.hitFlash || 0, 0.38);
+					}
+				});
+			}
+			elizabeth.healPulse = Math.max(0, (elizabeth.healPulse || 0) - dt);
+			elizabeth.x = clamp(elizabeth.x, 20, CFG.worldW - 20);
+			elizabeth.y = clamp(elizabeth.y, 20, CFG.worldH - 20);
+			pushOutMountains(elizabeth);
+			pushOutEastSea(elizabeth);
+		}
+
 		function updateGoldPopups(dt) {
 			for (let i = goldPopups.length - 1; i >= 0; i--) {
 				const g = goldPopups[i];
@@ -2136,6 +2411,56 @@
 				ctx.fillStyle = "rgba(255,245,190,0.92)";
 				ctx.font = "12px Microsoft YaHei";
 				ctx.fillText("进入嘉峪关 → 西方大陆", jy.x, jy.y - hh - 70);
+			}
+		}
+
+		function drawHellGate() {
+			const g = hellGate;
+			if (g.x + 110 < camera.x || g.x - 110 > camera.x + canvas.width) return;
+			if (g.y + 92 < camera.y || g.y - 92 > camera.y + canvas.height) return;
+
+			ctx.fillStyle = "rgba(0,0,0,0.34)";
+			ctx.beginPath();
+			ctx.ellipse(g.x + 8, g.y + 24, 48, 16, 0, 0, Math.PI * 2);
+			ctx.fill();
+
+			ctx.fillStyle = "#4a3c30";
+			ctx.fillRect(g.x - 42, g.y - 8, 84, 36);
+			ctx.fillStyle = "#6f5a47";
+			ctx.fillRect(g.x - 30, g.y - 30, 60, 22);
+			ctx.fillStyle = "#241914";
+			ctx.beginPath();
+			ctx.arc(g.x, g.y + 2, 17, Math.PI, 0);
+			ctx.rect(g.x - 17, g.y + 2, 34, 26);
+			ctx.fill();
+
+			const portalPower = g.level / g.maxLevel;
+			if (portalPower > 0) {
+				const glow = 0.25 + portalPower * 0.3 + (g.pulse > 0 ? g.pulse * 0.25 : 0);
+				const grad = ctx.createRadialGradient(g.x, g.y + 2, 4, g.x, g.y + 2, 22 + portalPower * 8);
+				grad.addColorStop(0, `rgba(255, 110, 70, ${Math.min(0.9, glow + 0.25)})`);
+				grad.addColorStop(1, "rgba(160, 40, 28, 0)");
+				ctx.fillStyle = grad;
+				ctx.beginPath();
+				ctx.arc(g.x, g.y + 2, 24 + portalPower * 6, Math.PI, 0);
+				ctx.rect(g.x - 24, g.y + 2, 48, 30);
+				ctx.fill();
+			}
+
+			ctx.fillStyle = "#f6ead6";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText(g.name, g.x, g.y - 46);
+
+			if (g.level < g.maxLevel && !player.dead && dist(player, g) < g.r + 120) {
+				ctx.fillStyle = "rgba(255, 228, 178, 0.95)";
+				ctx.font = "12px Microsoft YaHei";
+				ctx.fillText(`可扩建: ${g.level}/${g.maxLevel}，建满后可进入`, g.x, g.y - 60);
+			}
+			if (g.level >= g.maxLevel && !player.dead && dist(player, g) < g.r + 120) {
+				ctx.fillStyle = "rgba(255, 172, 142, 0.95)";
+				ctx.font = "12px Microsoft YaHei";
+				ctx.fillText("地狱入口已开启，靠近进入", g.x, g.y - 60);
 			}
 		}
 
@@ -2358,6 +2683,7 @@
 				dead: false
 			};
 			saveHeroFlags({ zhugeliang: true });
+			clearDeadHeroId("zhugeliang");
 		}
 
 		function updateZhugeliang(dt) {
@@ -2560,6 +2886,25 @@
 			drawHealthBar(xiaoqiao.x, xiaoqiao.y - 28, 40, xiaoqiao.hp, xiaoqiao.maxHp, "#dfa9ff");
 		}
 
+		function drawElizabeth() {
+			if (!elizabeth || elizabeth.dead) return;
+			if (heroDetailRuntime && heroDetailRuntime.drawElizabeth) {
+				heroDetailRuntime.drawElizabeth({
+					hero: elizabeth,
+					ctx,
+					drawHealthBar,
+					getFacing: renderStd && renderStd.getFacing ? renderStd.getFacing : null
+				});
+			}
+			if ((elizabeth.healPulse || 0) > 0) {
+				ctx.strokeStyle = `rgba(175,210,255,${0.4 + elizabeth.healPulse})`;
+				ctx.lineWidth = 2.2;
+				ctx.beginPath();
+				ctx.arc(elizabeth.x, elizabeth.y - 3, 16 + (1 - elizabeth.healPulse) * 20, 0, Math.PI * 2);
+				ctx.stroke();
+			}
+		}
+
 		function drawSunArrows() {
 			for (const a of sunArrows) {
 				const ang = Math.atan2(a.vy, a.vx);
@@ -2628,9 +2973,12 @@
 				if (!l.dead && l.hp <= 0) l.dead = true;
 			}
 			if (zhugeliang && !zhugeliang.dead && zhugeliang.hp <= 0) zhugeliang.dead = true;
+			if (lancelot_ally && !lancelot_ally.dead && lancelot_ally.hp <= 0) lancelot_ally.dead = true;
 			if (sunshangxiang && !sunshangxiang.dead && sunshangxiang.hp <= 0) sunshangxiang.dead = true;
 			if (daqiao && !daqiao.dead && daqiao.hp <= 0) daqiao.dead = true;
 			if (xiaoqiao && !xiaoqiao.dead && xiaoqiao.hp <= 0) xiaoqiao.dead = true;
+			if (elizabeth && !elizabeth.dead && elizabeth.hp <= 0) elizabeth.dead = true;
+			syncDeadHeroIdsFromCurrentState();
 			const allyOut = outposts.filter((o) => o.owner === "ally").length;
 			const deadEnemyGenerals = enemies.filter((e) => e.dead).length;
 			const aliveEnemies = enemies.filter((e) => e.active && !e.dead).length;
@@ -3236,6 +3584,8 @@
 
 			// 武当山茅屋
 			drawWudangHut();
+			// 武当山左侧地狱入口
+			drawHellGate();
 			// 嘉峪关隘口
 			drawJiayuguan();
 			// 江东酒馆
@@ -3467,6 +3817,7 @@
 			drawSunshangxiang();
 			drawDaqiao();
 			drawXiaoqiao();
+			drawElizabeth();
 
 			if (!player.dead) {
 				if (player.isShip) drawPlayerShip();
@@ -3724,6 +4075,11 @@
 			miniCtx.fillStyle = "#d4c07a";
 			miniCtx.fillRect(jiayuguan.x * sx - 3, jiayuguan.y * sy - 2, 6, 4);
 			drawMiniLabel(jiayuguan.name, jiayuguan.x * sx, jiayuguan.y * sy);
+
+			// 地狱入口
+			miniCtx.fillStyle = hellGate.level >= hellGate.maxLevel ? "#ff8d72" : "#c6927f";
+			miniCtx.fillRect(hellGate.x * sx - 3, hellGate.y * sy - 3, 6, 6);
+			drawMiniLabel(`${hellGate.name} ${hellGate.level}/${hellGate.maxLevel}`, hellGate.x * sx, hellGate.y * sy);
 
 			// 武当山茅屋
 			miniCtx.fillStyle = wudangHut.captured ? "#cfb35e" : "#9e84d4";
@@ -4067,7 +4423,7 @@
 					}
 				}
 
-				const jiangdongAllies = [sunshangxiang, daqiao, xiaoqiao].filter((h) => h && !h.dead);
+				const jiangdongAllies = [sunshangxiang, daqiao, xiaoqiao, elizabeth].filter((h) => h && !h.dead);
 				for (const h of jiangdongAllies) {
 					for (const u of enemyUnits) {
 						if (u.dead) continue;
@@ -4104,7 +4460,7 @@
 				applyCrowdCollision(allies, allies, true);
 				applyCrowdCollision(enemyUnits, enemyUnits, true);
 				applyCrowdCollision(allies, enemyUnits, false);
-				const specialAllies = [zhugeliang, lancelot_ally, sunshangxiang, daqiao, xiaoqiao].filter((x) => x && !x.dead);
+				const specialAllies = [zhugeliang, lancelot_ally, sunshangxiang, daqiao, xiaoqiao, elizabeth].filter((x) => x && !x.dead);
 				applyCrowdCollision(specialAllies, allies, false);
 				applyCrowdCollision(specialAllies, enemyUnits, false);
 				applyCrowdCollision([player], allies, false);
@@ -4127,9 +4483,11 @@
 				updateSunshangxiang(dt);
 				updateDaqiao(dt);
 				updateXiaoqiao(dt);
+				updateElizabeth(dt);
 				updateSunArrows(dt);
 				updateGoldPopups(dt);
 				jiayuguanSystem();
+				hellGateSystem(dt);
 				shipyardSystem(dt);
 				bydCarSystem();
 				syncMainPlayerState(false);
@@ -4184,20 +4542,32 @@
 				const allyOut = outposts.filter((o) => o.owner === "ally").length;
 				const deadEnemyGenerals = enemies.filter((e) => e.dead).length;
 				const txt = `主线任务: 占领城池 ${Math.min(allyOut, MISSION.needOutposts)}/${MISSION.needOutposts} | 击败敌将 ${Math.min(deadEnemyGenerals, MISSION.needGenerals)}/${MISSION.needGenerals}`;
+				const compactHud = window.matchMedia("(max-width: 900px), (pointer: coarse)").matches;
+				const hudY = getHudTopOffset();
+				const missionW = Math.max(220, Math.min(420, canvas.width - 16));
+				const missionH = compactHud ? 22 : 24;
+				const missionTextY = hudY + (compactHud ? 15 : 17);
 				ctx.fillStyle = "rgba(0,0,0,0.40)";
-				ctx.fillRect(canvas.width * 0.5 - 210, 10, 420, 24);
+				ctx.fillRect(canvas.width * 0.5 - missionW * 0.5, hudY, missionW, missionH);
 				ctx.fillStyle = "#f3f6da";
-				ctx.font = "600 13px Microsoft YaHei";
+				ctx.font = compactHud ? "600 11px Microsoft YaHei" : "600 13px Microsoft YaHei";
 				ctx.textAlign = "center";
-				ctx.fillText(txt, canvas.width * 0.5, 27);
+				ctx.fillText(txt, canvas.width * 0.5, missionTextY);
 
 				// 金钱 HUD
+				const resourceBoxW = compactHud ? 124 : 140;
+				const resourceY = hudY + missionH + 6;
 				ctx.fillStyle = "rgba(0,0,0,0.45)";
-				ctx.fillRect(10, 10, 140, 24);
+				ctx.fillRect(10, resourceY, resourceBoxW, missionH);
 				ctx.fillStyle = "#f3cf59";
-				ctx.font = "700 13px Microsoft YaHei";
+				ctx.font = compactHud ? "700 12px Microsoft YaHei" : "700 13px Microsoft YaHei";
 				ctx.textAlign = "left";
-				ctx.fillText(`💰 金: ${Math.floor(playerGold)}`, 18, 27);
+				ctx.fillText(`💰 金: ${Math.floor(playerGold)}`, 18, resourceY + (compactHud ? 15 : 17));
+
+				ctx.fillStyle = "rgba(0,0,0,0.45)";
+				ctx.fillRect(14 + resourceBoxW, resourceY, resourceBoxW, missionH);
+				ctx.fillStyle = "#d9e6f3";
+				ctx.fillText(`⛓ 铁: ${Math.floor(playerIron)}`, 22 + resourceBoxW, resourceY + (compactHud ? 15 : 17));
 			}
 
 			if (gameState.over) {
