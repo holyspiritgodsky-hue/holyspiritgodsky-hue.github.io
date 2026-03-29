@@ -1,0 +1,1891 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>大阪战场</title>
+<style>
+html, body {
+margin: 0;
+width: 100%;
+height: 100%;
+overflow: hidden;
+font-family: "Microsoft YaHei", sans-serif;
+background: radial-gradient(circle at 20% 20%, #3f6f8f, #1a2f43 60%);
+color: #eef6ff;
+}
+#backBtn {
+position: fixed;
+left: -6px;
+top: 50%;
+transform: translateY(-50%);
+z-index: 6;
+width: 126px;
+height: 126px;
+padding-left: 0;
+border: none;
+background: transparent;
+box-shadow: none;
+clip-path: none;
+color: transparent;
+font-weight: 800;
+font-size: 0;
+line-height: 0;
+letter-spacing: 1px;
+text-decoration: none;
+display: flex;
+align-items: center;
+justify-content: center;
+overflow: hidden;
+}
+#backBtn::before {
+content: "⛵";
+position: absolute;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -52%);
+font-size: 96px;
+line-height: 1;
+color: rgba(255, 248, 228, 0.96);
+text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+#backBtn::after {
+content: "回中原";
+position: absolute;
+left: 50%;
+top: 72%;
+transform: translateX(-50%);
+font-size: 13px;
+font-weight: 800;
+letter-spacing: 1px;
+line-height: 1;
+color: rgba(255, 242, 205, 0.95);
+text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+#backBtn:hover {
+filter: brightness(1.07);
+transform: translateY(-50%) scale(1.02);
+}
+#chargeBtn {
+position: fixed;
+left: 50%;
+transform: translateX(-50%);
+bottom: 14px;
+z-index: 3;
+border: 1px solid rgba(255, 223, 124, 0.55);
+background: rgba(79, 60, 14, 0.86);
+color: #ffe8a1;
+padding: 10px 14px;
+border-radius: 999px;
+font-size: 13px;
+font-weight: 700;
+cursor: pointer;
+}
+#chargeBtn:disabled {
+opacity: 0.58;
+cursor: default;
+}
+#waveInfo {
+position: fixed;
+top: 54px;
+left: 12px;
+z-index: 2;
+font-size: 12px;
+padding: 6px 10px;
+border-radius: 8px;
+background: rgba(8,16,24,0.62);
+border: 1px solid rgba(255,255,255,0.2);
+}
+#storyModal {
+display: none;
+position: fixed;
+left: 50%;
+bottom: 20px;
+transform: translateX(-50%);
+z-index: 10;
+width: min(760px, 94vw);
+background: rgba(12, 8, 8, 0.94);
+border: 1px solid rgba(235,160,160,0.55);
+border-radius: 10px;
+box-shadow: 0 10px 32px rgba(0,0,0,0.52);
+padding: 12px;
+}
+#storyTitle { font-weight: 700; font-size: 13px; color: #ffcece; margin-bottom: 6px; }
+#storyText { font-size: 13px; line-height: 1.6; color: #f6e8e8; white-space: pre-line; }
+#storyActions { margin-top: 10px; display: flex; justify-content: flex-end; gap: 8px; }
+#assassinateBtn,
+#cancelStoryBtn {
+height: 32px;
+padding: 0 12px;
+border-radius: 8px;
+border: 1px solid rgba(255,255,255,0.3);
+font-size: 12px;
+font-weight: 700;
+color: #fff4f4;
+cursor: pointer;
+}
+#assassinateBtn { background: rgba(130,35,35,0.86); }
+#cancelStoryBtn { background: rgba(52,52,52,0.86); }
+#game { width: 100vw; height: 100vh; display: block; }
+#deathModal {
+display: none;
+position: fixed;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -50%);
+z-index: 20;
+width: min(430px, 90vw);
+padding: 16px 16px 14px;
+border-radius: 12px;
+background: rgba(10, 10, 12, 0.92);
+border: 1px solid rgba(255, 194, 168, 0.5);
+box-shadow: 0 14px 36px rgba(0,0,0,0.55);
+text-align: center;
+}
+#deathTitle {
+font-size: 22px;
+font-weight: 800;
+color: #ffd4c8;
+margin-bottom: 8px;
+}
+#deathText {
+font-size: 13px;
+line-height: 1.6;
+color: #f5ece7;
+margin-bottom: 12px;
+}
+#deathReturnBtn {
+height: 36px;
+padding: 0 16px;
+border-radius: 8px;
+border: 1px solid rgba(255,255,255,0.35);
+background: rgba(112, 46, 46, 0.9);
+color: #fff1ec;
+font-size: 13px;
+font-weight: 700;
+cursor: pointer;
+}
+#deathReturnBtn:hover {
+background: rgba(136, 58, 58, 0.95);
+}
+#victoryModal {
+display: none;
+position: fixed;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -50%);
+z-index: 21;
+width: min(480px, 92vw);
+padding: 16px 16px 14px;
+border-radius: 12px;
+background: rgba(12, 9, 8, 0.94);
+border: 1px solid rgba(255, 216, 156, 0.56);
+box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+text-align: center;
+}
+#victoryTitle {
+font-size: 22px;
+font-weight: 800;
+color: #ffe3a5;
+margin-bottom: 8px;
+}
+#victoryText {
+font-size: 13px;
+line-height: 1.6;
+color: #fff1d9;
+margin-bottom: 12px;
+white-space: pre-line;
+}
+#continueGameBtn {
+height: 36px;
+padding: 0 18px;
+border-radius: 999px;
+border: 1px solid rgba(255, 227, 139, 0.72);
+background: linear-gradient(180deg, rgba(132, 92, 24, 0.95), rgba(94, 62, 15, 0.95));
+color: #fff2c0;
+font-size: 14px;
+font-weight: 800;
+letter-spacing: 1px;
+cursor: pointer;
+box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+#continueGameBtn:hover {
+filter: brightness(1.08);
+}
+</style>
+</head>
+<body>
+<a id="backBtn" href="#" aria-label="返回中原" title="返回中原"></a>
+<div id="waveInfo">事件: 前往大阪城招募真田幸村</div>
+<div id="storyModal">
+<div id="storyTitle">真田幸村</div>
+<div id="storyText"></div>
+<div id="storyActions">
+<button id="cancelStoryBtn" type="button">取消</button>
+<button id="assassinateBtn" type="button">刺杀德川家康</button>
+</div>
+</div>
+<canvas id="game"></canvas>
+<button id="chargeBtn" type="button">大喝</button>
+<div id="deathModal">
+<div id="deathTitle">你已战死</div>
+<div id="deathText">大阪之战暂失利，请回中原重整旗鼓。</div>
+<button id="deathReturnBtn" type="button">返回中原重振旗鼓</button>
+</div>
+<div id="victoryModal">
+<div id="victoryTitle">刺杀成功</div>
+<div id="victoryText">德川家康伏诛，东军军心大乱。
+真田幸村已正式归队，可继续在此地自由行动。</div>
+<button id="continueGameBtn" type="button">继续游戏</button>
+</div>
+<script src="heroes.js"></script>
+<script src="sense.js"></script>
+<script>
+const RETURN_POINT_KEY = "warReturnPoint";
+const heroStore = window.WarHeroes;
+const sharedUI = window.WarSense
+? window.WarSense.initSharedUI({ addPauseMusic: true, rightStart: 14, top: 14 })
+: { isPaused: () => false, drawPauseOverlay: () => {} };
+
+function loadHeroFlags() {
+if (!heroStore) return { zhugeliang: false, lancelot: false, sanada: false, sunshangxiang: false, daqiao: false, xiaoqiao: false, elizabeth: false };
+return heroStore.loadFlags();
+}
+
+function saveHeroFlags(patch) {
+if (!heroStore) return;
+heroStore.saveFlags(patch || {});
+}
+
+function syncHeroFlags() {
+if (heroStore) {
+heroStore.syncFlags();
+}
+}
+
+function syncPlayerState() {
+if (heroStore && heroStore.syncPlayerState) {
+heroStore.syncPlayerState();
+}
+}
+
+function saveAndReturn() {
+if (backPortalTriggered) return;
+backPortalTriggered = true;
+syncHeroFlags();
+syncPlayerState();
+const marker = JSON.stringify({ point: "oceanShipyard", from: "jap" });
+localStorage.setItem(RETURN_POINT_KEY, marker);
+sessionStorage.setItem(RETURN_POINT_KEY, marker);
+window.location.href = "index.html";
+}
+
+function resolveWeaponTypeByHero(unit, isPlayer) {
+if (!unit) return "saber";
+if (isPlayer || unit.heroId === "playerMain") return "pudao";
+switch (unit.heroId) {
+case "sanada":
+return "spear";
+case "zhugeliang":
+return "none";
+case "sunshangxiang":
+return "none";
+case "lancelot":
+return "saber";
+case "daqiao":
+return "none";
+case "xiaoqiao":
+return "none";
+default:
+return unit.weaponType || "saber";
+}
+}
+
+function resolveEnemyLeaderWeapon(name) {
+switch (name) {
+case "酒井忠次":
+return "spear";
+case "本多忠胜":
+return "spear";
+case "服部半藏":
+return "saber";
+case "井伊直政":
+return "halberd";
+case "榊原康政":
+return "hammer";
+case "德川家康":
+return "saber";
+default:
+return "saber";
+}
+}
+
+syncHeroFlags();
+syncPlayerState();
+document.getElementById("backBtn").addEventListener("click", (e) => {
+e.preventDefault();
+saveAndReturn();
+});
+window.addEventListener("beforeunload", () => {
+syncHeroFlags();
+syncPlayerState();
+});
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const renderStd = window.WarSense || null;
+const heroDetailRuntime = heroStore && heroStore.detailRuntime ? heroStore.detailRuntime : null;
+const waveInfo = document.getElementById("waveInfo");
+const storyModal = document.getElementById("storyModal");
+const storyText = document.getElementById("storyText");
+const assassinateBtn = document.getElementById("assassinateBtn");
+const cancelStoryBtn = document.getElementById("cancelStoryBtn");
+const chargeBtn = document.getElementById("chargeBtn");
+const deathModal = document.getElementById("deathModal");
+const deathReturnBtn = document.getElementById("deathReturnBtn");
+const victoryModal = document.getElementById("victoryModal");
+const continueGameBtn = document.getElementById("continueGameBtn");
+
+const BASE_WORLD = { w: 1180, h: 740 };
+const world = {
+w: Math.max(window.innerWidth, 1600),
+h: Math.max(window.innerHeight, 900)
+};
+const worldScale = {
+x: world.w / BASE_WORLD.w,
+y: world.h / BASE_WORLD.h,
+u: Math.min(world.w / BASE_WORLD.w, world.h / BASE_WORLD.h)
+};
+const returnPortal = {
+x: 84 * worldScale.x,
+y: world.h * 0.5,
+r: 76 * worldScale.u
+};
+const player = (heroStore && heroStore.createMainPlayer)
+? heroStore.createMainPlayer(180 * worldScale.x, 360 * worldScale.y, {
+body: "#c49a58",
+head: "#efdba0",
+accent: "#f3e8b8",
+attackCd: 0
+})
+: { name: "张飞", x: 180 * worldScale.x, y: 360 * worldScale.y, r: 11, speed: 210, hp: 460, maxHp: 460, dir: 0, attackCd: 0 };
+const camera = { x: 0, y: 0 };
+const osaka = { x: 590 * worldScale.x, y: 360 * worldScale.y, r: 62 * worldScale.u, name: "大阪城" };
+const sanadamaru = { x: 705 * worldScale.x, y: 330 * worldScale.y, r: 28 * worldScale.u, name: "真田丸" };
+const allies = [];
+const enemyLeaders = [];
+const enemyUnits = [];
+const moveInput = { up: false, down: false, left: false, right: false };
+let last = performance.now();
+let modalOpen = false;
+let eventTriggered = false;
+let inOsakaRange = false;
+let battleStarted = false;
+let battleCleared = false;
+let hasSanada = false;
+let freePlay = false;
+let victoryHandled = false;
+let assaultPulse = 0;
+let assaultShake = 0;
+let audioCtx = null;
+let backPortalTriggered = false;
+let sanadaNpc = {
+x: sanadamaru.x - 18,
+y: sanadamaru.y + 8,
+r: 10,
+name: "真田幸村",
+body: "#cb3838",
+head: "#e7be90",
+accent: "#f2d07d",
+mounted: true,
+dir: Math.PI,
+hp: 999,
+maxHp: 999,
+dead: false,
+heroId: "sanada"
+};
+
+const tokugawaDeployment = [
+{ name: "酒井忠次", color: "#c56f64", x: osaka.x - 180 * worldScale.x, y: osaka.y - 128 * worldScale.y, unitCount: 16 },
+{ name: "本多忠胜", color: "#bf8f64", x: osaka.x + 24 * worldScale.x, y: osaka.y - 170 * worldScale.y, unitCount: 16 },
+{ name: "服部半藏", color: "#6d6e83", x: osaka.x + 188 * worldScale.x, y: osaka.y - 70 * worldScale.y, unitCount: 18 },
+{ name: "井伊直政", color: "#b75a5a", x: osaka.x + 178 * worldScale.x, y: osaka.y + 116 * worldScale.y, unitCount: 20 },
+{ name: "榊原康政", color: "#7c6cb8", x: osaka.x - 18 * worldScale.x, y: osaka.y + 176 * worldScale.y, unitCount: 20 },
+{ name: "德川家康", color: "#d0b164", x: world.w - 120, y: osaka.y + 30 * worldScale.y, unitCount: 48 }
+];
+const skillFx = []; // { type, x1, y1, x2, y2, x, y, r, life }
+const allyProjectiles = []; // { type: "arrow", x, y, vx, vy, life, damage }
+const goldPopups = []; // { x, y, text, color, life }
+let playerGold = 0;
+const allyFormationOffsets = [
+[-48, 24],
+[-68, -22],
+[-90, 4],
+[-112, 34],
+[-134, -34]
+];
+player.target = { x: player.x, y: player.y };
+
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+function createLightningFx(x1, y1, x2, y2) {
+const segs = [];
+const fromX = x2;
+const fromY = y2 - 280;
+segs.push({ x: fromX, y: fromY });
+for (let i = 1; i < 8; i += 1) {
+const t = i / 8;
+segs.push({
+x: fromX + (Math.random() - 0.5) * 80,
+y: fromY + (y2 - fromY) * t
+});
+}
+segs.push({ x: x2, y: y2 });
+return { type: "lightning", segs, life: 1, tx: x2, ty: y2, splashR: 52 };
+}
+
+function createLinearLightningFx(x1, y1, x2, y2) {
+const segs = [];
+const steps = 8;
+for (let i = 0; i <= steps; i += 1) {
+const t = i / steps;
+const px = x1 + (x2 - x1) * t;
+const py = y1 + (y2 - y1) * t;
+if (i === 0 || i === steps) segs.push({ x: px, y: py });
+else segs.push({ x: px + rand(-9, 9), y: py + rand(-9, 9) });
+}
+return { type: "lightning", segs, life: 1, tx: x2, ty: y2, splashR: 52 };
+}
+
+function resize() {
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+}
+window.addEventListener("resize", resize);
+resize();
+
+function makeHero(name, x, y, style) {
+return {
+name, x, y,
+r: 10,
+speed: style.speed || 205,
+attackRange: 40,
+attackCd: 0,
+dir: 0,
+hp: style.hp || 320,
+maxHp: style.hp || 320,
+body: style.body,
+head: style.head,
+accent: style.accent,
+mounted: !!style.mounted,
+dead: false
+};
+}
+
+function makeSharedHero(heroId, x, y, fallbackStyle) {
+if (heroStore) {
+const hero = heroStore.createCompanion(heroId, x, y);
+if (hero) return hero;
+}
+const fallbackName = heroId === "zhugeliang" ? "诸葛亮" : heroId === "lancelot" ? "兰斯洛特" : "真田幸村";
+const fallback = makeHero(fallbackName, x, y, fallbackStyle);
+fallback.heroId = heroId;
+fallback.skill = getSharedSkillByHeroId(heroId) || { key: "slash", damage: 34, cooldown: 0.44, range: 40 };
+return fallback;
+}
+
+function getSharedSkillByHeroId(heroId) {
+if (!heroStore || !heroId) return null;
+if (heroId === "playerMain") {
+const mainDef = heroStore.MAIN_PLAYER_DEFINITION;
+return mainDef && mainDef.skill ? Object.assign({}, mainDef.skill) : null;
+}
+if (!heroStore.getHeroDefinition) return null;
+const def = heroStore.getHeroDefinition(heroId);
+return def && def.skill ? Object.assign({}, def.skill) : null;
+}
+
+function getSkillProfile(unit) {
+if (unit && unit.skill) return unit.skill;
+if (!unit || !unit.heroId) return { key: "slash", damage: 34, cooldown: 0.44, range: 40 };
+const shared = getSharedSkillByHeroId(unit.heroId);
+if (shared) return shared;
+return { key: "slash", damage: 34, cooldown: 0.44, range: 40 };
+}
+
+function startTokugawaAssault() {
+battleStarted = true;
+battleCleared = false;
+eventTriggered = true;
+assaultPulse = 1;
+assaultShake = 0.5;
+playAssaultDrums();
+waveInfo.textContent = "刺杀战开始: 真田军向德川本阵突击";
+closeStoryModal();
+}
+
+function playAssaultDrums() {
+const Ctx = window.AudioContext || window.webkitAudioContext;
+if (!Ctx) return;
+if (!audioCtx) audioCtx = new Ctx();
+if (audioCtx.state === "suspended") audioCtx.resume();
+const now = audioCtx.currentTime;
+const beats = [0, 0.2, 0.42, 0.72];
+for (const beat of beats) {
+const t = now + beat;
+const osc = audioCtx.createOscillator();
+const gain = audioCtx.createGain();
+osc.type = "triangle";
+osc.frequency.setValueAtTime(92, t);
+osc.frequency.exponentialRampToValueAtTime(56, t + 0.14);
+gain.gain.setValueAtTime(0.0001, t);
+gain.gain.exponentialRampToValueAtTime(0.35, t + 0.012);
+gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+osc.connect(gain);
+gain.connect(audioCtx.destination);
+osc.start(t);
+osc.stop(t + 0.18);
+}
+}
+
+function castWarCry() {
+if (!battleStarted || modalOpen || player.hp <= 0 || player.chargeCd > 0) return;
+player.chargeCd = 8;
+skillFx.push({ type: "roar", x: player.x, y: player.y, r: 28, life: 0.34 });
+const roarR = 175;
+for (const u of enemyUnits) {
+if (u.dead) continue;
+const d = dist(player, u);
+if (d > roarR) continue;
+const nx = (u.x - player.x) / (d || 1);
+const ny = (u.y - player.y) / (d || 1);
+u.x += nx * 70;
+u.y += ny * 70;
+u.hp -= 24;
+}
+for (const l of enemyLeaders) {
+if (l.dead) continue;
+const d = dist(player, l);
+if (d > roarR) continue;
+const nx = (l.x - player.x) / (d || 1);
+const ny = (l.y - player.y) / (d || 1);
+l.x += nx * 55;
+l.y += ny * 55;
+l.hp -= 36;
+}
+}
+
+function applySkillHit(attacker, target) {
+const skill = getSkillProfile(attacker);
+if (!target) return;
+target.hp -= skill.damage;
+if (skill.key === "saber" || skill.key === "slash") {
+attacker.slashTimer = Math.max(attacker.slashTimer || 0, 0.34);
+}
+if (skill.key === "lightning" && skill.splash) {
+for (const u of enemyUnits) {
+if (u.dead || u === target) continue;
+if (dist(u, target) <= skill.splash) u.hp -= Math.round(skill.damage * 0.55);
+}
+for (const l of enemyLeaders) {
+if (l.dead || l === target) continue;
+if (dist(l, target) <= skill.splash) l.hp -= Math.round(skill.damage * 0.45);
+}
+}
+if (skill.key === "lightning") {
+skillFx.push(createLightningFx(attacker.x, attacker.y - 6, target.x, target.y - 8));
+} else if (skill.key === "charge") {
+attacker.slashTimer = Math.max(attacker.slashTimer || 0, 0.34);
+const dx = target.x - attacker.x;
+const dy = target.y - attacker.y;
+const d = Math.hypot(dx, dy) || 1;
+attacker.x += (dx / d) * Math.min(28, d);
+attacker.y += (dy / d) * Math.min(28, d);
+skillFx.push({ type: "ring", x: attacker.x, y: attacker.y, r: 18, life: 0.2 });
+for (const u of enemyUnits) {
+if (u.dead || u === target) continue;
+if (dist(u, target) <= 34) u.hp -= Math.round(skill.damage * 0.35);
+}
+for (const l of enemyLeaders) {
+if (l.dead || l === target) continue;
+if (dist(l, target) <= 34) l.hp -= Math.round(skill.damage * 0.25);
+}
+} else if (skill.key === "charm") {
+skillFx.push({ type: "ring", x: target.x, y: target.y, r: 12, life: 0.16 });
+target.attackCd = Math.max(target.attackCd || 0, 0.36);
+} else {
+skillFx.push({ type: "slash", x: attacker.x, y: attacker.y, r: 14, life: 0.12 });
+}
+}
+
+function fireAllyArrow(attacker, target, skill) {
+if (!attacker || !target) return;
+const angle = Math.atan2(target.y - attacker.y, target.x - attacker.x);
+attacker.dir = angle;
+const speed = 520;
+allyProjectiles.push({
+type: "arrow",
+x: attacker.x + Math.cos(angle) * 10,
+y: attacker.y + Math.sin(angle) * 10,
+vx: Math.cos(angle) * speed,
+vy: Math.sin(angle) * speed,
+life: 0.85,
+damage: skill && skill.damage ? skill.damage : 36
+});
+}
+
+function applyEnemyLeaderSkillHit(attacker, target, skill) {
+if (!target) return;
+const dmg = skill && skill.damage ? skill.damage : 22;
+target.hp -= dmg;
+if (skill && skill.key === "lightning" && skill.splash) {
+for (const a of allies) {
+if (a.dead || a === target) continue;
+if (dist(a, target) <= skill.splash) a.hp -= Math.round(dmg * 0.45);
+}
+if (player.hp > 0 && player !== target && dist(player, target) <= skill.splash) {
+player.hp -= Math.round(dmg * 0.35);
+}
+}
+if (skill && skill.key === "lightning") {
+skillFx.push(createLinearLightningFx(attacker.x, attacker.y - 6, target.x, target.y - 8));
+}
+}
+
+function updateSkillFx(dt) {
+for (let i = skillFx.length - 1; i >= 0; i -= 1) {
+if (skillFx[i].type === "lightning") skillFx[i].life -= dt * 3.5;
+else skillFx[i].life -= dt;
+if (skillFx[i].life <= 0) skillFx.splice(i, 1);
+}
+}
+
+function spawnGoldPopup(x, y, text, color) {
+goldPopups.push({ x: x, y: y, text: text || "+100", color: color || "#f2d66f", life: 1.1 });
+}
+
+function updateGoldPopups(dt) {
+for (let i = goldPopups.length - 1; i >= 0; i -= 1) {
+const g = goldPopups[i];
+g.life -= dt;
+g.y -= 22 * dt;
+if (g.life <= 0) goldPopups.splice(i, 1);
+}
+}
+
+function updateAllyProjectiles(dt) {
+for (let i = allyProjectiles.length - 1; i >= 0; i -= 1) {
+const p = allyProjectiles[i];
+p.x += p.vx * dt;
+p.y += p.vy * dt;
+p.life -= dt;
+let hit = false;
+for (const u of enemyUnits) {
+if (u.dead) continue;
+if (Math.hypot(p.x - u.x, p.y - u.y) < (u.r || 7) + 6) {
+u.hp -= p.damage;
+hit = true;
+break;
+}
+}
+if (!hit) {
+for (const e of enemyLeaders) {
+if (e.dead) continue;
+if (Math.hypot(p.x - e.x, p.y - e.y) < (e.r || 12) + 7) {
+e.hp -= p.damage;
+hit = true;
+break;
+}
+}
+}
+if (hit || p.life <= 0) allyProjectiles.splice(i, 1);
+}
+}
+
+function refreshAllyFormationSlots() {
+let idx = 0;
+for (const a of allies) {
+if (a.dead) continue;
+a.formationIndex = idx;
+idx += 1;
+}
+}
+
+function applyCrowdCollision(groupA, groupB, sameGroup) {
+for (let i = 0; i < groupA.length; i += 1) {
+const a = groupA[i];
+if (!a || a.dead) continue;
+const jStart = sameGroup ? i + 1 : 0;
+for (let j = jStart; j < groupB.length; j += 1) {
+const b = groupB[j];
+if (!b || b.dead) continue;
+const dx = b.x - a.x;
+const dy = b.y - a.y;
+const d = Math.hypot(dx, dy) || 0.001;
+const ar = a.radius || a.r || 7;
+const br = b.radius || b.r || 7;
+const minDist = ar + br + 2;
+if (d >= minDist) continue;
+const overlap = minDist - d;
+const nx = dx / d;
+const ny = dy / d;
+a.x -= nx * overlap * 0.55;
+a.y -= ny * overlap * 0.55;
+b.x += nx * overlap * 0.55;
+b.y += ny * overlap * 0.55;
+}
+}
+}
+
+function loadAlliesByFlags() {
+const flags = loadHeroFlags();
+hasSanada = false;
+if (sanadaNpc) {
+sanadaNpc.dead = false;
+sanadaNpc.x = sanadamaru.x - 18;
+sanadaNpc.y = sanadamaru.y + 8;
+}
+if (flags.zhugeliang) {
+allies.push(makeSharedHero("zhugeliang", player.x - 40, player.y + 24, {
+body: "#bddcf4", head: "#e8c89a", accent: "#7fa9d0", speed: 198, hp: 300
+}));
+}
+if (flags.lancelot) {
+allies.push(makeSharedHero("lancelot", player.x - 60, player.y - 20, {
+body: "#d3d6df", head: "#e8c89a", accent: "#c53131", speed: 226, hp: 360
+}));
+}
+if (flags.sunshangxiang) {
+allies.push(makeSharedHero("sunshangxiang", player.x - 86, player.y + 30, {
+body: "#5f88d8", head: "#f0c9a2", accent: "#f0d78d", speed: 216, hp: 280
+}));
+}
+if (flags.daqiao) {
+allies.push(makeSharedHero("daqiao", player.x - 106, player.y - 10, {
+body: "#e9a8b4", head: "#f0cfac", accent: "#ffe6ec", speed: 204, hp: 250
+}));
+}
+if (flags.xiaoqiao) {
+allies.push(makeSharedHero("xiaoqiao", player.x - 126, player.y + 8, {
+body: "#d7a7f0", head: "#f0cfac", accent: "#fbe7ff", speed: 208, hp: 240
+}));
+}
+if (flags.elizabeth) {
+allies.push(makeSharedHero("elizabeth", player.x - 146, player.y + 18, {
+body: "#4d5f9a", head: "#f0d4b2", accent: "#f1deb0", speed: 198, hp: 300, attackRange: 0, healRange: 170, healPower: 20
+}));
+}
+refreshAllyFormationSlots();
+}
+loadAlliesByFlags();
+
+function openStoryModal(text) {
+modalOpen = true;
+storyText.textContent = text;
+storyModal.style.display = "block";
+}
+function closeStoryModal() {
+modalOpen = false;
+storyModal.style.display = "none";
+}
+
+function recruitSanada() {
+const exists = allies.some((a) => a.name === "真田幸村");
+if (!exists) {
+allies.push(makeSharedHero("sanada", (sanadaNpc && !sanadaNpc.dead) ? sanadaNpc.x : player.x + 32, (sanadaNpc && !sanadaNpc.dead) ? sanadaNpc.y : player.y + 14, {
+body: "#cb3838", head: "#e7be90", accent: "#f2d07d", speed: 236, hp: 390, mounted: true
+}));
+refreshAllyFormationSlots();
+}
+if (sanadaNpc) sanadaNpc.dead = true;
+saveHeroFlags({ sanada: true });
+hasSanada = true;
+startTokugawaAssault();
+}
+
+function grantSanadaAfterVictory() {
+const exists = allies.some((a) => !a.dead && (a.heroId === "sanada" || a.name === "真田幸村"));
+if (!exists) {
+allies.push(makeSharedHero("sanada", player.x - 90, player.y + 2, {
+body: "#cb3838", head: "#e7be90", accent: "#f2d07d", speed: 236, hp: 390, mounted: true
+}));
+refreshAllyFormationSlots();
+}
+if (sanadaNpc) sanadaNpc.dead = true;
+hasSanada = true;
+saveHeroFlags({ sanada: true });
+}
+
+function handleAssassinationVictory() {
+if (victoryHandled) return;
+victoryHandled = true;
+battleCleared = true;
+battleStarted = false;
+for (const e of enemyLeaders) e.dead = true;
+for (const u of enemyUnits) u.dead = true;
+grantSanadaAfterVictory();
+closeStoryModal();
+victoryModal.style.display = "block";
+waveInfo.textContent = "刺杀成功: 已诛德川家康";
+}
+
+function spawnEncirclement() {
+for (let i = 0; i < tokugawaDeployment.length; i += 1) {
+const slot = tokugawaDeployment[i];
+const leader = {
+name: slot.name,
+x: slot.x,
+y: slot.y,
+guardX: slot.x,
+guardY: slot.y,
+guardR: 12,
+r: 12,
+hp: 420 + i * 40,
+maxHp: 420 + i * 40,
+speed: 132,
+attackCd: 0,
+dir: Math.atan2(osaka.y - slot.y, osaka.x - slot.x),
+color: slot.color,
+weaponType: resolveEnemyLeaderWeapon(slot.name),
+dead: false
+};
+if (i === 0 || slot.name === "酒井忠次") {
+leader.skill = { key: "lightning", damage: 40, cooldown: 0.6, range: 175, splash: 52 };
+}
+enemyLeaders.push(leader);
+for (let j = 0; j < slot.unitCount; j += 1) {
+enemyUnits.push({
+x: slot.x + rand(-34, 34),
+y: slot.y + rand(-34, 34),
+guardX: slot.x + rand(-34, 34),
+guardY: slot.y + rand(-34, 34),
+guardR: 15,
+r: 7,
+hp: 92,
+maxHp: 92,
+speed: 146,
+dir: Math.atan2(osaka.y - slot.y, osaka.x - slot.x),
+attackCd: 0,
+dead: false
+});
+}
+}
+}
+
+spawnEncirclement();
+
+function nearestAliveTarget(from, includePlayer) {
+let best = null;
+let bestD = Infinity;
+if (includePlayer && player.hp > 0) {
+const d = dist(from, player);
+if (d < bestD) { best = player; bestD = d; }
+}
+for (const a of allies) {
+if (a.dead || a.hp <= 0) continue;
+const d = dist(from, a);
+if (d < bestD) { best = a; bestD = d; }
+}
+return { target: best, d: bestD };
+}
+
+function nearestEnemy(from) {
+let best = null;
+let bestD = Infinity;
+for (const u of enemyUnits) {
+if (u.dead) continue;
+const d = dist(from, u);
+if (d < bestD) { best = u; bestD = d; }
+}
+for (const l of enemyLeaders) {
+if (l.dead) continue;
+const d = dist(from, l);
+if (d < bestD) { best = l; bestD = d; }
+}
+return { target: best, d: bestD };
+}
+
+function nearestEnemyForHero(from, range) {
+let best = null;
+let bestD = Infinity;
+for (const u of enemyUnits) {
+if (u.dead) continue;
+const d = dist(from, u);
+if (d < range && d < bestD) { best = u; bestD = d; }
+}
+for (const l of enemyLeaders) {
+if (l.dead) continue;
+const d = dist(from, l);
+if (d < range && d < bestD) { best = l; bestD = d; }
+}
+return { target: best, d: bestD };
+}
+
+function moveToward(e, tx, ty, speed, dt) {
+const dx = tx - e.x;
+const dy = ty - e.y;
+const d = Math.hypot(dx, dy);
+if (d < 0.001) return;
+e.dir = Math.atan2(dy, dx);
+const step = Math.min(d, speed * dt);
+e.x += (dx / d) * step;
+e.y += (dy / d) * step;
+}
+
+function updateZhugeliangAlly(a, dt) {
+if (heroDetailRuntime && heroDetailRuntime.updateZhugeliangAlly) {
+heroDetailRuntime.updateZhugeliangAlly({
+hero: a,
+dt,
+player,
+enemyUnits,
+enemyLeaders,
+dist,
+moveToward,
+createLightningFx,
+skillFx
+});
+return;
+}
+
+// Fallback path if shared runtime fails to load.
+a.hitFlash = Math.max(0, (a.hitFlash || 0) - dt * 1.6);
+if (dist(a, player) > 80) moveToward(a, player.x, player.y, a.speed, dt);
+}
+
+function updateLancelotAllyDetailed(a, dt) {
+if (heroDetailRuntime && heroDetailRuntime.updateLancelotAlly) {
+heroDetailRuntime.updateLancelotAlly({
+hero: a,
+dt,
+player,
+enemyUnits,
+enemyLeaders,
+dist,
+moveToward
+});
+return;
+}
+
+// Fallback path if shared runtime fails to load.
+const dx = player.x - a.x;
+const dy = player.y - a.y;
+const d = Math.hypot(dx, dy);
+if (d > 70) {
+a.x += (dx / d) * Math.min(a.speed * dt, d - 55);
+a.y += (dy / d) * Math.min(a.speed * dt, d - 55);
+a.dir = Math.atan2(dy, dx);
+}
+}
+
+function updatePlayer(dt) {
+player.slashTimer = Math.max(0, (player.slashTimer || 0) - dt);
+const mx = (moveInput.right ? 1 : 0) - (moveInput.left ? 1 : 0);
+const my = (moveInput.down ? 1 : 0) - (moveInput.up ? 1 : 0);
+if (!modalOpen && (mx || my)) {
+const d = Math.hypot(mx, my) || 1;
+player.x += (mx / d) * player.speed * dt;
+player.y += (my / d) * player.speed * dt;
+player.dir = Math.atan2(my / d, mx / d);
+player.target.x = player.x;
+player.target.y = player.y;
+} else if (!modalOpen) {
+moveToward(player, player.target.x, player.target.y, player.speed, dt);
+} else {
+player.target.x = player.x;
+player.target.y = player.y;
+}
+player.x = clamp(player.x, player.r, world.w - player.r);
+player.y = clamp(player.y, player.r, world.h - player.r);
+
+if (!modalOpen && !backPortalTriggered && dist(player, returnPortal) <= returnPortal.r) {
+saveAndReturn();
+return;
+}
+
+if (!battleStarted) {
+player.attackCd = Math.max(0, player.attackCd - dt);
+return;
+}
+
+player.attackCd = Math.max(0, player.attackCd - dt);
+const ne = nearestEnemy(player);
+const pSkill = getSkillProfile(player);
+const pRange = pSkill.range || player.attackRange || 42;
+if (ne.target && ne.d < pRange && player.attackCd <= 0) {
+player.attackCd = pSkill.cooldown || 0.34;
+applySkillHit(player, ne.target);
+}
+}
+
+function updateAllies(dt) {
+for (const a of allies) {
+if (a.dead || a.hp <= 0) { a.dead = true; continue; }
+
+if (!battleStarted) {
+const followDist = 72;
+const pd = dist(a, player);
+if (pd > followDist) moveToward(a, player.x, player.y, a.speed * 0.92, dt);
+a.x = clamp(a.x, a.r, world.w - a.r);
+a.y = clamp(a.y, a.r, world.h - a.r);
+continue;
+}
+
+if (heroDetailRuntime && heroDetailRuntime.updateCompanion) {
+heroDetailRuntime.updateCompanion({
+hero: a,
+dt,
+player,
+enemyUnits,
+enemyLeaders,
+dist,
+moveToward,
+nearestEnemy: nearestEnemyForHero,
+createLightningFx,
+skillFx,
+fireArrow: function (hero, target, damage) {
+fireAllyArrow(hero, target, { damage: damage });
+},
+onGoldTick: function (amount, x, y) {
+playerGold += amount;
+spawnGoldPopup(x, y, "+" + amount, "#f2d66f");
+},
+applySkillHit
+});
+} else {
+const followDist = 72;
+const pd = dist(a, player);
+if (pd > followDist) moveToward(a, player.x, player.y, a.speed * 0.92, dt);
+}
+
+a.x = clamp(a.x, a.r, world.w - a.r);
+a.y = clamp(a.y, a.r, world.h - a.r);
+}
+}
+
+function updateEnemies(dt) {
+for (const l of enemyLeaders) {
+if (l.dead || l.hp <= 0) { l.dead = true; continue; }
+l.attackCd = Math.max(0, l.attackCd - dt);
+l.slashTimer = Math.max(0, (l.slashTimer || 0) - dt);
+
+if (!battleStarted) {
+const gd = Math.hypot((l.guardX || l.x) - l.x, (l.guardY || l.y) - l.y);
+if (gd > (l.guardR || 10)) moveToward(l, l.guardX || l.x, l.guardY || l.y, l.speed * 0.7, dt);
+l.dir = Math.atan2(osaka.y - l.y, osaka.x - l.x);
+continue;
+}
+
+const t = nearestAliveTarget(l, true);
+if (!t.target) continue;
+const lSkill = l.skill || null;
+if (l.name === "德川家康") {
+const fixedRange = lSkill && lSkill.key === "lightning" ? (lSkill.range || 260) : 52;
+if (t.d <= fixedRange && l.attackCd <= 0) {
+if (lSkill && lSkill.key === "lightning") {
+l.attackCd = lSkill.cooldown || 1.2;
+applyEnemyLeaderSkillHit(l, t.target, lSkill);
+} else {
+l.attackCd = 0.62;
+l.slashTimer = Math.max(l.slashTimer || 0, 0.34);
+t.target.hp -= 24;
+}
+}
+continue;
+}
+const lRange = lSkill && lSkill.key === "lightning" ? (lSkill.range || 560) : 40;
+if (t.d > lRange) moveToward(l, t.target.x, t.target.y, l.speed, dt);
+else if (l.attackCd <= 0) {
+if (lSkill && lSkill.key === "lightning") {
+l.attackCd = lSkill.cooldown || 0.6;
+applyEnemyLeaderSkillHit(l, t.target, lSkill);
+} else {
+l.attackCd = 0.56;
+l.slashTimer = Math.max(l.slashTimer || 0, 0.34);
+t.target.hp -= 22;
+}
+}
+}
+for (const u of enemyUnits) {
+if (u.dead || u.hp <= 0) { u.dead = true; continue; }
+u.attackCd = Math.max(0, u.attackCd - dt);
+u.slashTimer = Math.max(0, (u.slashTimer || 0) - dt);
+
+if (!battleStarted) {
+const gd = Math.hypot((u.guardX || u.x) - u.x, (u.guardY || u.y) - u.y);
+if (gd > (u.guardR || 14)) moveToward(u, u.guardX || u.x, u.guardY || u.y, u.speed * 0.68, dt);
+u.dir = Math.atan2(osaka.y - u.y, osaka.x - u.x);
+continue;
+}
+
+const t = nearestAliveTarget(u, true);
+if (!t.target) continue;
+if (t.d > 26) moveToward(u, t.target.x, t.target.y, u.speed, dt);
+else if (u.attackCd <= 0) {
+u.attackCd = 0.58;
+u.slashTimer = Math.max(u.slashTimer || 0, 0.12);
+t.target.hp -= 15;
+}
+}
+
+for (const u of enemyUnits) {
+if (u.dead) continue;
+u.x = clamp(u.x, u.r, world.w - u.r);
+u.y = clamp(u.y, u.r, world.h - u.r);
+}
+}
+
+function updateBattleState() {
+if (freePlay) return;
+const tokugawa = enemyLeaders.find((e) => e.name === "德川家康");
+if (battleStarted && tokugawa && tokugawa.dead) {
+handleAssassinationVictory();
+return;
+}
+const aliveLeaders = enemyLeaders.filter((e) => !e.dead).length;
+const aliveUnits = enemyUnits.filter((u) => !u.dead).length;
+if (battleStarted && aliveLeaders === 0 && aliveUnits === 0) {
+handleAssassinationVictory();
+}
+}
+
+function updateStoryTrigger() {
+if (eventTriggered) return;
+const inRange = dist(player, osaka) < osaka.r + 60;
+if (inRange && !inOsakaRange && !modalOpen) {
+openStoryModal("主公，丰臣大势已去，城中只余死战之士。\n真田幸村愿以赤备残军为锋，与主公共赴绝命一战。\n今夜不求生还，只求斩下德川家康首级，以告天下。\n你可愿即刻突入敌阵，随我刺杀家康？");
+assassinateBtn.textContent = "刺杀德川家康";
+}
+inOsakaRange = inRange;
+}
+
+function updateCamera() {
+camera.x = clamp(player.x - canvas.width / 2, 0, world.w - canvas.width);
+camera.y = clamp(player.y - canvas.height / 2, 0, world.h - canvas.height);
+}
+
+window.addEventListener("keydown", (e) => {
+if (modalOpen && (e.key === "Escape" || e.key.toLowerCase() === "q")) {
+e.preventDefault();
+closeStoryModal();
+return;
+}
+const k = e.key.toLowerCase();
+const c = e.code;
+if (k === "w" || c === "KeyW" || e.key === "ArrowUp") moveInput.up = true;
+if (k === "s" || c === "KeyS" || e.key === "ArrowDown") moveInput.down = true;
+if (k === "a" || c === "KeyA" || e.key === "ArrowLeft") moveInput.left = true;
+if (k === "d" || c === "KeyD" || e.key === "ArrowRight") moveInput.right = true;
+if (c === "KeyW" || c === "KeyA" || c === "KeyS" || c === "KeyD" || e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === "ArrowLeft" || e.key === "ArrowRight") e.preventDefault();
+if (k === "q") castWarCry();
+});
+window.addEventListener("keyup", (e) => {
+const k = e.key.toLowerCase();
+const c = e.code;
+if (k === "w" || c === "KeyW" || e.key === "ArrowUp") moveInput.up = false;
+if (k === "s" || c === "KeyS" || e.key === "ArrowDown") moveInput.down = false;
+if (k === "a" || c === "KeyA" || e.key === "ArrowLeft") moveInput.left = false;
+if (k === "d" || c === "KeyD" || e.key === "ArrowRight") moveInput.right = false;
+});
+window.addEventListener("blur", () => {
+moveInput.up = false;
+moveInput.down = false;
+moveInput.left = false;
+moveInput.right = false;
+});
+
+canvas.addEventListener("pointerdown", (e) => {
+if (modalOpen || e.button !== 0) return;
+const rect = canvas.getBoundingClientRect();
+const wx = (e.clientX - rect.left) + camera.x;
+const wy = (e.clientY - rect.top) + camera.y;
+player.target.x = clamp(wx, player.r, world.w - player.r);
+player.target.y = clamp(wy, player.r, world.h - player.r);
+e.preventDefault();
+});
+
+assassinateBtn.addEventListener("click", () => {
+if (hasSanada) startTokugawaAssault();
+else recruitSanada();
+});
+cancelStoryBtn.addEventListener("click", () => closeStoryModal());
+chargeBtn.addEventListener("click", () => castWarCry());
+deathReturnBtn.addEventListener("click", () => saveAndReturn());
+continueGameBtn.addEventListener("click", () => {
+if (!battleCleared) return;
+freePlay = true;
+victoryModal.style.display = "none";
+waveInfo.textContent = "自由行动: 真田幸村已归队";
+});
+
+function drawHealthBar(x, y, w, hp, maxHp, color) {
+if (renderStd && renderStd.drawHealthBar) {
+renderStd.drawHealthBar(ctx, x, y, w, hp, maxHp, color, "rgba(0,0,0,0.6)", 4);
+return;
+}
+ctx.fillStyle = "rgba(0,0,0,0.6)";
+ctx.fillRect(x - w / 2, y, w, 4);
+ctx.fillStyle = color;
+ctx.fillRect(x - w / 2 + 1, y + 1, (w - 2) * clamp(hp / maxHp, 0, 1), 2);
+}
+
+function drawDetailedSoldier(entity, isLeader, baseColor, accentColor, options) {
+const opts = options || {};
+const isSanada = entity && (entity.heroId === "sanada" || entity.name === "真田幸村");
+ctx.save();
+ctx.translate(entity.x, entity.y);
+
+const scale = isLeader ? 1.25 : 0.82;
+ctx.scale(scale, scale);
+
+if (entity.mounted) {
+ctx.fillStyle = opts.mountBody || (isSanada ? "#8d1d1d" : "#8b5e3c");
+ctx.beginPath();
+ctx.ellipse(0, 13, 14, 7.5, 0, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = opts.mountHead || (isSanada ? "#7a1515" : "#7a4a24");
+ctx.beginPath();
+ctx.ellipse(10, 5, 6.5, 5, -0.5, 0, Math.PI * 2);
+ctx.fill();
+ctx.strokeStyle = "#5a3010";
+ctx.lineWidth = 2.2;
+ctx.beginPath();
+ctx.moveTo(-9, 18); ctx.lineTo(-10, 26);
+ctx.moveTo(-3, 20); ctx.lineTo(-3, 28);
+ctx.moveTo(3, 20);  ctx.lineTo(4, 28);
+ctx.moveTo(9, 17);  ctx.lineTo(10, 25);
+ctx.stroke();
+}
+
+ctx.strokeStyle = "rgba(0,0,0,0.35)";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(0, 2);
+ctx.lineTo(-4, 9);
+ctx.moveTo(0, 2);
+ctx.lineTo(4, 9);
+ctx.stroke();
+
+ctx.fillStyle = baseColor;
+ctx.fillRect(-4.6, -8.2, 9.2, 12.2);
+
+ctx.fillStyle = accentColor;
+ctx.fillRect(-6.2, -6.8, 2.6, 6);
+ctx.fillRect(3.6, -6.8, 2.6, 6);
+
+ctx.strokeStyle = "#2f2518";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(-2, 4);
+ctx.lineTo(-2.5, 11);
+ctx.moveTo(2, 4);
+ctx.lineTo(2.5, 11);
+ctx.stroke();
+
+ctx.fillStyle = entity.head || "#e7c59e";
+ctx.beginPath();
+ctx.arc(0, -11.5, 4.6, 0, Math.PI * 2);
+ctx.fill();
+
+ctx.fillStyle = "#2f1e16";
+ctx.fillRect(-5, -14.8, 10, 2.8);
+
+if (isLeader) {
+const empoweredBlade = !!entity.goldBlade;
+const weaponType = entity.weaponType || "saber";
+ctx.save();
+ctx.rotate((entity.dir || 0) + 0.06);
+if (empoweredBlade) {
+ctx.shadowColor = "rgba(255, 221, 96, 0.95)";
+ctx.shadowBlur = 14;
+}
+
+if (weaponType === "pudao") {
+if (entity.slashTimer > 0) {
+const swingP = 1 - entity.slashTimer / 0.34;
+const ext = Math.sin(clamp(swingP, 0, 1) * Math.PI) * 4.5;
+ctx.translate(ext * 0.28, -ext * 0.6);
+}
+
+ctx.fillStyle = empoweredBlade ? "#a07830" : "#4d3621";
+ctx.beginPath();
+ctx.ellipse(-5.2, 7.2, 3.2, 2.1, 0.9, 0, Math.PI * 2);
+ctx.fill();
+
+ctx.strokeStyle = empoweredBlade ? "#8a682a" : "#6b4c2d";
+ctx.lineWidth = 3;
+ctx.beginPath();
+ctx.moveTo(-3.2, 4.6);
+ctx.lineTo(16.8, -21.4);
+ctx.stroke();
+
+ctx.fillStyle = empoweredBlade ? "#f0cd60" : "#cfd7e1";
+ctx.beginPath();
+ctx.moveTo(16.2, -21.8);
+ctx.lineTo(24.6, -31.2);
+ctx.lineTo(22.6, -15.8);
+ctx.lineTo(18.4, -19.1);
+ctx.closePath();
+ctx.fill();
+
+ctx.strokeStyle = empoweredBlade ? "#7a5515" : "#8a9aaa";
+ctx.lineWidth = 1.6;
+ctx.beginPath();
+ctx.moveTo(16.6, -21.4);
+ctx.lineTo(22.8, -15.6);
+ctx.stroke();
+
+ctx.fillStyle = empoweredBlade ? "#f7df92" : "#ecf2f8";
+ctx.beginPath();
+ctx.moveTo(18.3, -20.1);
+ctx.lineTo(22.1, -24.6);
+ctx.lineTo(21.3, -18.6);
+ctx.closePath();
+ctx.fill();
+
+ctx.strokeStyle = empoweredBlade ? "#f5d46d" : "#d8e0e9";
+ctx.lineWidth = 1.4;
+ctx.beginPath();
+ctx.moveTo(16.6, -21.2);
+ctx.lineTo(23.6, -29.1);
+ctx.stroke();
+
+ctx.fillStyle = empoweredBlade ? "#f3c95a" : "#c9d2dd";
+ctx.fillRect(14.7, -19.8, 2.3, 2.3);
+} else if (weaponType === "spear") {
+ctx.strokeStyle = "#61462c";
+ctx.lineWidth = 2.3;
+ctx.beginPath();
+ctx.moveTo(-2, 4);
+ctx.lineTo(18, -20);
+ctx.stroke();
+ctx.strokeStyle = "#d5dce5";
+ctx.lineWidth = 1.6;
+ctx.beginPath();
+ctx.moveTo(18, -20);
+ctx.lineTo(23, -24);
+ctx.lineTo(21, -18);
+ctx.stroke();
+} else if (weaponType === "hammer") {
+ctx.strokeStyle = "#5a4026";
+ctx.lineWidth = 2.9;
+ctx.beginPath();
+ctx.moveTo(-2, 3);
+ctx.lineTo(9, -15);
+ctx.stroke();
+ctx.fillStyle = "#adb8c4";
+ctx.fillRect(9, -20, 9, 8);
+ctx.fillStyle = "#87919d";
+ctx.fillRect(10.2, -18.8, 2.4, 5.6);
+ctx.fillRect(14.2, -18.8, 2.4, 5.6);
+} else if (weaponType === "halberd") {
+ctx.strokeStyle = "#5f452b";
+ctx.lineWidth = 2.4;
+ctx.beginPath();
+ctx.moveTo(-2, 4);
+ctx.lineTo(14, -19);
+ctx.stroke();
+ctx.strokeStyle = "#d0d9e2";
+ctx.lineWidth = 1.8;
+ctx.beginPath();
+ctx.moveTo(13.5, -19.2);
+ctx.quadraticCurveTo(22, -24, 21, -10.5);
+ctx.moveTo(14.5, -16.5);
+ctx.lineTo(7.5, -20.5);
+ctx.stroke();
+} else if (weaponType === "none") {
+// no melee weapon for heroes that use dedicated signature props (fan/bow/etc.)
+} else {
+ctx.strokeStyle = "#5f4327";
+ctx.lineWidth = 2.2;
+ctx.beginPath();
+ctx.moveTo(-2, 4);
+ctx.lineTo(14, -18);
+ctx.stroke();
+}
+
+ctx.restore();
+
+ctx.strokeStyle = "rgba(255, 248, 209, 0.9)";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.arc(0, -2, 14 + Math.sin(performance.now() * 0.01) * 1.2, 0, Math.PI * 2);
+ctx.stroke();
+
+if (entity.slashTimer > 0) {
+const t = clamp(entity.slashTimer / 0.34, 0, 1);
+const heavy = entity.attackLock > 0 ? 0.5 : entity.recoverTimer > 0 ? -0.25 : 0;
+const swing = (1 - t) * 1.5 - 0.85 + heavy;
+const facing = entity.dir || 0;
+const sa = facing - 1.35 + swing;
+const ea = facing + 0.22 + swing;
+
+ctx.strokeStyle = empoweredBlade ? `rgba(255, 218, 86, ${0.48 + (1 - t) * 0.42})` : `rgba(255, 231, 156, ${0.38 + (1 - t) * 0.52})`;
+ctx.lineWidth = 4.6;
+ctx.beginPath();
+ctx.arc(0, -8, 18.8, sa, ea);
+ctx.stroke();
+
+ctx.strokeStyle = empoweredBlade ? `rgba(255, 248, 198, ${0.32 + (1 - t) * 0.44})` : `rgba(255, 255, 255, ${0.25 + (1 - t) * 0.4})`;
+ctx.lineWidth = 1.8;
+ctx.beginPath();
+ctx.arc(0, -8, 15.2, sa + 0.05, ea - 0.08);
+ctx.stroke();
+}
+} else if (entity.slashTimer > 0) {
+const t = clamp(entity.slashTimer / 0.12, 0, 1);
+const swing = (1 - t) * 1.35 - 0.72;
+const facing = entity.dir || 0;
+const sa = facing - 1.05 + swing;
+const ea = facing + 0.05 + swing;
+
+ctx.strokeStyle = `rgba(255, 228, 150, ${0.28 + (1 - t) * 0.45})`;
+ctx.lineWidth = 2.1;
+ctx.beginPath();
+ctx.arc(0, -5, 10.5, sa, ea);
+ctx.stroke();
+
+ctx.strokeStyle = `rgba(255, 255, 255, ${0.16 + (1 - t) * 0.28})`;
+ctx.lineWidth = 0.9;
+ctx.beginPath();
+ctx.arc(0, -5, 8.2, sa + 0.03, ea - 0.04);
+ctx.stroke();
+}
+
+ctx.restore();
+}
+
+function drawHeroSignature(h, isPlayer, facing) {
+ctx.save();
+ctx.translate(h.x, h.y);
+ctx.scale(facing, 1);
+
+if (isPlayer || h.heroId === "playerMain") {
+const goldBlade = !!h.goldBlade;
+ctx.rotate((h.dir || 0) * 0.2);
+ctx.strokeStyle = goldBlade ? "#8a682a" : "#6b4c2d";
+ctx.lineWidth = 2.4;
+ctx.beginPath();
+ctx.moveTo(-1, 2.5);
+ctx.lineTo(15, -17.5);
+ctx.stroke();
+ctx.fillStyle = goldBlade ? "#f0cd60" : "#d7dfea";
+ctx.beginPath();
+ctx.moveTo(14.6, -17.8);
+ctx.lineTo(21.8, -25.6);
+ctx.lineTo(20.4, -12.8);
+ctx.closePath();
+ctx.fill();
+ctx.restore();
+return;
+}
+
+if (h.heroId === "sanada") {
+ctx.rotate((h.dir || 0) * 0.2);
+ctx.strokeStyle = "#5f452b";
+ctx.lineWidth = 2.2;
+ctx.beginPath();
+ctx.moveTo(-1.5, 3);
+ctx.lineTo(14.5, -17.5);
+ctx.stroke();
+ctx.strokeStyle = "#d5dce5";
+ctx.lineWidth = 1.4;
+ctx.beginPath();
+ctx.moveTo(14.5, -17.5);
+ctx.lineTo(20.8, -23.4);
+ctx.lineTo(17.8, -14.8);
+ctx.stroke();
+ctx.restore();
+return;
+}
+
+if (h.heroId === "sunshangxiang") {
+ctx.strokeStyle = "#6f472a";
+ctx.lineWidth = 2.2;
+ctx.beginPath();
+ctx.arc(9.5, -7.5, 7.2, -1.2, 1.05);
+ctx.stroke();
+ctx.strokeStyle = "#f0debb";
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(11.8, -13.6);
+ctx.lineTo(7.2, -1.2);
+ctx.stroke();
+ctx.fillStyle = "#8a5f3b";
+ctx.fillRect(-7.2, -9.3, 2.4, 7.6);
+ctx.restore();
+return;
+}
+
+if (h.heroId === "zhugeliang") {
+ctx.fillStyle = "#f3f8ff";
+ctx.beginPath();
+ctx.moveTo(6.2, -6.8);
+ctx.lineTo(15.5, -11.2);
+ctx.lineTo(13.2, -2.8);
+ctx.closePath();
+ctx.fill();
+ctx.strokeStyle = "#8bb8e8";
+ctx.lineWidth = 1;
+ctx.beginPath();
+ctx.moveTo(6.8, -6.1);
+ctx.lineTo(14.4, -9.6);
+ctx.moveTo(7.3, -4.3);
+ctx.lineTo(13.8, -7.2);
+ctx.stroke();
+ctx.fillStyle = "rgba(140,205,255,0.7)";
+ctx.beginPath();
+ctx.arc(-1.2, -17.8, 3.2, 0, Math.PI * 2);
+ctx.fill();
+ctx.restore();
+return;
+}
+
+if (h.heroId === "lancelot") {
+ctx.strokeStyle = "#d8e4ff";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(6, -16);
+ctx.lineTo(6, 7);
+ctx.stroke();
+ctx.strokeStyle = "#c09030";
+ctx.lineWidth = 3;
+ctx.beginPath();
+ctx.moveTo(2, -6);
+ctx.lineTo(10, -6);
+ctx.stroke();
+ctx.restore();
+return;
+}
+
+if (h.heroId === "daqiao") {
+const g = ctx.createRadialGradient(0, -5, 2, 0, -5, 16);
+g.addColorStop(0, "rgba(232,244,255,0.45)");
+g.addColorStop(1, "rgba(232,244,255,0)");
+ctx.fillStyle = g;
+ctx.beginPath();
+ctx.arc(0, -5, 16, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = "rgba(227,240,255,0.9)";
+ctx.beginPath();
+ctx.ellipse(-7.6, -2.8, 3, 2, -0.4, 0, Math.PI * 2);
+ctx.ellipse(7.6, -2.8, 3, 2, 0.4, 0, Math.PI * 2);
+ctx.fill();
+ctx.restore();
+return;
+}
+
+if (h.heroId === "xiaoqiao") {
+ctx.strokeStyle = "rgba(248, 210, 255, 0.92)";
+ctx.lineWidth = 1.5;
+ctx.beginPath();
+ctx.arc(6.5, -7.8, 5.8, -0.9, 1.2);
+ctx.stroke();
+ctx.beginPath();
+ctx.arc(-6.5, -7.8, 5.8, 2.0, 4.1);
+ctx.stroke();
+ctx.restore();
+return;
+}
+
+ctx.restore();
+}
+
+function drawZhugeliangHero(h) {
+if (heroDetailRuntime && heroDetailRuntime.drawZhugeliangHero) {
+heroDetailRuntime.drawZhugeliangHero({ hero: h, ctx, drawHealthBar });
+return;
+}
+drawHeroSignature(h, false, renderStd && renderStd.getFacing ? renderStd.getFacing(h.dir || 0) : (Math.cos(h.dir || 0) >= 0 ? 1 : -1));
+ctx.fillStyle = "#c8e8ff";
+ctx.font = "700 12px Microsoft YaHei";
+ctx.textAlign = "center";
+ctx.fillText(h.name || "诸葛亮", h.x, h.y - 31);
+drawHealthBar(h.x, h.y - 26, 40, h.hp, h.maxHp, "#6ab8ff");
+}
+
+function drawLancelotHero(h) {
+if (heroDetailRuntime && heroDetailRuntime.drawLancelotHero) {
+heroDetailRuntime.drawLancelotHero({ hero: h, ctx, drawHealthBar });
+return;
+}
+drawHeroSignature(h, false, renderStd && renderStd.getFacing ? renderStd.getFacing(h.dir || 0) : (Math.cos(h.dir || 0) >= 0 ? 1 : -1));
+ctx.fillStyle = "#b8d8ff";
+ctx.font = "700 12px Microsoft YaHei";
+ctx.textAlign = "center";
+ctx.fillText(h.name || "兰斯洛特", h.x, h.y - 33);
+drawHealthBar(h.x, h.y - 28, 44, h.hp, h.maxHp, "#70a8ff");
+}
+
+function drawHero(h, isPlayer) {
+if (!isPlayer && h && h.heroId === "zhugeliang") {
+drawZhugeliangHero(h);
+return;
+}
+if (!isPlayer && h && h.heroId === "lancelot") {
+drawLancelotHero(h);
+return;
+}
+const isSanada = h && (h.heroId === "sanada" || h.name === "真田幸村");
+h.weaponType = resolveWeaponTypeByHero(h, isPlayer);
+drawDetailedSoldier(h, true, h.body || "#cfad5b", h.accent || "#ffe7a5", {
+mountBody: isSanada ? "#8d1d1d" : "#8b5e3c",
+mountHead: isSanada ? "#7a1515" : "#7a4a24"
+});
+if (!isPlayer && h.heroId !== "playerMain") {
+const facing = renderStd && renderStd.getFacing ? renderStd.getFacing(h.dir || 0) : (Math.cos(h.dir || 0) >= 0 ? 1 : -1);
+drawHeroSignature(h, false, facing);
+}
+ctx.fillStyle = "rgba(245,240,226,0.95)";
+ctx.font = "700 12px Microsoft YaHei";
+ctx.textAlign = "center";
+ctx.fillText(h.name || "主角", h.x, h.y - 25);
+drawHealthBar(h.x, h.y - 20, isPlayer ? 48 : 40, h.hp, h.maxHp, isPlayer ? "#ffe6a8" : "#8ed0ff");
+}
+
+function drawEnemy(e, isLeader) {
+drawDetailedSoldier(e, !!isLeader, isLeader ? e.color : "#cf8276", isLeader ? "rgba(255,215,200,0.6)" : "rgba(60,35,30,0.35)");
+if (isLeader) {
+ctx.fillStyle = "#ffd5c8";
+ctx.font = "700 12px Microsoft YaHei";
+ctx.textAlign = "center";
+ctx.fillText(e.name, e.x, e.y - 25);
+drawHealthBar(e.x, e.y - 20, 44, e.hp, e.maxHp, "#ff9d8f");
+}
+}
+
+function drawCastle(c, body, roof) {
+ctx.fillStyle = "rgba(0,0,0,0.24)";
+ctx.beginPath();
+ctx.ellipse(c.x + 6, c.y + 30, 56, 14, 0, 0, Math.PI * 2);
+ctx.fill();
+ctx.fillStyle = body;
+ctx.fillRect(c.x - 50, c.y - 18, 100, 46);
+ctx.fillStyle = roof;
+ctx.beginPath();
+ctx.moveTo(c.x - 58, c.y - 18);
+ctx.lineTo(c.x, c.y - 58);
+ctx.lineTo(c.x + 58, c.y - 18);
+ctx.closePath();
+ctx.fill();
+ctx.fillStyle = "#f3efe8";
+ctx.fillRect(c.x - 8, c.y + 4, 16, 24);
+ctx.fillStyle = "#2a2420";
+ctx.fillRect(c.x - 6, c.y + 6, 12, 22);
+ctx.fillStyle = "rgba(250,241,220,0.95)";
+ctx.font = "700 14px Microsoft YaHei";
+ctx.textAlign = "center";
+ctx.fillText(c.name, c.x, c.y - 68);
+}
+
+function drawMap() {
+ctx.clearRect(0, 0, canvas.width, canvas.height);
+updateCamera();
+const shakeX = assaultShake > 0 ? rand(-1, 1) * 16 * assaultShake : 0;
+const shakeY = assaultShake > 0 ? rand(-1, 1) * 10 * assaultShake : 0;
+ctx.save();
+ctx.translate(-camera.x + shakeX, -camera.y + shakeY);
+
+const seaG = ctx.createLinearGradient(0, 0, world.w, world.h);
+seaG.addColorStop(0, "#3f6f8f");
+seaG.addColorStop(1, "#28475d");
+ctx.fillStyle = seaG;
+ctx.fillRect(0, 0, world.w, world.h);
+
+ctx.fillStyle = "#7ea069";
+ctx.beginPath();
+ctx.moveTo(90 * worldScale.x, 86 * worldScale.y);
+ctx.lineTo(700 * worldScale.x, 70 * worldScale.y);
+ctx.lineTo(980 * worldScale.x, 170 * worldScale.y);
+ctx.lineTo(1040 * worldScale.x, 350 * worldScale.y);
+ctx.lineTo(990 * worldScale.x, 620 * worldScale.y);
+ctx.lineTo(730 * worldScale.x, 692 * worldScale.y);
+ctx.lineTo(180 * worldScale.x, 672 * worldScale.y);
+ctx.lineTo(80 * worldScale.x, 470 * worldScale.y);
+ctx.closePath();
+ctx.fill();
+
+drawCastle(osaka, "#a39170", "#7f6341");
+drawCastle(sanadamaru, "#896f57", "#653c2e");
+
+for (const u of enemyUnits) if (!u.dead) drawEnemy(u, false);
+for (const l of enemyLeaders) if (!l.dead) drawEnemy(l, true);
+
+for (const fx of skillFx) {
+if (fx.type === "lightning") {
+if (renderStd && renderStd.drawLightningFx) {
+renderStd.drawLightningFx(ctx, fx);
+} else {
+ctx.strokeStyle = "rgba(158, 218, 255, 0.85)";
+ctx.lineWidth = 2;
+ctx.beginPath();
+if (fx.segs && fx.segs.length > 1) {
+ctx.moveTo(fx.segs[0].x, fx.segs[0].y);
+for (let si = 1; si < fx.segs.length; si += 1) ctx.lineTo(fx.segs[si].x, fx.segs[si].y);
+} else {
+ctx.moveTo(fx.x1, fx.y1);
+ctx.lineTo((fx.x1 + fx.x2) * 0.5 + rand(-8, 8), (fx.y1 + fx.y2) * 0.5 + rand(-8, 8));
+ctx.lineTo(fx.x2, fx.y2);
+}
+
+for (const p of allyProjectiles) {
+if (p.type !== "arrow") continue;
+const ang = Math.atan2(p.vy, p.vx);
+ctx.save();
+ctx.translate(p.x, p.y);
+ctx.rotate(ang);
+ctx.strokeStyle = "#f3dfb1";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.moveTo(-7, 0);
+ctx.lineTo(7, 0);
+ctx.stroke();
+ctx.fillStyle = "#d5e3ef";
+ctx.beginPath();
+ctx.moveTo(7, 0);
+ctx.lineTo(3, -2.3);
+ctx.lineTo(3, 2.3);
+ctx.closePath();
+ctx.fill();
+ctx.restore();
+}
+ctx.stroke();
+}
+} else if (fx.type === "ring") {
+ctx.strokeStyle = "rgba(242, 95, 95, 0.85)";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.arc(fx.x, fx.y, fx.r, 0, Math.PI * 2);
+ctx.stroke();
+} else if (fx.type === "roar") {
+ctx.strokeStyle = "rgba(255, 220, 120, 0.9)";
+ctx.lineWidth = 2.6;
+ctx.beginPath();
+ctx.arc(fx.x, fx.y, fx.r + (1 - fx.life / 0.34) * 90, 0, Math.PI * 2);
+ctx.stroke();
+} else {
+ctx.strokeStyle = "rgba(255, 238, 187, 0.92)";
+ctx.lineWidth = 2;
+ctx.beginPath();
+ctx.arc(fx.x, fx.y, fx.r, -0.6, 0.75);
+ctx.stroke();
+}
+}
+
+if (sanadaNpc && !sanadaNpc.dead) drawHero(sanadaNpc, false);
+for (const a of allies) if (!a.dead) drawHero(a, false);
+drawHero(player, true);
+
+for (const g of goldPopups) {
+ctx.globalAlpha = clamp(g.life / 1.1, 0, 1);
+ctx.fillStyle = g.color;
+ctx.font = "700 13px Microsoft YaHei";
+ctx.textAlign = "center";
+ctx.fillText(g.text, g.x, g.y);
+}
+ctx.globalAlpha = 1;
+
+ctx.restore();
+ctx.fillStyle = "rgba(255,255,255,0.9)";
+ctx.font = "700 14px Microsoft YaHei";
+ctx.textAlign = "center";
+ctx.fillText("大阪战场 · 德川东军来袭", canvas.width * 0.5, 24);
+
+if (assaultPulse > 0) {
+const strength = clamp(assaultPulse, 0, 1);
+const redG = ctx.createRadialGradient(canvas.width * 0.5, canvas.height * 0.52, canvas.height * 0.12, canvas.width * 0.5, canvas.height * 0.52, canvas.height * 0.72);
+redG.addColorStop(0, `rgba(176, 42, 36, ${0.1 + strength * 0.2})`);
+redG.addColorStop(1, `rgba(56, 8, 8, ${0.28 + strength * 0.38})`);
+ctx.fillStyle = redG;
+ctx.fillRect(0, 0, canvas.width, canvas.height);
+ctx.fillStyle = `rgba(255, 220, 200, ${0.14 + strength * 0.3})`;
+ctx.font = "700 22px Microsoft YaHei";
+ctx.textAlign = "center";
+ctx.fillText("赤备突击", canvas.width * 0.5, canvas.height * 0.48);
+}
+}
+
+function tick(now) {
+const dt = Math.min(0.033, (now - last) / 1000);
+last = now;
+
+if (sharedUI.isPaused()) {
+drawMap();
+sharedUI.drawPauseOverlay(ctx, canvas.width, canvas.height);
+requestAnimationFrame(tick);
+return;
+}
+
+if (player.hp > 0) {
+updatePlayer(dt);
+updateStoryTrigger();
+updateAllies(dt);
+updateEnemies(dt);
+
+const aliveAllies = allies.filter((a) => a && !a.dead && a.hp > 0);
+const aliveLeaders = enemyLeaders.filter((e) => e && !e.dead && e.hp > 0);
+const aliveUnits = enemyUnits.filter((u) => u && !u.dead && u.hp > 0);
+applyCrowdCollision(aliveAllies, aliveAllies, true);
+applyCrowdCollision(aliveUnits, aliveUnits, true);
+applyCrowdCollision(aliveLeaders, aliveLeaders, true);
+applyCrowdCollision(aliveAllies, aliveUnits, false);
+applyCrowdCollision(aliveAllies, aliveLeaders, false);
+applyCrowdCollision(aliveLeaders, aliveUnits, false);
+applyCrowdCollision([player], aliveAllies, false);
+applyCrowdCollision([player], aliveUnits, false);
+applyCrowdCollision([player], aliveLeaders, false);
+
+player.x = clamp(player.x, player.r, world.w - player.r);
+player.y = clamp(player.y, player.r, world.h - player.r);
+for (const a of aliveAllies) {
+a.x = clamp(a.x, a.r, world.w - a.r);
+a.y = clamp(a.y, a.r, world.h - a.r);
+}
+for (const u of aliveUnits) {
+u.x = clamp(u.x, u.r, world.w - u.r);
+u.y = clamp(u.y, u.r, world.h - u.r);
+}
+for (const e of aliveLeaders) {
+e.x = clamp(e.x, e.r, world.w - e.r);
+e.y = clamp(e.y, e.r, world.h - e.r);
+}
+
+updateBattleState();
+player.chargeCd = Math.max(0, (player.chargeCd || 0) - dt);
+}
+updateSkillFx(dt);
+updateAllyProjectiles(dt);
+updateGoldPopups(dt);
+assaultPulse = Math.max(0, assaultPulse - dt * 0.85);
+assaultShake = Math.max(0, assaultShake - dt * 1.8);
+
+if (!eventTriggered) {
+waveInfo.textContent = "事件: 前往大阪城招募真田幸村";
+} else if (battleCleared) {
+if (!freePlay) {
+waveInfo.textContent = "刺杀成功: 德川家康伏诛";
+} else {
+waveInfo.textContent = "自由行动: 真田幸村已归队";
+}
+} else if (battleStarted) {
+const aliveLeaders = enemyLeaders.filter((e) => !e.dead).length;
+waveInfo.textContent = `刺杀战中: 敌将剩余 ${aliveLeaders} / 6 · 金钱 ${playerGold}`;
+}
+if (player.hp <= 0) {
+waveInfo.textContent = "你已战死，返回中原可重整旗鼓";
+}
+
+deathModal.style.display = player.hp <= 0 ? "block" : "none";
+
+chargeBtn.disabled = modalOpen || player.hp <= 0 || (player.chargeCd || 0) > 0;
+
+drawMap();
+requestAnimationFrame(tick);
+}
+
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

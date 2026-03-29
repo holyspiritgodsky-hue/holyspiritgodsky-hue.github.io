@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>英雄卡牌馆</title>
+<style>
+:root {
+  --bg-a: #0d1f30;
+  --bg-b: #263e58;
+  --panel: rgba(8, 16, 24, 0.78);
+  --line: rgba(255, 255, 255, 0.2);
+  --text: #f5f8ff;
+  --muted: rgba(230, 239, 255, 0.7);
+  --accent: #e3c07a;
+  --accent-2: #f7e4b6;
+  --button-bg: rgba(40, 64, 90, 0.88);
+  --button-bg-hover: rgba(56, 84, 116, 0.94);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+  font-family: "Georgia", "Times New Roman", "Microsoft YaHei", serif;
+  color: var(--text);
+  background: radial-gradient(circle at 16% 18%, var(--bg-b), var(--bg-a) 64%);
+}
+
+.page {
+  min-height: 100vh;
+  padding: 20px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 14px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(24px, 4.2vw, 40px);
+  letter-spacing: 1.2px;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.back-link {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(14, 24, 34, 0.84);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  padding: 9px 14px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.segment {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px;
+  display: inline-flex;
+  background: rgba(10, 18, 28, 0.62);
+}
+
+.seg-btn {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.seg-btn.active {
+  background: rgba(230, 195, 126, 0.2);
+  color: var(--accent-2);
+}
+
+.hero-list {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.hero-chip {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(14, 24, 34, 0.62);
+  color: var(--muted);
+  padding: 7px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.hero-chip.active {
+  border-color: rgba(255, 231, 176, 0.72);
+  color: #fff1d2;
+  background: rgba(128, 72, 38, 0.34);
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.34);
+  display: grid;
+  grid-template-columns: minmax(240px, 40%) 1fr;
+  min-height: 420px;
+  overflow: hidden;
+}
+
+.left {
+  position: relative;
+  border-right: 1px solid rgba(255, 255, 255, 0.14);
+  background:
+    radial-gradient(circle at 30% 18%, rgba(255, 226, 144, 0.22), transparent 38%),
+    linear-gradient(160deg, rgba(10, 16, 25, 0.85), rgba(31, 49, 70, 0.86));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.portrait-wrap {
+  width: min(92%, 460px);
+  aspect-ratio: 0.72;
+  border-radius: 18px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 227, 170, 0.6);
+  box-shadow:
+    0 0 0 2px rgba(255, 226, 162, 0.2) inset,
+    0 0 28px rgba(245, 202, 103, 0.36),
+    0 16px 40px rgba(0, 0, 0, 0.45);
+}
+
+.portrait-fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.portrait-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  box-shadow: 0 0 22px rgba(255, 220, 140, 0.65) inset;
+}
+
+.portrait {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+  transform: translate3d(0, 0, 0);
+}
+
+.portrait-parallax-bg {
+  position: absolute;
+  inset: -6%;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 226, 168, 0.2), transparent 42%),
+    radial-gradient(circle at 78% 22%, rgba(255, 238, 186, 0.1), transparent 40%),
+    linear-gradient(160deg, rgba(8, 12, 18, 0.28), rgba(28, 44, 62, 0.36));
+  transform: translate3d(0, 0, 0) scale(1.05);
+  z-index: 0;
+}
+
+.portrait.landscape {
+  background-size: contain;
+  background-position: center center;
+  background-color: rgba(8, 14, 22, 0.7);
+}
+
+.portrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.52));
+}
+
+.portrait-fallback {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1;
+  background:
+    radial-gradient(circle at 46% 24%, rgba(255, 226, 189, 0.76) 0 12%, transparent 13%),
+    radial-gradient(circle at 45% 48%, rgba(154, 55, 55, 0.84) 0 24%, transparent 25%),
+    radial-gradient(circle at 56% 50%, rgba(237, 186, 121, 0.68) 0 4%, transparent 5%),
+    linear-gradient(165deg, rgba(20, 25, 34, 0.86), rgba(44, 68, 88, 0.92));
+}
+
+.quote-box {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 52px;
+  min-height: 46px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 231, 175, 0.45);
+  background: rgba(10, 12, 16, 0.66);
+  color: rgba(255, 243, 214, 0.96);
+  font-size: 13px;
+  line-height: 1.6;
+  z-index: 5;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+  pointer-events: none;
+}
+
+.quote-box.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.right {
+  padding: 22px 22px 16px;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  gap: 14px;
+}
+
+.hero-name {
+  margin: 0;
+  font-size: clamp(28px, 4.2vw, 44px);
+  line-height: 1.05;
+}
+
+.hero-title {
+  margin: 6px 0 0;
+  color: var(--accent-2);
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.hero-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: minmax(190px, 280px) 1fr;
+  gap: 12px;
+  align-items: center;
+}
+
+.radar-wrap {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 12px;
+  background: rgba(6, 12, 18, 0.38);
+  padding: 8px;
+}
+
+#radar {
+  width: 100%;
+  height: 230px;
+  display: block;
+}
+
+.story {
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  background: rgba(7, 13, 20, 0.34);
+  padding: 14px;
+  line-height: 1.9;
+  font-size: 15px;
+  color: rgba(247, 245, 235, 0.96);
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 10px;
+  background: var(--button-bg);
+  color: var(--text);
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease;
+}
+
+.action-btn:hover {
+  background: var(--button-bg-hover);
+}
+
+.action-btn:active {
+  transform: scale(0.96);
+}
+
+.particle-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.particle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  animation: burst 460ms ease-out forwards;
+}
+
+@keyframes burst {
+  0% { opacity: 1; transform: translate(0, 0) scale(1); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(0.2); }
+}
+
+@media (max-width: 980px) {
+  .card { grid-template-columns: 1fr; }
+  .left { border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.14); }
+  .stats { grid-template-columns: 1fr; }
+  .portrait-wrap { max-width: 360px; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="head">
+    <div>
+      <h1 class="title">英雄卡牌馆</h1>
+      <p class="subtitle">立绘、六维属性、羁绊故事与互动展示</p>
+    </div>
+    <a class="back-link" href="index.html">返回主战场</a>
+  </div>
+
+  <div class="toolbar">
+    <div class="segment" id="regionSwitch">
+      <button class="seg-btn active" data-region="china">中国英雄</button>
+      <button class="seg-btn" data-region="japan">日本英雄</button>
+      <button class="seg-btn" data-region="europe">欧洲英雄</button>
+      <button class="seg-btn" data-region="south">南美英雄</button>
+    </div>
+    <div class="hero-list" id="heroList"></div>
+  </div>
+
+  <section class="card">
+    <div class="left">
+      <div class="portrait-wrap">
+        <div class="portrait" id="portrait">
+          <div class="portrait-parallax-bg" id="portraitBgLayer"></div>
+          <div class="portrait-fallback" id="fallbackPortrait"></div>
+        </div>
+        <canvas class="portrait-fx" id="portraitFx" width="640" height="900"></canvas>
+        <div class="quote-box" id="quoteBox"><span id="quoteText"></span></div>
+        <div class="portrait-glow" id="portraitGlow"></div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div>
+        <h2 class="hero-name" id="heroName"></h2>
+        <p class="hero-title" id="heroTitle"></p>
+      </div>
+
+      <div class="hero-tags" id="heroTags"></div>
+
+      <div class="stats">
+        <div class="radar-wrap">
+          <canvas id="radar" width="320" height="230"></canvas>
+        </div>
+        <p class="story" id="heroStory"></p>
+      </div>
+
+      <div class="actions">
+        <button class="action-btn" id="giftBtn">赠送礼物</button>
+        <button class="action-btn" id="bondBtn">查看羁绊</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="particle-layer" id="particleLayer"></div>
+
+<script>
+const HERO_DB = {
+  china: [
+    {
+      id: "zhangfei",
+      name: "张飞",
+      title: "燕人虎将 · 长坂怒啸",
+      palette: {
+        a: "#2a1f16",
+        b: "#4a3520",
+        c: "#c99c4d",
+        accent: "#f1d99a",
+        btn: "rgba(95, 66, 30, 0.92)",
+        btnHover: "rgba(128, 86, 38, 0.98)"
+      },
+      tags: ["重刃破阵", "近战压制", "护主狂战"],
+      stats: [99, 62, 86, 70, 97, 82],
+      portrait: "img/zf.png",
+      fxTheme: "dust",
+      quote: "桥上万人可退，唯我张飞不可退。",
+      story: "他曾一声怒喝震退千骑，也曾在夜雨里独自磨刀到天亮。传闻那段远洋三角恋曾把战友逼到决裂边缘，张飞却始终不问爱恨，只把一壶浊酒摆在营门：明日上阵，谁还能活着回来，再谈儿女情长。"
+    },
+    {
+      id: "zhugeliang",
+      name: "诸葛亮",
+      title: "卧龙筹天 · 羽扇惊雷",
+      palette: {
+        a: "#1c2430",
+        b: "#30455b",
+        c: "#bda972",
+        accent: "#ece0bf",
+        btn: "rgba(44, 67, 92, 0.9)",
+        btnHover: "rgba(62, 92, 126, 0.95)"
+      },
+      tags: ["雷法控场", "军略统筹", "后阵核心"],
+      stats: [70, 100, 98, 88, 95, 74],
+      portrait: "img/zgl.png",
+      fxTheme: "mist",
+      quote: "天时地利可算，人心难测亦可借。",
+      story: "他把星象写进兵书，也把人心算进棋局。阿尼塔那段三角旧事传到中军时，诸葛亮只淡淡一句：情之一字最难算，偏偏最能乱阵。于是他亲手改了夜袭时辰，既救了同袍，也保住了全军火线。"
+    },
+    {
+      id: "sunshangxiang",
+      name: "孙尚香",
+      title: "江东烈弓 · 凤火穿云",
+      palette: {
+        a: "#2c2f4f",
+        b: "#4f5d8f",
+        c: "#d4ad57",
+        accent: "#f8e6b1",
+        btn: "rgba(62, 80, 136, 0.9)",
+        btnHover: "rgba(84, 106, 175, 0.96)"
+      },
+      tags: ["远程点杀", "机动游射", "江东名门"],
+      stats: [82, 84, 78, 92, 86, 95],
+      portrait: "img/ssx.png",
+      fxTheme: "dust",
+      quote: "我的箭，不会给犹豫留下时间。",
+      story: "她的箭比火更快，传令比风更准。面对阿尼塔与两位名将的旧恋传闻，她从不多嘴，只在出发前把弓弦再紧一分：情爱可以迟到，战机绝不等人。可无人知道，她也曾在江风里写下一封没有寄出的信。"
+    }
+  ],
+  japan: [
+    {
+      id: "sanada",
+      name: "真田幸村",
+      title: "赤备孤胆 · 大坂血将",
+      palette: {
+        a: "#3f2222",
+        b: "#742c2c",
+        c: "#d5b16b",
+        accent: "#f2d59b",
+        btn: "rgba(104, 42, 35, 0.9)",
+        btnHover: "rgba(132, 56, 46, 0.95)"
+      },
+      tags: ["骑兵突击", "悲壮死战", "丰臣遗臣"],
+      stats: [96, 72, 88, 78, 100, 92],
+      portrait: "img/ztxc.png",
+      story: "大势已去，他仍披赤甲立于风中。昔日与阿尼塔在远洋舰队中并肩时，曾把胜负看得很轻；而今他却要在夜色里赌上姓名。传闻那段三角恋让他与同袍决裂，可临阵之际，他仍把旧信折好放进铠甲里，只说一句：若此去无归，愿她在晨曦中仍记得我的马蹄声。"
+    },
+    {
+      id: "takeda",
+      name: "武田信玄",
+      title: "甲斐之虎 · 风林火山",
+      palette: {
+        a: "#2d2220",
+        b: "#4d3a34",
+        c: "#c6a070",
+        accent: "#e3cfb1",
+        btn: "rgba(82, 55, 44, 0.9)",
+        btnHover: "rgba(106, 72, 57, 0.95)"
+      },
+      tags: ["铁骑推进", "军势统率", "战场压境"],
+      stats: [93, 86, 97, 74, 88, 90],
+      portrait: "",
+      fxTheme: "smoke",
+      quote: "风林火山，不在口号，在每一次推进。",
+      story: "他不夸战绩，只看阵线推进了几里。营火旁偶有流言，说他也曾卷入一段荒唐爱事；武田只把地图铺平，让硝烟替答案说话。因为在他看来，能活着走出战场的人，才配谈情。"
+    }
+  ],
+  europe: [
+    {
+      id: "elizabeth",
+      name: "伊丽莎白",
+      title: "不列颠女王 · 海权之冠",
+      palette: {
+        a: "#1e1f35",
+        b: "#3f4d7a",
+        c: "#d7b56f",
+        accent: "#f3e1b0",
+        btn: "rgba(59, 74, 120, 0.9)",
+        btnHover: "rgba(81, 100, 158, 0.95)"
+      },
+      tags: ["舰队统御", "王权号令", "远洋外交"],
+      stats: [78, 96, 94, 98, 90, 76],
+      portraits: ["img/ylsb1.png", "img/ylsb2.png"],
+      fxTheme: "mist",
+      quote: "海权不只是炮火，更是秩序与意志。",
+      story: "在群岛与大陆之间，她把王座变成了航线与港口。有人说她只擅长宫廷博弈，可每当风暴压境，她总先问补给与船坞，再问旗帜与荣誉。战时她会在同一夜里签下征召令与赈济令，对她而言，胜利不是战报里的一行字，而是城镇还能继续点灯。"
+    },
+    {
+      id: "jeanne",
+      name: "贞德",
+      title: "奥尔良圣女 · 旌旗引雷",
+      palette: {
+        a: "#1d2d39",
+        b: "#3d5e73",
+        c: "#d2b378",
+        accent: "#f0e2c1",
+        btn: "rgba(52, 89, 112, 0.9)",
+        btnHover: "rgba(72, 118, 146, 0.95)"
+      },
+      tags: ["圣旗鼓舞", "正面突破", "信念光环"],
+      stats: [91, 84, 89, 94, 100, 86],
+      portrait: "img/zd.png",
+      fxTheme: "mist",
+      quote: "我听见号角，不为荣耀，只为守住家园。",
+      story: "她曾以一面旗帜唤起溃散军心，也曾在夜里独自祈祷黎明。战场把她推向神话，她却始终记得自己只是站在最前面的那个人。"
+    }
+  ],
+  south: [
+    {
+      id: "anita",
+      name: "阿尼塔",
+      title: "烈焰航海家 · 风暴玫瑰",
+      palette: {
+        a: "#4a1f1d",
+        b: "#8b2f24",
+        c: "#d9a43a",
+        accent: "#f6dd97",
+        btn: "rgba(120, 45, 29, 0.92)",
+        btnHover: "rgba(154, 58, 37, 0.98)"
+      },
+      tags: ["火系掌控", "航线指挥", "热烈魅力"],
+      stats: [84, 88, 79, 98, 70, 90],
+      portrait: "img/ant.png",
+      landscape: true,
+      fxTheme: "petal",
+      quote: "如果你想带走朱塞佩，就先从我的马蹄下爬过去。",
+      story: "阿尼塔曾在同一艘战船上爱过两个男人：一个是把誓言写在刀鞘上的武将，一个是把未来写在海图上的船长。三角恋让整支舰队险些分裂，而她最终选择离开，把情书与军令一起丢进火盆。后来有人说，那一夜的火光比南美的日落更红。"
+    },
+    {
+      id: "garibaldi",
+      name: "加里波第",
+      title: "红衫统帅 · 远征之焰",
+      palette: {
+        a: "#4f231d",
+        b: "#8a3327",
+        c: "#e0ad3e",
+        accent: "#f8df9a",
+        btn: "rgba(122, 50, 33, 0.92)",
+        btnHover: "rgba(152, 63, 40, 0.98)"
+      },
+      tags: ["红衫军", "远征统率", "铁血信念"],
+      stats: [92, 78, 94, 86, 96, 88],
+      portrait: "",
+      fxTheme: "petal",
+      quote: "只要阿尼塔在侧，这世界便没有我征服不了的疆域。",
+      story: "每次远征前，他都会亲手擦亮佩刀。有人劝他别再提那段三角旧事，他却笑着说：若爱能让人胆怯，它便不配上战旗。于是他和阿尼塔并肩策马，在炮火与海风间写下属于红衫军的传说。"
+    }
+  ]
+};
+
+const RADAR_LABELS = ["武力", "智略", "统率", "魅力", "忠义", "机动"];
+
+const regionSwitch = document.getElementById("regionSwitch");
+const heroList = document.getElementById("heroList");
+const portrait = document.getElementById("portrait");
+const portraitWrap = document.querySelector(".portrait-wrap");
+const portraitBgLayer = document.getElementById("portraitBgLayer");
+const portraitFx = document.getElementById("portraitFx");
+const portraitFxCtx = portraitFx.getContext("2d");
+const portraitGlow = document.getElementById("portraitGlow");
+const quoteBox = document.getElementById("quoteBox");
+const quoteText = document.getElementById("quoteText");
+const fallbackPortrait = document.getElementById("fallbackPortrait");
+const heroName = document.getElementById("heroName");
+const heroTitle = document.getElementById("heroTitle");
+const heroTags = document.getElementById("heroTags");
+const heroStory = document.getElementById("heroStory");
+const radar = document.getElementById("radar");
+const radarCtx = radar.getContext("2d");
+const giftBtn = document.getElementById("giftBtn");
+const bondBtn = document.getElementById("bondBtn");
+const particleLayer = document.getElementById("particleLayer");
+
+let currentRegion = "china";
+let currentHeroId = HERO_DB.china[0].id;
+let audioCtx = null;
+let portraitAnimId = 0;
+let fxTheme = "dust";
+let fxParticles = [];
+let pointerX = 0;
+let pointerY = 0;
+let pointerTargetX = 0;
+let pointerTargetY = 0;
+let quoteTimer = null;
+let quoteSeq = 0;
+let portraitVariantIndex = 0;
+let portraitHeroKey = "";
+
+function getCurrentHero() {
+  return HERO_DB[currentRegion].find((h) => h.id === currentHeroId) || HERO_DB[currentRegion][0];
+}
+
+function setTheme(hero) {
+  document.documentElement.style.setProperty("--bg-a", hero.palette.a);
+  document.documentElement.style.setProperty("--bg-b", hero.palette.b);
+  document.documentElement.style.setProperty("--accent", hero.palette.c);
+  document.documentElement.style.setProperty("--accent-2", hero.palette.accent);
+  document.documentElement.style.setProperty("--button-bg", hero.palette.btn);
+  document.documentElement.style.setProperty("--button-bg-hover", hero.palette.btnHover);
+}
+
+function renderHeroChips() {
+  heroList.innerHTML = "";
+  HERO_DB[currentRegion].forEach((hero) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "hero-chip" + (hero.id === currentHeroId ? " active" : "");
+    btn.textContent = hero.name;
+    btn.addEventListener("click", () => {
+      currentHeroId = hero.id;
+      render();
+    });
+    heroList.appendChild(btn);
+  });
+}
+
+function renderTags(hero) {
+  heroTags.innerHTML = "";
+  hero.tags.forEach((t) => {
+    const tag = document.createElement("span");
+    tag.className = "tag";
+    tag.textContent = t;
+    heroTags.appendChild(tag);
+  });
+}
+
+function renderPortrait(hero) {
+  portrait.classList.toggle("landscape", !!hero.landscape);
+  fxTheme = hero.fxTheme || "dust";
+  resetPortraitParticles();
+
+  const heroKey = `${currentRegion}:${hero.id}`;
+  if (portraitHeroKey !== heroKey) {
+    portraitHeroKey = heroKey;
+    portraitVariantIndex = 0;
+  }
+
+  const portraits = Array.isArray(hero.portraits) && hero.portraits.length
+    ? hero.portraits
+    : (hero.portrait ? [hero.portrait] : []);
+
+  if (portraits.length > 0) {
+    const img = portraits[portraitVariantIndex % portraits.length];
+    portrait.style.backgroundImage = `url('${img}')`;
+    fallbackPortrait.style.display = "none";
+  } else {
+    portrait.style.backgroundImage = "";
+    fallbackPortrait.style.display = "block";
+  }
+}
+
+function resizePortraitFx() {
+  const rect = portraitWrap.getBoundingClientRect();
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  portraitFx.width = Math.max(2, Math.round(rect.width * dpr));
+  portraitFx.height = Math.max(2, Math.round(rect.height * dpr));
+  portraitFxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+function createPortraitParticle(theme) {
+  const w = portraitFx.clientWidth || 320;
+  const h = portraitFx.clientHeight || 420;
+  if (theme === "petal") {
+    return {
+      x: Math.random() * w,
+      y: Math.random() * h - h,
+      vx: (Math.random() - 0.5) * 22,
+      vy: 24 + Math.random() * 36,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 2.1,
+      size: 4 + Math.random() * 5,
+      life: 0.35 + Math.random() * 0.4
+    };
+  }
+  if (theme === "smoke") {
+    return {
+      x: w * (0.28 + Math.random() * 0.44),
+      y: h * (0.72 + Math.random() * 0.2),
+      vx: (Math.random() - 0.5) * 16,
+      vy: -(12 + Math.random() * 24),
+      size: 10 + Math.random() * 18,
+      grow: 6 + Math.random() * 8,
+      alpha: 0.1 + Math.random() * 0.26
+    };
+  }
+  if (theme === "mist") {
+    return {
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: -6 + Math.random() * 12,
+      vy: -4 + Math.random() * 8,
+      size: 8 + Math.random() * 12,
+      alpha: 0.07 + Math.random() * 0.12
+    };
+  }
+  return {
+    x: Math.random() * w,
+    y: Math.random() * h,
+    vx: -8 + Math.random() * 16,
+    vy: -8 + Math.random() * 16,
+    size: 2 + Math.random() * 3,
+    alpha: 0.08 + Math.random() * 0.16
+  };
+}
+
+function resetPortraitParticles() {
+  const count = fxTheme === "petal" ? 24 : fxTheme === "smoke" ? 20 : 16;
+  fxParticles = Array.from({ length: count }, () => createPortraitParticle(fxTheme));
+}
+
+function drawPortraitParticles(dt) {
+  const w = portraitFx.clientWidth || 320;
+  const h = portraitFx.clientHeight || 420;
+  portraitFxCtx.clearRect(0, 0, w, h);
+  for (let i = 0; i < fxParticles.length; i += 1) {
+    const p = fxParticles[i];
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    if (fxTheme === "petal") {
+      p.rot += p.vr * dt;
+      portraitFxCtx.save();
+      portraitFxCtx.translate(p.x, p.y);
+      portraitFxCtx.rotate(p.rot);
+      portraitFxCtx.fillStyle = `rgba(208, 62, 86, ${p.life})`;
+      portraitFxCtx.beginPath();
+      portraitFxCtx.ellipse(0, 0, p.size, p.size * 0.6, 0, 0, Math.PI * 2);
+      portraitFxCtx.fill();
+      portraitFxCtx.restore();
+      if (p.y > h + 16 || p.x < -20 || p.x > w + 20) fxParticles[i] = createPortraitParticle(fxTheme);
+      continue;
+    }
+    if (fxTheme === "smoke") {
+      p.size += p.grow * dt * 0.3;
+      p.alpha = Math.max(0, p.alpha - dt * 0.03);
+      portraitFxCtx.fillStyle = `rgba(200, 200, 200, ${p.alpha})`;
+      portraitFxCtx.beginPath();
+      portraitFxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      portraitFxCtx.fill();
+      if (p.y < -30 || p.alpha <= 0.02) fxParticles[i] = createPortraitParticle(fxTheme);
+      continue;
+    }
+    portraitFxCtx.fillStyle = fxTheme === "mist" ? `rgba(198, 214, 232, ${p.alpha})` : `rgba(244, 215, 154, ${p.alpha})`;
+    portraitFxCtx.beginPath();
+    portraitFxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    portraitFxCtx.fill();
+    if (p.x < -18 || p.x > w + 18 || p.y < -18 || p.y > h + 18) fxParticles[i] = createPortraitParticle(fxTheme);
+  }
+}
+
+function typeHeroQuote(text) {
+  if (!text) return;
+  if (quoteTimer) clearTimeout(quoteTimer);
+  quoteSeq += 1;
+  const seq = quoteSeq;
+  quoteText.textContent = "";
+  quoteBox.classList.add("show");
+  let i = 0;
+  function step() {
+    if (seq !== quoteSeq) return;
+    i += 1;
+    quoteText.textContent = text.slice(0, i);
+    if (i < text.length) quoteTimer = setTimeout(step, 28);
+    else quoteTimer = setTimeout(() => {
+      if (seq !== quoteSeq) return;
+      quoteBox.classList.remove("show");
+    }, 2600);
+  }
+  step();
+}
+
+function animatePortrait(now) {
+  if (!animatePortrait.last) animatePortrait.last = now;
+  const dt = Math.min(0.05, (now - animatePortrait.last) / 1000);
+  animatePortrait.last = now;
+  pointerX += (pointerTargetX - pointerX) * 0.08;
+  pointerY += (pointerTargetY - pointerY) * 0.08;
+  const t = now * 0.001;
+  const floatY = Math.sin(t * 1.35) * 6;
+  portrait.style.transform = `translate3d(${pointerX * 8}px, ${floatY + pointerY * 4}px, 0)`;
+  portraitBgLayer.style.transform = `translate3d(${pointerX * 3}px, ${pointerY * 2}px, 0) scale(1.05)`;
+  portraitGlow.style.transform = `translate3d(${pointerX * 10}px, ${pointerY * 6}px, 0)`;
+  drawPortraitParticles(dt);
+  portraitAnimId = requestAnimationFrame(animatePortrait);
+}
+
+function drawRadar(hero) {
+  const w = radar.width;
+  const h = radar.height;
+  const cx = w / 2;
+  const cy = h / 2;
+  const outer = 82;
+  radarCtx.clearRect(0, 0, w, h);
+
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#e3c07a";
+
+  for (let ring = 1; ring <= 5; ring += 1) {
+    const r = (outer / 5) * ring;
+    radarCtx.beginPath();
+    for (let i = 0; i < RADAR_LABELS.length; i += 1) {
+      const a = -Math.PI / 2 + (i * Math.PI * 2) / RADAR_LABELS.length;
+      const x = cx + Math.cos(a) * r;
+      const y = cy + Math.sin(a) * r;
+      if (i === 0) radarCtx.moveTo(x, y);
+      else radarCtx.lineTo(x, y);
+    }
+    radarCtx.closePath();
+    radarCtx.strokeStyle = "rgba(255,255,255,0.17)";
+    radarCtx.lineWidth = 1;
+    radarCtx.stroke();
+  }
+
+  for (let i = 0; i < RADAR_LABELS.length; i += 1) {
+    const a = -Math.PI / 2 + (i * Math.PI * 2) / RADAR_LABELS.length;
+    const x = cx + Math.cos(a) * outer;
+    const y = cy + Math.sin(a) * outer;
+    radarCtx.beginPath();
+    radarCtx.moveTo(cx, cy);
+    radarCtx.lineTo(x, y);
+    radarCtx.strokeStyle = "rgba(255,255,255,0.14)";
+    radarCtx.stroke();
+
+    const lx = cx + Math.cos(a) * (outer + 18);
+    const ly = cy + Math.sin(a) * (outer + 18);
+    radarCtx.fillStyle = "rgba(246, 239, 224, 0.9)";
+    radarCtx.font = "12px Microsoft YaHei";
+    radarCtx.textAlign = "center";
+    radarCtx.textBaseline = "middle";
+    radarCtx.fillText(RADAR_LABELS[i], lx, ly);
+  }
+
+  radarCtx.beginPath();
+  hero.stats.forEach((v, i) => {
+    const ratio = Math.max(0, Math.min(1, v / 100));
+    const a = -Math.PI / 2 + (i * Math.PI * 2) / RADAR_LABELS.length;
+    const x = cx + Math.cos(a) * outer * ratio;
+    const y = cy + Math.sin(a) * outer * ratio;
+    if (i === 0) radarCtx.moveTo(x, y);
+    else radarCtx.lineTo(x, y);
+  });
+  radarCtx.closePath();
+  radarCtx.fillStyle = accent + "66";
+  radarCtx.strokeStyle = accent;
+  radarCtx.lineWidth = 2;
+  radarCtx.fill();
+  radarCtx.stroke();
+}
+
+function render() {
+  const hero = getCurrentHero();
+  setTheme(hero);
+
+  regionSwitch.querySelectorAll(".seg-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.region === currentRegion);
+  });
+
+  heroName.textContent = hero.name;
+  heroTitle.textContent = hero.title;
+  heroStory.textContent = hero.story;
+  renderTags(hero);
+  renderHeroChips();
+  renderPortrait(hero);
+  drawRadar(hero);
+}
+
+portraitWrap.addEventListener("mousemove", (e) => {
+  const r = portraitWrap.getBoundingClientRect();
+  const nx = ((e.clientX - r.left) / r.width) * 2 - 1;
+  const ny = ((e.clientY - r.top) / r.height) * 2 - 1;
+  pointerTargetX = Math.max(-1, Math.min(1, nx));
+  pointerTargetY = Math.max(-1, Math.min(1, ny));
+});
+
+portraitWrap.addEventListener("mouseleave", () => {
+  pointerTargetX = 0;
+  pointerTargetY = 0;
+});
+
+portraitWrap.addEventListener("mouseenter", () => {
+  const hero = getCurrentHero();
+  if (hero && hero.quote) typeHeroQuote(hero.quote);
+});
+
+portraitWrap.addEventListener("click", () => {
+  const hero = getCurrentHero();
+  const portraits = hero && Array.isArray(hero.portraits) ? hero.portraits : null;
+  if (portraits && portraits.length > 1) {
+    portraitVariantIndex = (portraitVariantIndex + 1) % portraits.length;
+    renderPortrait(hero);
+  }
+  if (hero && hero.quote) typeHeroQuote(hero.quote);
+});
+
+regionSwitch.addEventListener("click", (e) => {
+  const btn = e.target.closest(".seg-btn");
+  if (!btn) return;
+  const region = btn.dataset.region;
+  if (!region || region === currentRegion) return;
+  currentRegion = region;
+  currentHeroId = HERO_DB[currentRegion][0].id;
+  render();
+});
+
+function ensureAudio() {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  if (!audioCtx) audioCtx = new Ctx();
+  if (audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+
+function playClickTone() {
+  const ctx = ensureAudio();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = "square";
+  osc.frequency.setValueAtTime(1120, now);
+  osc.frequency.exponentialRampToValueAtTime(760, now + 0.06);
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.22, now + 0.01);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.09);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(now);
+  osc.stop(now + 0.1);
+
+  const noiseBuffer = ctx.createBuffer(1, 2048, ctx.sampleRate);
+  const data = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * 0.5;
+  const noise = ctx.createBufferSource();
+  const nGain = ctx.createGain();
+  noise.buffer = noiseBuffer;
+  nGain.gain.setValueAtTime(0.09, now);
+  nGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06);
+  noise.connect(nGain);
+  nGain.connect(ctx.destination);
+  noise.start(now);
+  noise.stop(now + 0.07);
+}
+
+function spawnParticles(x, y) {
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim() || "#e3c07a";
+  for (let i = 0; i < 18; i += 1) {
+    const p = document.createElement("span");
+    p.className = "particle";
+    p.style.left = `${x}px`;
+    p.style.top = `${y}px`;
+    p.style.background = i % 2 ? accent : "#ffffff";
+    p.style.setProperty("--dx", `${(Math.random() - 0.5) * 90}px`);
+    p.style.setProperty("--dy", `${(Math.random() - 0.5) * 70}px`);
+    particleLayer.appendChild(p);
+    p.addEventListener("animationend", () => p.remove(), { once: true });
+  }
+}
+
+function bindAction(btn, message) {
+  btn.addEventListener("click", (e) => {
+    playClickTone();
+    const rect = e.currentTarget.getBoundingClientRect();
+    spawnParticles(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    btn.textContent = message;
+    setTimeout(() => {
+      btn.textContent = btn.id === "giftBtn" ? "赠送礼物" : "查看羁绊";
+    }, 800);
+  });
+}
+
+bindAction(giftBtn, "已赠送");
+bindAction(bondBtn, "羁绊已展开");
+window.addEventListener("resize", () => {
+  resizePortraitFx();
+  resetPortraitParticles();
+});
+resizePortraitFx();
+resetPortraitParticles();
+if (!portraitAnimId) portraitAnimId = requestAnimationFrame(animatePortrait);
+render();
+</script>
+</body>
+</html>
