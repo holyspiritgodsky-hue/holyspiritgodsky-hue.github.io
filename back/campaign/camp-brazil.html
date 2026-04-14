@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>贞德：逆转时空 - 巴西营地</title>
+	<link rel="stylesheet" href="campaign.css" />
+</head>
+<body class="restPage">
+	<main class="restShell">
+		<section class="restHero">
+			<p class="restEyebrow">Chapter Camp</p>
+			<h1 class="restTitle">巴西营地</h1>
+			<p class="restLead">今晚不打仗。
+
+海风退了，火堆亮着，伤口先缝，旧账晚点再翻。
+
+阿妮塔和佩德罗终于坐进同一片火光里，郑和则已经把去马里的商路消息摊开。</p>
+			<div class="restActions">
+				<a class="primaryBtn" href="mali.html">前往马里</a>
+				<a class="ghostBtn" href="brazilRise.html">回到巴西起势</a>
+			</div>
+			<div class="restGrid">
+				<article class="restCard">
+					<h2>阿妮塔</h2>
+					<p>嘴上还在骂佩德罗，枪却先放下了。
+
+她不打算立刻原谅，但也不想把巴西据点变成私人处刑场。</p>
+				</article>
+				<article class="restCard">
+					<h2>佩德罗</h2>
+					<p>总算不再只会写信。
+
+这回他得把王位、逃婚和巴西都当面讲清楚，不然明天还是得挨枪托。</p>
+				</article>
+				<article class="restCard">
+					<h2>郑和</h2>
+					<p>已经在看下一段商路。
+
+他说马里那边先谈货，再谈站队，比欧洲宫廷诚实一些。</p>
+				</article>
+				<article class="restCard">
+					<h2>这一章的作用</h2>
+					<p>不是推进战，而是让玩家真的离开战场，重新整理人和线。
+
+从巴西篇切到非洲篇，节奏在这里换气。</p>
+				</article>
+			</div>
+		</section>
+		<aside class="restSidebar">
+			<section class="restPanel">
+				<h2>休整状态</h2>
+				<div class="restStat"><span class="restStatLabel">贞德等级</span><span id="restLevel" class="restStatValue">-</span></div>
+				<div class="restStat"><span class="restStatLabel">当前经验</span><span id="restXp" class="restStatValue">-</span></div>
+				<div class="restStat"><span class="restStatLabel">种田加成</span><span id="restFarm" class="restStatValue">-</span></div>
+				<div class="restStat"><span class="restStatLabel">体魄加成</span><span id="restHp" class="restStatValue">-</span></div>
+			</section>
+			<section class="restPanel">
+				<h2>营地安排</h2>
+				<ol class="restList">
+					<li>今夜不刷新敌军，不做护送，不做防守。</li>
+					<li>把巴西篇的人物关系在这里理顺，再去非洲线。</li>
+					<li>睡醒后如果要扩展，这个页面可以继续做成整条主线的固定营地模板。</li>
+				</ol>
+			</section>
+		</aside>
+	</main>
+	<script src="../heroes.js"></script>
+	<script>
+		(function () {
+			const store = window.WarHeroes;
+			const state = store && store.loadPlayerState ? store.loadPlayerState() : null;
+			const level = state && state.jeanneLevel ? state.jeanneLevel : 1;
+			const xp = state && typeof state.jeanneTotalXp === "number" ? state.jeanneTotalXp : 0;
+			const farm = state && state.jeanneFarmLevel ? state.jeanneFarmLevel : 0;
+			const hp = state && state.jeanneHpSkillLevel ? state.jeanneHpSkillLevel : 0;
+			document.getElementById("restLevel").textContent = "Level " + level;
+			document.getElementById("restXp").textContent = String(xp);
+			document.getElementById("restFarm").textContent = "+" + (farm * 5) + "%";
+			document.getElementById("restHp").textContent = "+" + (hp * 10);
+		}());
+	</script>
+</body>
+</html>

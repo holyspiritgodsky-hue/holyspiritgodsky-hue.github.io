@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>贞德：逆转时空 - 皮卡第</title>
+	<link rel="stylesheet" href="campaign.css" />
+</head>
+<body data-stage="picardy">
+	<canvas id="game"></canvas>
+
+	<header class="hud">
+		<div class="hudBadge">贞德：逆转时空</div>
+		<h1 id="chapterTitle">第3关 皮卡第</h1>
+		<p id="chapterSubtitle">加冕之后，背叛合围</p>
+		<div class="hudMeta">
+			<span id="objectiveText">掩护前锋推进，守住皮卡第阵线</span>
+			<span id="playerHpText">贞德 260 / 260</span>
+			<span id="stageInfoText">忠诚者 0 / 0</span>
+		</div>
+	</header>
+
+	<div class="actions">
+		<button id="skillBtn" type="button">Q 为了自由！</button>
+		<button id="pauseBtn" type="button">空格暂停</button>
+		<button id="storyBtn" type="button">查看剧情</button>
+	</div>
+
+	<div id="dialog" class="overlay">
+		<div class="panel">
+			<div id="dialogTitle" class="panelTitle"></div>
+			<div id="dialogText" class="panelText"></div>
+			<div class="panelActions">
+				<button id="dialogBtn" type="button">迎战</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="result" class="overlay hidden">
+		<div class="panel resultPanel">
+			<div id="resultTitle" class="panelTitle"></div>
+			<div id="resultText" class="panelText"></div>
+			<div class="panelActions">
+				<a id="nextStageBtn" class="primaryBtn" href="england.html">押往英格兰</a>
+				<a class="ghostBtn" href="picardy.html">重新开始</a>
+			</div>
+		</div>
+	</div>
+
+	<nav class="chapterNav" aria-label="章节导航">
+		<a href="index.html" data-stage-link="orleans">奥尔良</a>
+		<a href="reims.html" data-stage-link="reims">兰斯</a>
+		<a href="tavern.html" data-stage-link="tavern">兰斯酒馆</a>
+		<a href="picardy.html" data-stage-link="picardy">皮卡第</a>
+		<a href="england.html" data-stage-link="england">英格兰火刑</a>
+		<a href="rouen.html" data-stage-link="rouen">英格兰地牢</a>
+		<a href="spain.html" data-stage-link="spain">西班牙</a>
+		<a href="portugal.html" data-stage-link="portugal">葡萄牙</a>
+		<a href="brazilCoast.html" data-stage-link="brazilCoast">巴西海岸</a>
+		<a href="brazilJungle.html" data-stage-link="brazilJungle">巴西雨林</a>
+		<a href="brazilRise.html" data-stage-link="brazilRise">巴西起势</a>
+	</nav>
+
+
+	<script src="../heroes.js"></script>
+	<script src="campaign.js"></script>
+</body>
+</html>

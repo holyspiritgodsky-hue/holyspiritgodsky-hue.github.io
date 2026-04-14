@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>贞德：逆转时空 - 酒馆休整</title>
+	<link rel="stylesheet" href="campaign.css" />
+</head>
+<body class="restPage tavernPage" data-stage="tavern">
+	<main class="restShell">
+		<section class="restHero">
+				<div class="restIntro">
+					<p id="pageEyebrow" class="restEyebrow"></p>
+					<h1 id="pageTitle" class="restTitle"></h1>
+					<p id="pageLead" class="restLead"></p>
+					<div class="restActions">
+						<button id="recruitBtn" class="primaryBtn" type="button"></button>
+						<a id="nextStageBtn" class="ghostBtn" href="picardy.html"></a>
+					</div>
+				</div>
+
+			<section class="tavernScene" aria-label="酒馆休整场景">
+				<div class="tavernGlow"></div>
+				<div id="sceneBanner" class="tavernBanner"></div>
+				<div class="tavernTable">
+					<div id="mugStrip" class="tavernMugStrip"></div>
+				</div>
+				<div id="sceneCast" class="tavernCast"></div>
+			</section>
+
+				<div id="cardsGrid" class="restGrid"></div>
+		</section>
+
+		<aside class="restSidebar">
+			<section class="restPanel">
+				<h2 id="statsTitle"></h2>
+				<div class="restStat"><span class="restStatLabel">贞德等级</span><span id="restLevel" class="restStatValue">-</span></div>
+				<div class="restStat"><span class="restStatLabel">当前经验</span><span id="restXp" class="restStatValue">-</span></div>
+				<div class="restStat"><span class="restStatLabel">已入队英雄</span><span id="heroCount" class="restStatValue">-</span></div>
+				<div class="restStat"><span id="recruitStatusLabel" class="restStatLabel"></span><span id="recruitStatus" class="restStatValue">待招募</span></div>
+			</section>
+			<section class="restPanel">
+				<h2 id="planTitle"></h2>
+				<ol id="planList" class="restList"></ol>
+			</section>
+		</aside>
+	</main>
+
+	<nav class="chapterNav" aria-label="章节导航">
+		<a href="index.html" data-stage-link="orleans">奥尔良</a>
+		<a href="reims.html" data-stage-link="reims">兰斯</a>
+		<a href="tavern.html" data-stage-link="tavern">兰斯酒馆</a>
+		<a href="picardy.html" data-stage-link="picardy">皮卡第</a>
+		<a href="england.html" data-stage-link="england">英格兰火刑</a>
+		<a href="rouen.html" data-stage-link="rouen">英格兰地牢</a>
+		<a href="spain.html" data-stage-link="spain">西班牙</a>
+		<a href="portugal.html" data-stage-link="portugal">葡萄牙</a>
+		<a href="brazilCoast.html" data-stage-link="brazilCoast">巴西海岸</a>
+		<a href="brazilJungle.html" data-stage-link="brazilJungle">巴西雨林</a>
+		<a href="brazilRise.html" data-stage-link="brazilRise">巴西起势</a>
+		<a href="mali.html" data-stage-link="mali">马里</a>
+	</nav>
+
+	<div id="interludeDialog" class="overlay hidden">
+		<div class="panel">
+			<div id="interludeDialogTitle" class="panelTitle"></div>
+			<div id="interludeDialogText" class="panelText"></div>
+			<div class="panelActions">
+				<button id="interludeDialogBtn" type="button">继续</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="../heroes.js"></script>
+	<script>
+		window.CampaignInterludeConfig = {
+			stageId: "tavern",
+			pageTitle: "贞德：逆转时空 - 兰斯酒馆",
+			eyebrow: "休整夜",
+			title: "兰斯酒馆",
+			lead: [
+				"加冕后的这一夜，队伍终于能坐下来喘口气。",
+				"先把人心和队形稳住，再带着兰斯洛特出发去皮卡第。"
+			],
+			banner: "今夜免战",
+			nextHref: "picardy.html",
+			nextLabel: "前往皮卡第",
+			statsTitle: "队伍状态",
+			planTitle: "今夜安排",
+			mugCount: 3,
+			recruitHero: {
+				id: "lancelot",
+				name: "兰斯洛特",
+				recruitLabel: "免费招募兰斯洛特",
+				joinedLabel: "兰斯洛特已入队",
+				pendingStatus: "待招募",
+				joinedStatus: "已入队",
+				flavor: [
+					"传奇骑士愿意免费加入。",
+					"这次不收金币，只认你有没有胆量继续往前走。"
+				],
+				joinedFlavor: [
+					"兰斯洛特已经答应同行。",
+					"酒喝完就起身，下一站直接跟你去皮卡第。"
+				],
+				dialog: [
+					"我不是来领赏的。",
+					"你若继续向前，我这把剑今晚就算你的。"
+				],
+				joinedDialogue: [
+					"从现在起，我跟你一起走。",
+					"到皮卡第若真有埋伏，我会先替你劈开第一道口子。"
+				]
+			},
+			figures: [
+				{ name: "贞德", variant: "heroFigure jeanneSprite", slot: "left", image: "../img/zd.png", dialogueTitle: "贞德", dialogue: ["今晚先让大家坐下。", "明天到了皮卡第，再把剑重新举起来。"] },
+				{ name: "前锋小兵", variant: "soldierFigure", slot: "leftMid", dialogueTitle: "前锋小兵", dialogue: ["总算能把靴子烤干了。", "希望皮卡第那边别又是一夜急行军。"] },
+				{ name: "兰斯洛特", variant: "knightFigure", slot: "center", heroId: "lancelot", dialogueTitle: "兰斯洛特" },
+				{ name: "酒吧小妹", variant: "barmaidFigure", slot: "topCenter", image: "../img/6.gif", dialogueTitle: "酒吧小妹", dialogue: ["今晚我替你们看着酒桶。", "能跳舞的时候就先跳，等明天上路可没人替你们轻松。"] },
+				{ name: "后队小兵", variant: "soldierFigure", slot: "right", dialogueTitle: "后队小兵", dialogue: ["酒还能再添，盔甲我可不想现在就穿回去。", "但只要你一声令下，我们还是会跟上。"] },
+				{ name: "查理阵营军官", variant: "heroFigure", slot: "rearRight", dialogueTitle: "军官", dialogue: ["加冕是成了，可朝里那帮人未必都高兴。", "这杯喝完，最好别把皮卡第想得太轻。"] }
+			],
+			cards: [
+				{ title: "今夜气氛", text: ["这不是庆功会，只是战前短暂的安静。", "坐下来喝一杯，是为了明天还能一起上路。"] },
+				{ title: "兰斯洛特", recruitCard: true },
+				{ title: "接下来", text: ["皮卡第不会像兰斯这样顺。", "下一关开始，真正麻烦的是背后的局势。"] }
+			],
+			planItems: [
+				"先把兰斯洛特招进队伍。",
+				"点场景里的角色，可以听到他们今夜的对话。",
+				"准备好后，直接前往皮卡第。"
+			]
+		};
+	</script>
+	<script src="interlude.js"></script>
+</body>
+</html>

@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>南美海岸</title>
+  <style>
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Microsoft YaHei", sans-serif;
+      background: radial-gradient(circle at 74% 20%, #2f7f6a, #153226 60%);
+      color: #ebfff6;
+      user-select: none;
+    }
+
+    #game {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      touch-action: none;
+      cursor: crosshair;
+    }
+
+    #miniWrap {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      z-index: 3;
+      width: 220px;
+      height: 146px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      background: rgba(10, 12, 10, 0.6);
+      overflow: hidden;
+    }
+
+    #mini {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: pointer;
+    }
+
+    #waveInfo {
+      position: fixed;
+      left: 12px;
+      top: 54px;
+      z-index: 4;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(8, 16, 24, 0.62);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      pointer-events: none;
+    }
+
+    #storyModal {
+      display: none;
+      position: fixed;
+      left: 50%;
+      bottom: 20px;
+      transform: translateX(-50%);
+      z-index: 12;
+      width: min(760px, 94vw);
+      background: rgba(15, 12, 10, 0.95);
+      border: 1px solid rgba(255, 200, 156, 0.58);
+      border-radius: 10px;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.58);
+      padding: 12px;
+    }
+
+    #storyTitle {
+      font-weight: 700;
+      font-size: 13px;
+      color: #ffd39d;
+      margin-bottom: 6px;
+    }
+
+    #storyText {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #f9efe1;
+      white-space: pre-line;
+    }
+
+    #storyActions {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    #storyNextBtn,
+    #storyChoiceA,
+    #storyChoiceB,
+    #storyCloseBtn {
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff4f0;
+      cursor: pointer;
+    }
+
+    #storyNextBtn { background: rgba(130, 82, 35, 0.9); }
+    #storyChoiceA { background: rgba(34, 93, 80, 0.9); display: none; }
+    #storyChoiceB { background: rgba(116, 45, 45, 0.9); display: none; }
+    #storyCloseBtn { background: rgba(56, 56, 56, 0.9); display: none; }
+  </style>
+</head>
+<body>
+  <a id="cardsBtn" class="sense-panel-btn" href="hero-cards.html">英雄展示</a>
+  <a id="labBtn" class="sense-panel-btn" href="https://gameart.top">首页</a>
+  <button id="backBtn" class="sense-panel-btn" type="button">返回中原</button>
+  <canvas id="game"></canvas>
+  <div id="waveInfo">南美海岸：前往庄园触发阿尼塔与加里波第事件</div>
+  <div id="storyModal">
+    <div id="storyTitle">阿尼塔</div>
+    <div id="storyText"></div>
+    <div id="storyActions">
+      <button id="storyNextBtn" type="button">继续</button>
+      <button id="storyChoiceA" type="button">劝阿尼塔离开火线</button>
+      <button id="storyChoiceB" type="button">支持加里波第复仇</button>
+      <button id="storyCloseBtn" type="button">关闭</button>
+    </div>
+  </div>
+  <div id="miniWrap"><canvas id="mini"></canvas></div>
+
+  <script src="heroes.js"></script>
+  <script src="sense.js"></script>
+  <script>
+    const RETURN_POINT_KEY = "warReturnPoint";
+    const GOLD_STORE_KEY = "warSharedGold";
+
+    const heroStore = window.WarHeroes;
+    const runtime = heroStore && heroStore.detailRuntime ? heroStore.detailRuntime : null;
+    const renderStd = window.WarSense || null;
+
+    const sharedUI = window.WarSense
+      ? window.WarSense.initSharedUI({ addPauseMusic: true, rightStart: 14, top: 14, miniWrapId: "miniWrap" })
+      : { isPaused: () => false, drawPauseOverlay: () => {} };
+
+    function applyTopPanelLayout() {
+      if (!window.WarSense || !window.WarSense.layoutTopPanelButtons) return;
+      const compact = window.matchMedia("(max-width: 900px),(pointer: coarse)").matches;
+      window.WarSense.layoutTopPanelButtons({
+        ids: ["pauseBtn", "musicBtn", "backBtn", "labBtn", "cardsBtn"],
+        rightStart: compact ? 8 : 14,
+        top: compact ? 8 : 14,
+        gap: compact ? 6 : 8,
+        compact
+      });
+    }
+    applyTopPanelLayout();
+
+    function loadSharedGold() {
+      const raw = localStorage.getItem(GOLD_STORE_KEY) || sessionStorage.getItem(GOLD_STORE_KEY);
+      const val = Number(raw);
+      return Number.isFinite(val) ? Math.max(0, val) : 5000;
+    }
+
+    function saveSharedGold(v) {
+      const safe = Math.max(0, Math.floor(Number.isFinite(v) ? v : 0));
+      localStorage.setItem(GOLD_STORE_KEY, String(safe));
+      sessionStorage.setItem(GOLD_STORE_KEY, String(safe));
+    }
+
+    function loadHeroFlags() {
+      if (!heroStore) {
+        return {
+          zhugeliang: false,
+          lancelot: false,
+          sanada: false,
+          sunshangxiang: false,
+          daqiao: false,
+          xiaoqiao: false,
+          elizabeth: false
+        };
+      }
+      return heroStore.loadFlags();
+    }
+
+    function saveHeroFlags(patch) {
+      if (!heroStore) return;
+      heroStore.saveFlags(patch || {});
+    }
+
+    function syncHeroFlags() {
+      if (heroStore) heroStore.syncFlags();
+    }
+
+    function syncPlayerState() {
+      if (heroStore && heroStore.syncPlayerState) heroStore.syncPlayerState();
+    }
+
+    function saveAndReturn() {
+      syncHeroFlags();
+      syncPlayerState();
+      saveSharedGold(playerGold);
+      const marker = JSON.stringify({ point: "oceanShipyard", from: "south" });
+      localStorage.setItem(RETURN_POINT_KEY, marker);
+      sessionStorage.setItem(RETURN_POINT_KEY, marker);
+      window.location.href = "index.html";
+    }
+
+    document.getElementById("backBtn").addEventListener("click", (e) => {
+      e.preventDefault();
+      saveAndReturn();
+    });
+
+    window.addEventListener("beforeunload", () => {
+      syncHeroFlags();
+      syncPlayerState();
+      saveSharedGold(playerGold);
+    });
+
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    const mini = document.getElementById("mini");
+    const miniCtx = mini.getContext("2d");
+
+    const waveInfo = document.getElementById("waveInfo");
+    const storyModal = document.getElementById("storyModal");
+    const storyTitle = document.getElementById("storyTitle");
+    const storyText = document.getElementById("storyText");
+    const storyNextBtn = document.getElementById("storyNextBtn");
+    const storyChoiceA = document.getElementById("storyChoiceA");
+    const storyChoiceB = document.getElementById("storyChoiceB");
+    const storyCloseBtn = document.getElementById("storyCloseBtn");
+
+    const world = { w: 2200, h: 1400 };
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+    const player = (heroStore && heroStore.createMainPlayer)
+      ? heroStore.createMainPlayer(1760, 900, { radius: 11, r: 11, speed: 215, target: { x: 1760, y: 900 } })
+      : {
+          heroId: "playerMain",
+          name: "张飞",
+          x: 1760,
+          y: 900,
+          radius: 11,
+          r: 11,
+          speed: 215,
+          dir: Math.PI,
+          hp: 460,
+          maxHp: 460,
+          attackCd: 0,
+          target: { x: 1760, y: 900 },
+          body: "#c49a58",
+          head: "#efdba0",
+          accent: "#f3e8b8",
+          skill: { key: "saber", damage: 38, cooldown: 0.34, range: 42 }
+        };
+
+    let playerGold = loadSharedGold();
+
+    const allies = [];
+    const enemies = [];
+    const skillFx = [];
+    const allyProjectiles = [];
+    const goldPopups = [];
+
+    const camera = { x: 0, y: 0 };
+    const moveInput = { up: false, down: false, left: false, right: false };
+    const moveTarget = { active: false, x: player.x, y: player.y };
+
+    const coastline = [
+      { x: 220, y: 220, w: 560, h: 320 },
+      { x: 360, y: 520, w: 700, h: 420 },
+      { x: 980, y: 420, w: 420, h: 360 },
+      { x: 1280, y: 680, w: 520, h: 320 }
+    ];
+
+    const hacienda = { x: 760, y: 640, r: 58, name: "红衫庄园" };
+    const dock = { x: 1720, y: 920, r: 66, name: "远洋码头" };
+
+    const anitaNpc = {
+      x: hacienda.x - 36,
+      y: hacienda.y + 28,
+      heroId: "anita",
+      name: "阿尼塔",
+      body: "#8b2f24",
+      head: "#f0c9a2",
+      accent: "#f6dd97",
+      hp: 320,
+      maxHp: 320,
+      speed: 0,
+      attackCd: 0,
+      dir: 0,
+      radius: 11,
+      dead: false
+    };
+
+    const garibaldiNpc = {
+      x: hacienda.x + 40,
+      y: hacienda.y + 24,
+      heroId: "garibaldi",
+      name: "加里波第",
+      body: "#8a3327",
+      head: "#e6c39d",
+      accent: "#f8df9a",
+      hp: 360,
+      maxHp: 360,
+      speed: 0,
+      attackCd: 0,
+      dir: Math.PI,
+      radius: 11,
+      dead: false
+    };
+
+    const storyState = {
+      started: false,
+      finished: false,
+      step: 0,
+      choice: "",
+      open: false
+    };
+    let isReturningToCentral = false;
+
+    const storyLines = [
+      {
+        title: "阿尼塔",
+        text: "你终于来了。加里波第说他只剩复仇，而我只剩海图。\n可他昨夜把我旧情书锁进军火箱，还说要用炮火把过去烧干净。"
+      },
+      {
+        title: "加里波第",
+        text: "我不是怕失去你，我是怕你再为了旧爱回头。\n可你偏偏要在开战前夜，带着另一枚戒指站在我面前。"
+      },
+      {
+        title: "阿尼塔",
+        text: "那不是情人的戒指，是我弟弟的遗物！\n你却当众撕了婚约，把我推到甲板边，所有人都在看这场闹剧。"
+      },
+      {
+        title: "旁白",
+        text: "风暴压港，红衫军和护航队互相拔刀。\n你必须做个决定，这场狗血三角要么止血，要么炸裂。"
+      }
+    ];
+
+    function openStory() {
+      storyState.open = true;
+      storyModal.style.display = "block";
+      storyState.step = 0;
+      applyStoryStep();
+    }
+
+    function closeStory() {
+      storyState.open = false;
+      storyModal.style.display = "none";
+      moveTarget.x = player.x;
+      moveTarget.y = player.y;
+    }
+
+    function applyStoryStep() {
+      const line = storyLines[storyState.step];
+      storyTitle.textContent = line.title;
+      storyText.textContent = line.text;
+      const atChoice = storyState.step >= storyLines.length - 1;
+      storyNextBtn.style.display = atChoice ? "none" : "inline-flex";
+      storyChoiceA.style.display = atChoice ? "inline-flex" : "none";
+      storyChoiceB.style.display = atChoice ? "inline-flex" : "none";
+      storyCloseBtn.style.display = "none";
+    }
+
+    function finishStory(choice) {
+      storyState.choice = choice;
+      storyState.finished = true;
+      storyTitle.textContent = "结局";
+      if (choice === "calm") {
+        storyText.textContent = "你按住加里波第的枪，逼他当众道歉。阿尼塔把戒指抛进海里，换来短暂停火。\n她留下了三箱补给和一封没署名的信：\n“别让爱情再当引线。”\n获得 800 金，敌军减少。";
+        playerGold += 800;
+        saveSharedGold(playerGold);
+      } else {
+        storyText.textContent = "你选择支持加里波第复仇。阿尼塔冷笑离场，临走前放火点燃了旧码头。\n她说：\n“你们爱的是战旗，不是彼此。”\n敌军会更多，但会掉落额外战利金。";
+      }
+
+      const waveCount = choice === "calm" ? 6 : 11;
+      enemies.length = 0;
+      for (let i = 0; i < waveCount; i += 1) {
+        enemies.push({
+          x: hacienda.x + rand(-180, 180),
+          y: hacienda.y + rand(-160, 160),
+          r: 8,
+          hp: 120,
+          maxHp: 120,
+          speed: 132,
+          dir: 0,
+          attackCd: 0,
+          dead: false
+        });
+      }
+
+      storyNextBtn.style.display = "none";
+      storyChoiceA.style.display = "none";
+      storyChoiceB.style.display = "none";
+      storyCloseBtn.style.display = "inline-flex";
+      waveInfo.textContent = choice === "calm"
+        ? "你平息了狗血风暴：清剿残敌并护送补给"
+        : "你放任了狗血爆炸：击溃暴走军团";
+    }
+
+    storyNextBtn.addEventListener("click", () => {
+      storyState.step += 1;
+      applyStoryStep();
+    });
+
+    storyChoiceA.addEventListener("click", () => finishStory("calm"));
+    storyChoiceB.addEventListener("click", () => finishStory("rage"));
+    storyCloseBtn.addEventListener("click", () => closeStory());
+
+    function makeSharedHero(heroId, x, y, fallback) {
+      if (heroStore && heroStore.createCompanion) {
+        const h = heroStore.createCompanion(heroId, x, y, fallback || {});
+        if (h) {
+          h.r = h.r || h.radius || 8;
+          return h;
+        }
+      }
+      return Object.assign({ heroId, x, y, r: 8, dead: false, attackCd: 0 }, fallback || {});
+    }
+
+    function loadAlliesByFlags() {
+      const flags = loadHeroFlags();
+      if (heroStore && Array.isArray(heroStore.HERO_IDS)) {
+        let idx = 0;
+        for (const id of heroStore.HERO_IDS) {
+          if (!flags[id]) continue;
+          const offsetX = -36 - (idx % 4) * 22 - Math.floor(idx / 4) * 12;
+          const offsetY = 18 + ((idx % 2) ? -16 : 14) + Math.floor(idx / 4) * 6;
+          const ally = makeSharedHero(id, player.x + offsetX, player.y + offsetY);
+          allies.push(ally);
+          idx += 1;
+        }
+        return;
+      }
+
+      const ids = ["zhugeliang", "lancelot", "sanada", "sunshangxiang", "daqiao", "xiaoqiao", "elizabeth"];
+      let idx = 0;
+      for (const id of ids) {
+        if (!flags[id]) continue;
+        const offsetX = -36 - (idx % 4) * 22 - Math.floor(idx / 4) * 12;
+        const offsetY = 18 + ((idx % 2) ? -16 : 14) + Math.floor(idx / 4) * 6;
+        allies.push(makeSharedHero(id, player.x + offsetX, player.y + offsetY));
+        idx += 1;
+      }
+    }
+
+    loadAlliesByFlags();
+
+    function nearestEnemy(from, range) {
+      let best = null;
+      let bestD = Infinity;
+      for (const e of enemies) {
+        if (e.dead) continue;
+        const d = dist(from, e);
+        if (d < bestD && (range === undefined || d < range)) {
+          best = e;
+          bestD = d;
+        }
+      }
+      return { target: best, d: bestD };
+    }
+
+    function nearestHeroTarget(from) {
+      let best = null;
+      let bestD = Infinity;
+      if (!player.dead) {
+        const d = dist(from, player);
+        if (d < bestD) {
+          best = player;
+          bestD = d;
+        }
+      }
+      for (const a of allies) {
+        if (a.dead) continue;
+        const d = dist(from, a);
+        if (d < bestD) {
+          best = a;
+          bestD = d;
+        }
+      }
+      return { target: best, d: bestD };
+    }
+
+    function moveToward(e, tx, ty, speed, dt) {
+      const dx = tx - e.x;
+      const dy = ty - e.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 0.001) return;
+      e.dir = Math.atan2(dy, dx);
+      const step = Math.min(d, speed * dt);
+      e.x += (dx / d) * step;
+      e.y += (dy / d) * step;
+    }
+
+    function createLightningFx(x1, y1, x2, y2) {
+      const segs = [];
+      segs.push({ x: x1, y: y1 });
+      for (let i = 1; i < 7; i += 1) {
+        const t = i / 7;
+        segs.push({
+          x: x1 + (x2 - x1) * t + (Math.random() - 0.5) * 40,
+          y: y1 + (y2 - y1) * t
+        });
+      }
+      segs.push({ x: x2, y: y2 });
+      return { type: "lightning", segs, life: 1, tx: x2, ty: y2, splashR: 46 };
+    }
+
+    function applySkillHit(attacker, target) {
+      if (!target) return;
+      const sk = attacker.skill || { damage: 30, cooldown: 0.5, key: "slash" };
+      target.hp -= sk.damage || 30;
+      if (sk.key === "lightning") {
+        skillFx.push(createLightningFx(attacker.x, attacker.y - 5, target.x, target.y - 6));
+      } else {
+        skillFx.push({ type: "ring", x: target.x, y: target.y, r: 10, life: 0.14 });
+      }
+    }
+
+    function fireArrow(hero, target, damage) {
+      if (!hero || !target || target.dead) return;
+      const angle = Math.atan2(target.y - hero.y, target.x - hero.x);
+      const spd = 520;
+      allyProjectiles.push({
+        x: hero.x + Math.cos(angle) * 10,
+        y: hero.y + Math.sin(angle) * 10,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        life: 0.85,
+        damage: damage || 36
+      });
+    }
+
+    function updateProjectiles(dt) {
+      for (let i = allyProjectiles.length - 1; i >= 0; i -= 1) {
+        const p = allyProjectiles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        let hit = false;
+        for (const e of enemies) {
+          if (e.dead) continue;
+          if (Math.hypot(p.x - e.x, p.y - e.y) < (e.r || 8) + 6) {
+            e.hp -= p.damage;
+            hit = true;
+            break;
+          }
+        }
+        if (hit || p.life <= 0) allyProjectiles.splice(i, 1);
+      }
+    }
+
+    function applyCrowdCollision(groupA, groupB, sameGroup) {
+      for (let i = 0; i < groupA.length; i += 1) {
+        const a = groupA[i];
+        if (!a || a.dead) continue;
+        const jStart = sameGroup ? i + 1 : 0;
+        for (let j = jStart; j < groupB.length; j += 1) {
+          const b = groupB[j];
+          if (!b || b.dead) continue;
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const d = Math.hypot(dx, dy) || 0.001;
+          const ar = a.radius || a.r || 7;
+          const br = b.radius || b.r || 7;
+          const minDist = ar + br + 2;
+          if (d >= minDist) continue;
+          const overlap = minDist - d;
+          const nx = dx / d;
+          const ny = dy / d;
+          a.x -= nx * overlap * 0.55;
+          a.y -= ny * overlap * 0.55;
+          b.x += nx * overlap * 0.55;
+          b.y += ny * overlap * 0.55;
+        }
+      }
+    }
+
+    function updateAllies(dt) {
+      for (const a of allies) {
+        if (a.dead || a.hp <= 0) {
+          a.dead = true;
+          continue;
+        }
+
+        if (runtime && runtime.updateCompanion) {
+          runtime.updateCompanion({
+            hero: a,
+            dt,
+            player,
+            enemyUnits: enemies,
+            enemyLeaders: [],
+            dist,
+            moveToward,
+            nearestEnemy,
+            createLightningFx,
+            skillFx,
+            fireArrow,
+            onGoldTick: function (amount, x, y) {
+              playerGold += amount;
+              saveSharedGold(playerGold);
+              goldPopups.push({ x, y, text: "+" + amount, color: "#f2d66f", life: 1.1 });
+            },
+            healTargets: function () {
+              return [player].concat(allies).filter((h) => h && !h.dead);
+            },
+            onHealFx: function (healer, target) {
+              healer.healPulse = Math.max(healer.healPulse || 0, 0.22);
+              target.hitFlash = Math.max(target.hitFlash || 0, 0.35);
+            },
+            applySkillHit
+          });
+        } else {
+          const followD = 72;
+          const d = dist(a, player);
+          if (d > followD) moveToward(a, player.x, player.y, (a.speed || 200) * 0.92, dt);
+        }
+
+        a.x = clamp(a.x, a.r || 8, world.w - (a.r || 8));
+        a.y = clamp(a.y, a.r || 8, world.h - (a.r || 8));
+      }
+    }
+
+    function updateEnemies(dt) {
+      for (const e of enemies) {
+        if (e.dead || e.hp <= 0) {
+          e.dead = true;
+          continue;
+        }
+        e.attackCd = Math.max(0, e.attackCd - dt);
+        const t = nearestHeroTarget(e);
+        if (!t.target) continue;
+        if (t.d > 24) {
+          moveToward(e, t.target.x, t.target.y, e.speed, dt);
+        } else if (e.attackCd <= 0) {
+          e.attackCd = 0.66;
+          t.target.hp -= 12;
+          t.target.hitFlash = Math.max(t.target.hitFlash || 0, 0.45);
+        }
+      }
+    }
+
+    function updatePlayer(dt) {
+      player.attackCd = Math.max(0, (player.attackCd || 0) - dt);
+      player.hitFlash = Math.max(0, (player.hitFlash || 0) - dt * 1.5);
+      const mx = (moveInput.right ? 1 : 0) - (moveInput.left ? 1 : 0);
+      const my = (moveInput.down ? 1 : 0) - (moveInput.up ? 1 : 0);
+      if (!storyState.open && (mx || my)) {
+        const d = Math.hypot(mx, my) || 1;
+        player.x += (mx / d) * player.speed * dt;
+        player.y += (my / d) * player.speed * dt;
+        player.dir = Math.atan2(my / d, mx / d);
+        moveTarget.x = player.x;
+        moveTarget.y = player.y;
+      } else if (!storyState.open) {
+        moveToward(player, moveTarget.x, moveTarget.y, player.speed, dt);
+      }
+
+      player.x = clamp(player.x, player.r || 11, world.w - (player.r || 11));
+      player.y = clamp(player.y, player.r || 11, world.h - (player.r || 11));
+
+      const ne = nearestEnemy(player, (player.skill && player.skill.range) || 42);
+      if (!storyState.open && ne.target && ne.d < ((player.skill && player.skill.range) || 42) && player.attackCd <= 0) {
+        player.attackCd = (player.skill && player.skill.cooldown) || 0.34;
+        applySkillHit(player, ne.target);
+      }
+    }
+
+    function updateStory() {
+      if (storyState.finished || storyState.open) return;
+      const near = dist(player, hacienda) < hacienda.r + 66;
+      if (near && !storyState.started) {
+        storyState.started = true;
+        openStory();
+      }
+    }
+
+    function checkDockReturn() {
+      if (isReturningToCentral) return;
+      const dockTriggerRadius = dock.r + 10;
+      if (dist(player, dock) <= dockTriggerRadius) {
+        isReturningToCentral = true;
+        saveAndReturn();
+      }
+    }
+
+    function updateSkillFx(dt) {
+      for (let i = skillFx.length - 1; i >= 0; i -= 1) {
+        const f = skillFx[i];
+        f.life -= dt * (f.type === "lightning" ? 3.3 : 1.2);
+        if (f.life <= 0) skillFx.splice(i, 1);
+      }
+    }
+
+    function updateGoldPopups(dt) {
+      for (let i = goldPopups.length - 1; i >= 0; i -= 1) {
+        const g = goldPopups[i];
+        g.life -= dt;
+        g.y -= 20 * dt;
+        if (g.life <= 0) goldPopups.splice(i, 1);
+      }
+    }
+
+    function drawHealthBar(x, y, w, hp, maxHp, color) {
+      if (renderStd && renderStd.drawHealthBar) {
+        renderStd.drawHealthBar(ctx, x, y, w, hp, maxHp, color, "rgba(0,0,0,0.6)", 4);
+        return;
+      }
+      ctx.fillStyle = "rgba(0,0,0,0.6)";
+      ctx.fillRect(x - w / 2, y, w, 4);
+      const ratio = clamp((hp || 0) / Math.max(1, maxHp || 1), 0, 1);
+      ctx.fillStyle = color;
+      ctx.fillRect(x - w / 2 + 1, y + 1, (w - 2) * ratio, 2);
+    }
+
+    function drawHero(h, isPlayer) {
+      if (!h || h.dead) return;
+
+      if (!isPlayer && runtime) {
+        if (h.heroId === "zhugeliang" && runtime.drawZhugeliangHero) {
+          runtime.drawZhugeliangHero({ hero: h, ctx, drawHealthBar });
+          return;
+        }
+        if (h.heroId === "lancelot" && runtime.drawLancelotHero) {
+          runtime.drawLancelotHero({ hero: h, ctx, drawHealthBar });
+          return;
+        }
+        if (h.heroId === "sunshangxiang" && runtime.drawSunshangxiang) {
+          runtime.drawSunshangxiang({ hero: h, ctx, drawHealthBar, getFacing: renderStd && renderStd.getFacing ? renderStd.getFacing : null });
+          return;
+        }
+        if (h.heroId === "daqiao" && runtime.drawDaqiao) {
+          runtime.drawDaqiao({ hero: h, ctx, drawHealthBar, getFacing: renderStd && renderStd.getFacing ? renderStd.getFacing : null });
+          return;
+        }
+        if (h.heroId === "xiaoqiao" && runtime.drawXiaoqiao) {
+          runtime.drawXiaoqiao({ hero: h, ctx, drawSoldier: null, drawHealthBar });
+          return;
+        }
+        if (h.heroId === "elizabeth" && runtime.drawElizabeth) {
+          runtime.drawElizabeth({ hero: h, ctx, drawHealthBar, getFacing: renderStd && renderStd.getFacing ? renderStd.getFacing : null });
+          return;
+        }
+      }
+
+      if (renderStd && renderStd.drawUprightUnit) {
+        renderStd.drawUprightUnit(ctx, h, {
+          body: h.body || "#c49a58",
+          head: h.head || "#efdba0",
+          accent: h.accent || "#8f6d35",
+          mountBody: "#8d1d1d",
+          mountSimple: true,
+          bodyWidth: 7.2,
+          bodyHeight: 10,
+          headRadius: 3.1,
+          headY: -8.5,
+          mountW: 10,
+          mountH: 5.2
+        });
+      } else {
+        const facing = Math.cos(h.dir || 0) >= 0 ? 1 : -1;
+        ctx.save();
+        ctx.translate(h.x, h.y);
+        ctx.scale(facing, 1);
+        ctx.fillStyle = h.body || "#c49a58";
+        ctx.fillRect(-4, -8, 8, 12);
+        ctx.fillStyle = h.head || "#efdba0";
+        ctx.beginPath();
+        ctx.arc(0, -11, 4.2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      ctx.fillStyle = "rgba(245,240,226,0.96)";
+      ctx.font = "700 12px Microsoft YaHei";
+      ctx.textAlign = "center";
+      ctx.fillText(h.name || "英雄", h.x, h.y - 24);
+      drawHealthBar(h.x, h.y - 19, isPlayer ? 44 : 38, h.hp || 1, h.maxHp || 1, isPlayer ? "#ffe6a8" : "#8ed0ff");
+    }
+
+    function drawEnemy(e) {
+      if (!e || e.dead) return;
+      if (renderStd && renderStd.drawUprightUnit) {
+        renderStd.drawUprightUnit(ctx, e, {
+          body: "#cf8276",
+          head: "#efc095",
+          accent: "rgba(60,35,30,0.35)",
+          bodyWidth: 6.8,
+          bodyHeight: 9,
+          headRadius: 2.8,
+          headY: -7.6
+        });
+      } else {
+        ctx.save();
+        ctx.translate(e.x, e.y);
+        ctx.fillStyle = "#cf8276";
+        ctx.fillRect(-3.4, -4.5, 6.8, 9);
+        ctx.fillStyle = "#efc095";
+        ctx.beginPath();
+        ctx.arc(0, -7.2, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      drawHealthBar(e.x, e.y - 8, 20, e.hp, e.maxHp, "#ff9d8f");
+    }
+
+    function drawNpc(npc) {
+      drawHero(npc, false);
+    }
+
+    function drawMap() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      camera.x = clamp(player.x - canvas.width / 2, 0, world.w - canvas.width);
+      camera.y = clamp(player.y - canvas.height / 2, 0, world.h - canvas.height);
+
+      ctx.save();
+      ctx.translate(-camera.x, -camera.y);
+
+      const seaG = ctx.createLinearGradient(0, 0, world.w, world.h);
+      seaG.addColorStop(0, "#1b4c62");
+      seaG.addColorStop(1, "#11303f");
+      ctx.fillStyle = seaG;
+      ctx.fillRect(0, 0, world.w, world.h);
+
+      for (const land of coastline) {
+        ctx.fillStyle = "#7ea069";
+        ctx.fillRect(land.x, land.y, land.w, land.h);
+      }
+
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      ctx.beginPath();
+      ctx.ellipse(hacienda.x + 8, hacienda.y + 26, 72, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#8a6543";
+      ctx.fillRect(hacienda.x - 56, hacienda.y - 20, 112, 56);
+      ctx.fillStyle = "#5e3a25";
+      ctx.beginPath();
+      ctx.moveTo(hacienda.x - 68, hacienda.y - 20);
+      ctx.lineTo(hacienda.x, hacienda.y - 60);
+      ctx.lineTo(hacienda.x + 68, hacienda.y - 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = "#f7e7ca";
+      ctx.font = "700 13px Microsoft YaHei";
+      ctx.textAlign = "center";
+      ctx.fillText(hacienda.name, hacienda.x, hacienda.y - 72);
+
+      ctx.fillStyle = "rgba(0,0,0,0.2)";
+      ctx.beginPath();
+      ctx.ellipse(dock.x + 8, dock.y + 22, 82, 22, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#8d7448";
+      ctx.fillRect(dock.x - 70, dock.y - 16, 140, 42);
+      ctx.fillStyle = "#6d5832";
+      ctx.fillRect(dock.x - 12, dock.y - 52, 24, 36);
+      ctx.fillStyle = "#b9dcff";
+      ctx.font = "700 13px Microsoft YaHei";
+      ctx.fillText(dock.name, dock.x, dock.y - 64);
+
+      if (!storyState.finished) {
+        drawNpc(anitaNpc);
+        drawNpc(garibaldiNpc);
+      }
+
+      for (const e of enemies) drawEnemy(e);
+      for (const a of allies) drawHero(a, false);
+      drawHero(player, true);
+
+      for (const fx of skillFx) {
+        if (fx.type === "lightning") {
+          if (renderStd && renderStd.drawLightningFx) {
+            renderStd.drawLightningFx(ctx, fx);
+          } else {
+            ctx.strokeStyle = "rgba(160,220,255,0.85)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(fx.segs[0].x, fx.segs[0].y);
+            for (let i = 1; i < fx.segs.length; i += 1) ctx.lineTo(fx.segs[i].x, fx.segs[i].y);
+            ctx.stroke();
+          }
+        } else {
+          ctx.strokeStyle = `rgba(255,210,130,${Math.max(0, fx.life)})`;
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(fx.x, fx.y, fx.r + (1 - fx.life) * 10, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
+
+      for (const p of allyProjectiles) {
+        const ang = Math.atan2(p.vy, p.vx);
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(ang);
+        ctx.strokeStyle = "#f3dfb1";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-7, 0);
+        ctx.lineTo(7, 0);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      for (const g of goldPopups) {
+        ctx.globalAlpha = Math.max(0, g.life);
+        ctx.fillStyle = g.color;
+        ctx.font = "700 13px Microsoft YaHei";
+        ctx.textAlign = "center";
+        ctx.fillText(g.text, g.x, g.y);
+      }
+      ctx.globalAlpha = 1;
+
+      ctx.restore();
+    }
+
+    function drawMini() {
+      miniCtx.clearRect(0, 0, mini.width, mini.height);
+      const sx = mini.width / world.w;
+      const sy = mini.height / world.h;
+
+      miniCtx.fillStyle = "#18364c";
+      miniCtx.fillRect(0, 0, mini.width, mini.height);
+      miniCtx.fillStyle = "#6d9a57";
+      for (const land of coastline) {
+        miniCtx.fillRect(land.x * sx, land.y * sy, land.w * sx, land.h * sy);
+      }
+
+      miniCtx.fillStyle = "#f0d060";
+      miniCtx.fillRect(hacienda.x * sx - 2, hacienda.y * sy - 2, 4, 4);
+      miniCtx.fillStyle = "#9dd7ff";
+      miniCtx.fillRect(dock.x * sx - 2, dock.y * sy - 2, 4, 4);
+
+      for (const e of enemies) {
+        if (e.dead) continue;
+        miniCtx.fillStyle = "#ff8f7d";
+        miniCtx.fillRect(e.x * sx - 1.5, e.y * sy - 1.5, 3, 3);
+      }
+
+      for (const a of allies) {
+        if (a.dead) continue;
+        miniCtx.fillStyle = "#8ed0ff";
+        miniCtx.fillRect(a.x * sx - 1.5, a.y * sy - 1.5, 3, 3);
+      }
+
+      miniCtx.fillStyle = "#f3d26b";
+      miniCtx.beginPath();
+      miniCtx.arc(player.x * sx, player.y * sy, 3, 0, Math.PI * 2);
+      miniCtx.fill();
+
+      miniCtx.strokeStyle = "rgba(255,244,200,0.9)";
+      miniCtx.lineWidth = 1;
+      miniCtx.strokeRect(camera.x * sx, camera.y * sy, canvas.width * sx, canvas.height * sy);
+    }
+
+    function resize() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      const compact = window.matchMedia("(max-width: 900px),(pointer: coarse)").matches;
+      mini.width = compact ? 176 : 220;
+      mini.height = compact ? 118 : 146;
+      applyTopPanelLayout();
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+
+    window.addEventListener("keydown", (e) => {
+      const k = e.key.toLowerCase();
+      if (k === "w" || e.key === "ArrowUp") moveInput.up = true;
+      if (k === "s" || e.key === "ArrowDown") moveInput.down = true;
+      if (k === "a" || e.key === "ArrowLeft") moveInput.left = true;
+      if (k === "d" || e.key === "ArrowRight") moveInput.right = true;
+      if (k === "w" || k === "a" || k === "s" || k === "d" || e.key.startsWith("Arrow")) e.preventDefault();
+    });
+
+    window.addEventListener("keyup", (e) => {
+      const k = e.key.toLowerCase();
+      if (k === "w" || e.key === "ArrowUp") moveInput.up = false;
+      if (k === "s" || e.key === "ArrowDown") moveInput.down = false;
+      if (k === "a" || e.key === "ArrowLeft") moveInput.left = false;
+      if (k === "d" || e.key === "ArrowRight") moveInput.right = false;
+    });
+
+    window.addEventListener("blur", () => {
+      moveInput.up = false;
+      moveInput.down = false;
+      moveInput.left = false;
+      moveInput.right = false;
+    });
+
+    canvas.addEventListener("pointerdown", (e) => {
+      if (storyState.open) return;
+      if (e.button !== 0) return;
+      const rect = canvas.getBoundingClientRect();
+      moveTarget.x = clamp((e.clientX - rect.left) + camera.x, player.r || 11, world.w - (player.r || 11));
+      moveTarget.y = clamp((e.clientY - rect.top) + camera.y, player.r || 11, world.h - (player.r || 11));
+      moveTarget.active = true;
+      e.preventDefault();
+    });
+
+    let miniDrag = false;
+    mini.addEventListener("pointerdown", (e) => {
+      miniDrag = true;
+      if (mini.setPointerCapture) mini.setPointerCapture(e.pointerId);
+      const rect = mini.getBoundingClientRect();
+      moveTarget.x = clamp(((e.clientX - rect.left) / rect.width) * world.w, player.r || 11, world.w - (player.r || 11));
+      moveTarget.y = clamp(((e.clientY - rect.top) / rect.height) * world.h, player.r || 11, world.h - (player.r || 11));
+      e.preventDefault();
+    }, { passive: false });
+
+    mini.addEventListener("pointermove", (e) => {
+      if (!miniDrag) return;
+      const rect = mini.getBoundingClientRect();
+      moveTarget.x = clamp(((e.clientX - rect.left) / rect.width) * world.w, player.r || 11, world.w - (player.r || 11));
+      moveTarget.y = clamp(((e.clientY - rect.top) / rect.height) * world.h, player.r || 11, world.h - (player.r || 11));
+      e.preventDefault();
+    }, { passive: false });
+
+    mini.addEventListener("pointerup", () => {
+      miniDrag = false;
+    });
+
+    function loop(now) {
+      const dt = Math.min(0.033, (now - loop.last) / 1000);
+      loop.last = now;
+
+      if (sharedUI.isPaused()) {
+        drawMap();
+        drawMini();
+        sharedUI.drawPauseOverlay(ctx, canvas.width, canvas.height);
+        requestAnimationFrame(loop);
+        return;
+      }
+
+      updatePlayer(dt);
+      updateStory();
+      checkDockReturn();
+
+      if (storyState.finished) {
+        updateAllies(dt);
+        updateEnemies(dt);
+      } else {
+        updateAllies(dt);
+      }
+
+      const aliveAllies = allies.filter(a => a && !a.dead);
+      const aliveEnemies = enemies.filter(e => e && !e.dead);
+      applyCrowdCollision(aliveAllies, aliveAllies, true);
+      applyCrowdCollision(aliveEnemies, aliveEnemies, true);
+      applyCrowdCollision(aliveAllies, aliveEnemies, false);
+      applyCrowdCollision([player], aliveAllies, false);
+      applyCrowdCollision([player], aliveEnemies, false);
+
+      player.x = clamp(player.x, player.r || 11, world.w - (player.r || 11));
+      player.y = clamp(player.y, player.r || 11, world.h - (player.r || 11));
+
+      updateProjectiles(dt);
+      updateSkillFx(dt);
+      updateGoldPopups(dt);
+
+      drawMap();
+      drawMini();
+
+      const aliveEnemyCount = enemies.filter(e => !e.dead).length;
+      const phaseText = storyState.finished
+        ? `战斗阶段 · 敌军剩余 ${aliveEnemyCount} · 金钱 ${Math.floor(playerGold)}`
+        : "剧情阶段 · 前往红衫庄园触发狗血事件";
+      waveInfo.textContent = phaseText;
+
+      requestAnimationFrame(loop);
+    }
+
+    loop.last = performance.now();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>

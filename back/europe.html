@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>西方大陆</title>
+	<style>
+		:root {
+			--sky: #8ab0c8;
+			--text: #f3f5ef;
+		}
+		html, body {
+			margin: 0; width: 100%; height: 100%;
+			overflow: hidden;
+			font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+			background: var(--sky);
+			color: var(--text);
+			user-select: none;
+		}
+		#game { width: 100vw; height: 100vh; display: block; cursor: crosshair; touch-action: none; }
+		#miniWrap {
+			position: fixed; right: 12px; bottom: 12px; z-index: 3;
+			width: 240px; height: 160px; border-radius: 8px;
+			border: 1px solid rgba(255,255,255,0.22);
+			background: rgba(10,12,10,0.6); overflow: hidden;
+		}
+		#mini { width: 100%; height: 100%; display: block; cursor: pointer; }
+		/* ── Quest dialog ─────────────────────────────────────────────────── */
+		#questDialog {
+			display: none;
+			position: fixed; left: 50%; bottom: 80px;
+			transform: translateX(-50%);
+			z-index: 10;
+			width: min(560px, 92vw);
+			background: rgba(12,10,6,0.93);
+			border: 1.5px solid rgba(200,185,130,0.6);
+			border-radius: 10px;
+			padding: 14px 20px 12px 20px;
+			box-shadow: 0 4px 28px rgba(0,0,0,0.7);
+			pointer-events: none;
+		}
+		#questDialog .qdSpeaker {
+			font-size: 13px; font-weight: 700;
+			color: #e8c86a; margin-bottom: 4px; letter-spacing: 1px;
+		}
+		#questDialog .qdText {
+			font-size: 13px; color: #f0e8d0; line-height: 1.6;
+		}
+		#questDialog .qdHint {
+			font-size: 11px; color: rgba(200,190,160,0.55);
+			margin-top: 6px; text-align: right;
+		}
+		/* ── Quest tracker ────────────────────────────────────────────────── */
+		#questTracker {
+			display: none;
+			position: fixed; left: 14px; top: 60px; z-index: 5;
+			background: rgba(0,0,0,0.55);
+			border: 1px solid rgba(200,180,100,0.35);
+			border-radius: 7px; padding: 7px 13px;
+			font-size: 12px; color: #e8d8a0; min-width: 180px;
+			pointer-events: none;
+		}
+		#questTracker .qtTitle { font-weight: 700; font-size: 12px; color: #f0d060; margin-bottom: 3px; }
+		#londonTavernDialog {
+			display: none;
+			position: fixed;
+			z-index: 12;
+			left: 50%;
+			bottom: 72px;
+			transform: translateX(-50%);
+			width: min(360px, 92vw);
+			padding: 12px;
+			border-radius: 11px;
+			background: rgba(18, 16, 22, 0.94);
+			border: 1px solid rgba(165, 198, 255, 0.55);
+			box-shadow: 0 12px 30px rgba(0, 0, 0, 0.55);
+		}
+		#londonTavernTitle {
+			font-size: 13px;
+			font-weight: 700;
+			color: #c9dcff;
+			margin-bottom: 6px;
+		}
+		#londonTavernText {
+			font-size: 12px;
+			line-height: 1.45;
+			color: #edf4ff;
+			margin-bottom: 9px;
+		}
+		#londonTavernActions {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 7px;
+		}
+		#recruitElizabethBtn,
+		#closeLondonTavernBtn {
+			height: 32px;
+			border-radius: 8px;
+			border: 1px solid rgba(255,255,255,0.28);
+			font-size: 12px;
+			font-weight: 700;
+			cursor: pointer;
+			color: #f2f8ff;
+		}
+		#recruitElizabethBtn { background: rgba(52, 78, 132, 0.9); }
+		#closeLondonTavernBtn { background: rgba(54, 56, 66, 0.88); }
+		#titleBar {
+			position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+			z-index: 4; background: rgba(0,0,0,0.45);
+			padding: 6px 22px; border-radius: 8px;
+			font-size: 15px; font-weight: 700; color: #e8d8b0;
+			letter-spacing: 2px;
+		}
+	</style>
+</head>
+<body>
+	<div id="titleBar">⚔ 西方大陆 — 欧洲战场</div>
+	<a id="cardsBtn" class="sense-panel-btn" href="hero-cards.html">英雄展示</a>
+	<a id="labBtn" class="sense-panel-btn" href="https://gameart.top">首页</a>
+	<button id="backBtn" class="sense-panel-btn" type="button" onclick="saveAndReturn()">返回中原</button>
+	<div id="questDialog">
+		<div class="qdSpeaker" id="qdSpeaker"></div>
+		<div class="qdText" id="qdText"></div>
+		<div class="qdHint">（靠近继续…）</div>
+	</div>
+	<div id="questTracker">
+		<div class="qtTitle">📜 当前任务</div>
+		<div id="qtDesc">-</div>
+	</div>
+	<div id="londonTavernDialog">
+		<div id="londonTavernTitle">伦敦王室会馆</div>
+		<div id="londonTavernText">可招募伊丽莎白（-1500金），她不会攻击，但会持续治疗周围英雄。</div>
+		<div id="londonTavernActions">
+			<button id="recruitElizabethBtn" type="button">招募伊丽莎白（-1500金）</button>
+			<button id="closeLondonTavernBtn" type="button">暂不招募</button>
+		</div>
+	</div>
+	<canvas id="game"></canvas>
+	<div id="miniWrap"><canvas id="mini"></canvas></div>
+
+	<script src="heroes.js"></script>
+	<script src="sense.js"></script>
+	<script>
+	const canvas = document.getElementById("game");
+	const ctx = canvas.getContext("2d");
+	const mini = document.getElementById("mini");
+	const miniCtx = mini.getContext("2d");
+	const renderStd = window.WarSense || null;
+	const sharedUI = window.WarSense
+		? window.WarSense.initSharedUI({
+			addPauseMusic: true,
+			miniWrapId: "miniWrap",
+			rightStart: 14,
+			top: 14
+		})
+		: { isPaused: () => false, drawPauseOverlay: () => {} };
+
+	function applyTopPanelLayout() {
+		if (!window.WarSense || !window.WarSense.layoutTopPanelButtons) return;
+		const compact = window.matchMedia("(max-width: 900px),(pointer: coarse)").matches;
+		window.WarSense.layoutTopPanelButtons({
+			ids: ["pauseBtn", "musicBtn", "backBtn", "labBtn", "cardsBtn"],
+			rightStart: compact ? 8 : 14,
+			top: compact ? 8 : 14,
+			gap: compact ? 6 : 8,
+			compact
+		});
+	}
+	applyTopPanelLayout();
+
+	// ── World ─────────────────────────────────────────────────────────────────
+	const W = 1800, H = 1200;
+
+	const rand  = (a, b) => a + Math.random() * (b - a);
+	const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+	const dist  = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+
+	const camera = { x: 0, y: 0 };
+
+	// ── Procedural terrain seeds ──────────────────────────────────────────────
+	const grassDots = Array.from({ length: 800 }, () => ({
+		x: rand(0, W), y: rand(0, H),
+		r: rand(0.8, 2.2),
+		c: Math.random() > 0.5 ? "#7aaa68" : "#649758"
+	}));
+
+	const hills = Array.from({ length: 55 }, () => ({
+		x: rand(60, W - 60), y: rand(50, H - 50),
+		r: rand(40, 120), a: rand(0.07, 0.18)
+	}));
+
+	const forests = Array.from({ length: 450 }, () => ({
+		x: rand(0, W), y: rand(0, H),
+		r: rand(2, 5),
+		c: Math.random() > 0.5 ? "#4a7a40" : "#3e6a36"
+	}));
+
+	// ── European rivers (coords ×0.3 of original) ──────────────────────────────
+	const rivers = [
+		// Rhine
+		{ pts: [[282,54],[294,156],[276,258],[258,354],[246,456],[264,546],[288,636]] },
+		// Danube
+		{ pts: [[630,270],[750,294],[870,315],[990,336],[1110,378],[1230,432],[1350,480]] },
+		// Seine
+		{ pts: [[204,420],[222,480],[234,540],[246,600],[264,654]] },
+		// Elbe
+		{ pts: [[480,60],[498,150],[516,240],[534,330]] },
+		// Vistula
+		{ pts: [[810,60],[825,150],[840,246],[855,360]] }
+	];
+
+	// ── Alps mountain range (coords ×0.3 of original) ────────────────────────
+	const alpsMountains = [
+		{ x: 360,  y: 540,  r: 57, name: "阿尔卑斯山" },
+		{ x: 432,  y: 516,  r: 50 },
+		{ x: 498,  y: 498,  r: 52 },
+		{ x: 564,  y: 510,  r: 47 },
+		{ x: 624,  y: 528,  r: 45 },
+		{ x: 678,  y: 546,  r: 42 },
+		{ x: 396,  y: 588,  r: 42 },
+		{ x: 468,  y: 570,  r: 39 },
+		{ x: 534,  y: 558,  r: 36 },
+		// Pyrenees
+		{ x: 120,  y: 780,  r: 51, name: "比利牛斯山" },
+		{ x: 180,  y: 768,  r: 48 },
+		{ x: 240,  y: 762,  r: 43 },
+		{ x: 300,  y: 774,  r: 40 },
+		// Carpathians
+		{ x: 750,  y: 420,  r: 44, name: "喀尔巴阡山" },
+		{ x: 810,  y: 402,  r: 39 },
+		{ x: 870,  y: 414,  r: 37 },
+		// Scandinavian
+		{ x: 420,  y: 60,   r: 45, name: "斯堪的纳维亚山" },
+		{ x: 480,  y: 72,   r: 42 },
+		{ x: 360,  y: 102,  r: 39 },
+		// Urals (right edge)
+		{ x: 1710, y: 180,  r: 47, name: "乌拉尔山" },
+		{ x: 1725, y: 270,  r: 45 },
+		{ x: 1716, y: 360,  r: 43 },
+		{ x: 1722, y: 450,  r: 42 },
+	];
+
+	// ── European cities (coords ×0.3 of original) ──────────────────────────────────
+	const cities = [
+		{ x: 246,  y: 324,  name: "巴黎",       r: 32 },
+		{ x: 438,  y: 294,  name: "柏林",       r: 32 },
+		{ x: 570,  y: 366,  name: "维也纳",     r: 32 },
+		{ x: 780,  y: 510,  name: "布达佩斯",   r: 32 },
+		{ x: 960,  y: 570,  name: "基辅",       r: 34 },
+		{ x: 1200, y: 390,  name: "莫斯科",     r: 38 },
+		{ x: 288,  y: 150,  name: "伦敦",       r: 30 },
+		{ x: 330,  y: 870,  name: "马德里",     r: 30 },
+		{ x: 510,  y: 810,  name: "罗马",       r: 32 },
+		{ x: 660,  y: 660,  name: "雅典",       r: 30 },
+		{ x: 1080, y: 180,  name: "斯德哥尔摩", r: 30 },
+		{ x: 870,  y: 150,  name: "华沙",       r: 30 },
+	];
+	const londonCity = cities.find(c => c.name === "伦敦") || { x: 288, y: 150, r: 30, name: "伦敦" };
+
+	// ── 嘉峪关 return portal (RIGHT edge) ─────────────────────────────────────
+	const returnGate = {
+		x: W - 80, y: H / 2,
+		w: 80, h: 52,
+		name: "嘉峪关（返回）",
+		portalR: 50
+	};
+
+	// ════════════════════════════════════════════════════════════════════════
+	// ── QUEST: 救王后格尼薇儿 ──────────────────────────────────────────────
+	// ════════════════════════════════════════════════════════════════════════
+
+	// 卡美洛城堡 — 亚瑟王所在地（地图中西部，伦敦偏南）
+	const camelot = { x: 270, y: 420, r: 46, name: "卡美洛城堡" };
+
+	// 黑暗要塞 — 莫德雷德关押王后处（地图北部）
+	const darkTower = { x: 680, y: 100, r: 38, name: "黑暗要塞" };
+
+	// 守卫士兵（初始在要塞周围）
+	const mordredGuards = [
+		{ x: 640, y: 80,  r: 10, hp: 3, dead: false, hitFlash: 0 },
+		{ x: 720, y: 90,  r: 10, hp: 3, dead: false, hitFlash: 0 },
+		{ x: 680, y: 140, r: 10, hp: 3, dead: false, hitFlash: 0 },
+	];
+
+	// 亚瑟王 NPC（跟随/移动逻辑）
+	const arthur = {
+		x: camelot.x + 30, y: camelot.y + 10,
+		speed: 180, dir: 0, radius: 12,
+		showDialog: false, dialogTimer: 0,
+		walkTarget: null
+	};
+
+	// 格尼薇儿（被救后出现，待在要塞旁）
+	const guinevere = {
+		x: darkTower.x + 55, y: darkTower.y + 30,
+		visible: false, dir: 0
+	};
+
+	// 兰斯洛特（成功后加入跟随队伍）
+	let lancelot = null;
+	let elizabeth = null;
+	const GOLD_STORE_KEY = "warSharedGold";
+	function loadSharedGold() {
+		const raw = localStorage.getItem(GOLD_STORE_KEY) || sessionStorage.getItem(GOLD_STORE_KEY);
+		const val = Number(raw);
+		return Number.isFinite(val) ? Math.max(0, val) : 5000;
+	}
+	function saveSharedGold(v) {
+		const safe = Math.max(0, Math.floor(Number.isFinite(v) ? v : 0));
+		localStorage.setItem(GOLD_STORE_KEY, String(safe));
+		sessionStorage.setItem(GOLD_STORE_KEY, String(safe));
+	}
+	let playerGold = loadSharedGold();
+	const heroStore = window.WarHeroes;
+	const heroDetailRuntime = heroStore && heroStore.detailRuntime ? heroStore.detailRuntime : null;
+
+	function loadHeroFlags() {
+		if (!heroStore) return { zhugeliang: false, lancelot: false, sanada: false, sunshangxiang: false, daqiao: false, xiaoqiao: false, elizabeth: false };
+		return heroStore.loadFlags();
+	}
+
+	function saveHeroFlags(patch) {
+		if (!heroStore) return;
+		heroStore.saveFlags(patch || {});
+	}
+
+	function syncPlayerState() {
+		if (heroStore && heroStore.syncPlayerState) heroStore.syncPlayerState();
+	}
+
+	function saveAndReturn() {
+		const flags = loadHeroFlags();
+		saveHeroFlags({
+			lancelot: flags.lancelot || !!lancelot,
+			elizabeth: flags.elizabeth || !!elizabeth
+		});
+		saveSharedGold(playerGold);
+		syncPlayerState();
+		window.location.href = "index.html";
+	}
+
+	/*
+	  quest.stage:
+	  0 = 未开始（靠近卡美洛触发）
+	  1 = 亚瑟介绍（玩家靠近卡美洛，显示对话）
+	  2 = 前往要塞（追踪提示）
+	  3 = 战斗中（靠近要塞，击败守卫动画）
+	  4 = 守卫已灭，格尼薇儿已救
+	  5 = 亚瑟庆贺（亚瑟走来，显示对话）
+	  6 = 兰斯洛特加入（任务完成）
+	*/
+	const quest = {
+		stage: 0,
+		timer: 0,
+		battleTimer: 0, // 战斗动画计时
+		guardsDead: false,
+	};
+
+	// UI helpers
+	const qdEl       = document.getElementById("questDialog");
+	const qdSpeaker  = document.getElementById("qdSpeaker");
+	const qdText     = document.getElementById("qdText");
+	const qtTracker  = document.getElementById("questTracker");
+	const qtDesc     = document.getElementById("qtDesc");
+	const londonTavernDialog = document.getElementById("londonTavernDialog");
+	const londonTavernText = document.getElementById("londonTavernText");
+	const recruitElizabethBtn = document.getElementById("recruitElizabethBtn");
+	const closeLondonTavernBtn = document.getElementById("closeLondonTavernBtn");
+	const londonTavernState = { open: false, suppressUntil: 0 };
+
+	function showDialog(speaker, text) {
+		qdSpeaker.textContent = speaker;
+		qdText.textContent    = text;
+		qdEl.style.display    = "block";
+	}
+	function hideDialog() { qdEl.style.display = "none"; }
+	function setTracker(text) {
+		qtTracker.style.display = text ? "block" : "none";
+		qtDesc.textContent = text || "";
+	}
+
+	function createElizabeth(x, y) {
+		if (heroStore && heroStore.createCompanion) {
+			const h = heroStore.createCompanion("elizabeth", x, y, { healPower: 20, healRange: 170 });
+			if (h) return h;
+		}
+		return {
+			heroId: "elizabeth",
+			name: "伊丽莎白",
+			x,
+			y,
+			speed: 198,
+			dir: 0,
+			radius: 11,
+			hp: 300,
+			maxHp: 300,
+			attackCd: 0,
+			body: "#4d5f9a",
+			head: "#f0d4b2",
+			accent: "#f1deb0",
+			healPower: 20,
+			healRange: 170,
+			dead: false,
+			skill: { key: "healAura", damage: 0, cooldown: 2.4, range: 170 }
+		};
+	}
+
+	function refreshLondonTavernText() {
+		if (!londonTavernText) return;
+		if (elizabeth) {
+			londonTavernText.textContent = "伊丽莎白已在队中，她会为周围英雄持续治疗。";
+			return;
+		}
+		londonTavernText.textContent = `可招募伊丽莎白（-1500金），她不会攻击，但会持续治疗周围英雄。当前资金：${Math.floor(playerGold)}金`;
+	}
+
+	function openLondonTavern() {
+		if (londonTavernState.open) return;
+		londonTavernState.open = true;
+		refreshLondonTavernText();
+		londonTavernDialog.style.display = "block";
+	}
+
+	function closeLondonTavern() {
+		if (!londonTavernState.open) return;
+		londonTavernState.open = false;
+		londonTavernState.suppressUntil = performance.now() + 900;
+		londonTavernDialog.style.display = "none";
+	}
+
+	function updateLondonTavern(nowMs) {
+		if (elizabeth) {
+			if (londonTavernState.open) closeLondonTavern();
+			return;
+		}
+		const near = dist(player, londonCity) < londonCity.r + 38;
+		if (!near) {
+			if (londonTavernState.open) closeLondonTavern();
+			return;
+		}
+		if (!londonTavernState.open && nowMs >= londonTavernState.suppressUntil) openLondonTavern();
+	}
+
+	recruitElizabethBtn.addEventListener("click", () => {
+		if (elizabeth) {
+			refreshLondonTavernText();
+			return;
+		}
+		if (playerGold < 1500) {
+			londonTavernText.textContent = `资金不足，当前仅有 ${Math.floor(playerGold)} 金。`;
+			return;
+		}
+		playerGold -= 1500;
+		saveSharedGold(playerGold);
+		elizabeth = createElizabeth(player.x - 68, player.y + 22);
+		saveHeroFlags({ elizabeth: true });
+		closeLondonTavern();
+	});
+
+	closeLondonTavernBtn.addEventListener("click", () => {
+		closeLondonTavern();
+	});
+
+	// ── Quest update (called every frame) ─────────────────────────────────────
+	function updateQuest(dt) {
+		const dpCamelot = dist(player, camelot);
+		const dpTower   = dist(player, darkTower);
+
+		quest.timer = Math.max(0, quest.timer - dt);
+
+		switch (quest.stage) {
+
+		// ── Stage 0: 等待玩家靠近卡美洛 ────────────────────────────────────
+		case 0:
+			if (dpCamelot < camelot.r + 90) {
+				quest.stage = 1;
+				quest.timer = 0;
+				setTracker("聆听亚瑟王的委托");
+			}
+			break;
+
+		// ── Stage 1: 亚瑟对话（第一句）─────────────────────────────────────
+		case 1:
+			showDialog("亚瑟王",
+				"勇士！我的王后格尼薇儿被叛将莫德雷德掳走，关押在北方的黑暗要塞中。\n请替我救回她，卡美洛将永远铭记你的恩情！");
+			if (dpCamelot > camelot.r + 180) {
+				hideDialog();
+				quest.stage = 2;
+				setTracker("前往黑暗要塞，救出格尼薇儿");
+			}
+			break;
+
+		// ── Stage 2: 玩家前往要塞 ───────────────────────────────────────────
+		case 2:
+			hideDialog();
+			if (dpTower < darkTower.r + 120) {
+				quest.stage = 3;
+				quest.battleTimer = 2.2; // 战斗动画时长
+				setTracker("击败莫德雷德的守卫！");
+			}
+			break;
+
+		// ── Stage 3: 战斗动画 ───────────────────────────────────────────────
+		case 3:
+			{
+				quest.battleTimer -= dt;
+				// 逐渐击杀守卫
+				const elapsed = 2.2 - quest.battleTimer;
+				for (let i = 0; i < mordredGuards.length; i++) {
+					const g = mordredGuards[i];
+					if (!g.dead && elapsed > i * 0.55 + 0.3) {
+						g.dead = true;
+					}
+					if (!g.dead) g.hitFlash = Math.sin(elapsed * 18) * 0.5 + 0.5;
+				}
+				showDialog("莫德雷德的守卫", "……不……不可能……！");
+				if (quest.battleTimer <= 0) {
+					quest.stage = 4;
+					quest.timer = 1.5;
+					guinevere.visible = true;
+					quest.guardsDead  = true;
+					setTracker("格尼薇儿已获救！返回卡美洛");
+				}
+			}
+			break;
+
+		// ── Stage 4: 等待，格尼薇儿显现 ────────────────────────────────────
+		case 4:
+			showDialog("格尼薇儿",
+				"谢谢你，勇敢的战士！快带我回卡美洛……亚瑟一定在焦急等待。");
+			if (quest.timer <= 0 && dpCamelot < camelot.r + 150) {
+				quest.stage = 5;
+				quest.timer = 0;
+				// 亚瑟走向玩家
+				arthur.walkTarget = { x: player.x + 30, y: player.y + 20 };
+				setTracker("亚瑟王前来道谢");
+			}
+			break;
+
+		// ── Stage 5: 亚瑟道谢 ───────────────────────────────────────────────
+		case 5:
+			{
+				const dArthur = dist(arthur, { x: arthur.walkTarget?.x ?? camelot.x, y: arthur.walkTarget?.y ?? camelot.y });
+				if (arthur.walkTarget) {
+					if (dArthur > 8) {
+						const dx = arthur.walkTarget.x - arthur.x;
+						const dy = arthur.walkTarget.y - arthur.y;
+						const d  = Math.hypot(dx, dy);
+						arthur.x += (dx / d) * arthur.speed * dt;
+						arthur.y += (dy / d) * arthur.speed * dt;
+						arthur.dir = Math.atan2(dy, dx);
+					} else {
+						arthur.walkTarget = null;
+					}
+				}
+				showDialog("亚瑟王",
+					"壮士！你的英勇令我铭刻于心。我最信赖的骑士——兰斯洛特，\n愿以剑为礼，跟随你踏遍天地！");
+				if (quest.timer <= 0 && dist(arthur, player) < 100) {
+					quest.timer = 2.8;
+					quest.stage = 6;
+				}
+			}
+			break;
+
+		// ── Stage 6: 兰斯洛特加入 ───────────────────────────────────────────
+		case 6:
+			if (!lancelot) {
+				const lDef = heroStore ? heroStore.getHeroDefinition("lancelot") : null;
+				lancelot = {
+					heroId: "lancelot",
+					x: camelot.x - 20, y: camelot.y + 40,
+					speed: lDef ? lDef.stats.speed : 250,
+					dir: 0,
+					radius: lDef ? lDef.stats.radius : 13,
+					hp: lDef ? lDef.stats.hp : 360,
+					maxHp: lDef ? lDef.stats.hp : 360,
+					glowPhase: 0
+				};
+				showDialog("兰斯洛特",
+					"主公！兰斯洛特·迪·雷克效忠于你。东方或西方，吾剑所向，所向披靡！");
+				setTracker("✦ 兰斯洛特已加入队伍");
+				saveHeroFlags({ lancelot: true });
+			}
+			if (quest.timer <= 0) {
+				hideDialog();
+				quest.stage = 7; // 完成
+			}
+			break;
+
+		case 7:
+			hideDialog();
+			break;
+		}
+	}
+
+	// ── Quest drawing ──────────────────────────────────────────────────────────
+
+	function drawCamelot() {
+		const c = camelot;
+		const t = performance.now() * 0.001;
+
+		// Glow if stage 0 (未触发时提示)
+		if (quest.stage <= 1) {
+			const glow = 0.18 + 0.10 * Math.sin(t * 2.2);
+			ctx.fillStyle = `rgba(255,230,120,${glow})`;
+			ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 28, 0, Math.PI * 2); ctx.fill();
+		}
+
+		// Castle body
+		ctx.fillStyle = "#a09070";
+		ctx.fillRect(c.x - 40, c.y - 35, 80, 62);
+		ctx.fillStyle = "#c8b888";
+		ctx.fillRect(c.x - 38, c.y - 33, 76, 20);
+
+		// Towers
+		const tower = (tx, ty) => {
+			ctx.fillStyle = "#8a7a60";
+			ctx.fillRect(tx - 10, ty - 50, 20, 50);
+			ctx.fillStyle = "#b0a080";
+			ctx.fillRect(tx - 10, ty - 50, 20, 12);
+			// battlements
+			for (let i = 0; i < 3; i++)
+				ctx.fillRect(tx - 9 + i * 7, ty - 56, 5, 7);
+			// pointed roof
+			ctx.fillStyle = "#6a4a2a";
+			ctx.beginPath();
+			ctx.moveTo(tx, ty - 68); ctx.lineTo(tx - 12, ty - 50); ctx.lineTo(tx + 12, ty - 50);
+			ctx.closePath(); ctx.fill();
+		};
+		tower(c.x - 32, c.y + 27);
+		tower(c.x + 32, c.y + 27);
+		tower(c.x,      c.y + 27 - 8); // center keep higher
+
+		// Main gate arch
+		ctx.fillStyle = "#2a1e10";
+		ctx.beginPath();
+		ctx.arc(c.x, c.y + 27, 13, Math.PI, 0);
+		ctx.rect(c.x - 13, c.y + 27, 26, 8);
+		ctx.fill();
+
+		// Banner
+		ctx.fillStyle = "#8844aa";
+		ctx.fillRect(c.x - 2, c.y - 68, 3, 20);
+		ctx.beginPath();
+		ctx.moveTo(c.x + 1, c.y - 68);
+		ctx.lineTo(c.x + 18, c.y - 62);
+		ctx.lineTo(c.x + 1, c.y - 56);
+		ctx.closePath(); ctx.fill();
+		// dragon symbol on banner
+		ctx.fillStyle = "#f0e040";
+		ctx.font = "bold 9px serif"; ctx.textAlign = "center";
+		ctx.fillText("龙", c.x + 9, c.y - 59);
+
+		// Name
+		ctx.fillStyle = "#f8e8c0";
+		ctx.font = "bold 13px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText(c.name, c.x, c.y - 72);
+		if (quest.stage === 0) {
+			ctx.fillStyle = "rgba(255,235,150,0.88)";
+			ctx.font = "11px Microsoft YaHei";
+			ctx.fillText("（接近查看）", c.x, c.y - 58);
+		}
+	}
+
+	function drawDarkTower() {
+		const t = darkTower;
+		const now = performance.now() * 0.001;
+
+		// Ominous glow if guards alive
+		if (!quest.guardsDead) {
+			const glow = 0.15 + 0.12 * Math.sin(now * 1.8);
+			ctx.fillStyle = `rgba(160,20,20,${glow})`;
+			ctx.beginPath(); ctx.arc(t.x, t.y, t.r + 40, 0, Math.PI * 2); ctx.fill();
+		}
+
+		// Base
+		ctx.fillStyle = "#3a3028";
+		ctx.fillRect(t.x - 28, t.y - 22, 56, 52);
+		ctx.fillStyle = "#504540";
+		ctx.fillRect(t.x - 26, t.y - 20, 52, 14);
+
+		// Tower shaft
+		ctx.fillStyle = "#2e2820";
+		ctx.fillRect(t.x - 16, t.y - 68, 32, 68);
+		ctx.fillStyle = "#443c34";
+		ctx.fillRect(t.x - 14, t.y - 66, 28, 10);
+
+		// Dark battlements
+		ctx.fillStyle = "#2a2018";
+		for (let i = -2; i <= 2; i++)
+			ctx.fillRect(t.x + i * 9 - 3, t.y - 76, 6, 9);
+
+		// Arrow slit window
+		ctx.fillStyle = "#c84020";
+		ctx.fillRect(t.x - 2, t.y - 52, 4, 10);
+
+		// Name
+		ctx.fillStyle = quest.guardsDead ? "#80b080" : "#e04040";
+		ctx.font = "bold 12px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText(quest.guardsDead ? "（已解放）" : t.name, t.x, t.y - 82);
+		if (quest.stage === 2) {
+			ctx.fillStyle = "rgba(255,100,100,0.88)";
+			ctx.font = "11px Microsoft YaHei";
+			ctx.fillText("⚠ 目标", t.x, t.y - 95);
+		}
+	}
+
+	function drawMordredGuards() {
+		for (const g of mordredGuards) {
+			if (g.dead) continue;
+			const flash = g.hitFlash;
+			ctx.save();
+			ctx.translate(g.x, g.y);
+			// helm
+			ctx.fillStyle = flash > 0.5 ? "#ffffff" : "#505060";
+			ctx.beginPath(); ctx.arc(0, -10, 5, 0, Math.PI * 2); ctx.fill();
+			// body / armor
+			ctx.fillStyle = flash > 0.5 ? "#ff8888" : "#404050";
+			ctx.fillRect(-4, -6, 8, 10);
+			// legs
+			ctx.strokeStyle = "#2a2030"; ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.moveTo(-2, 4); ctx.lineTo(-2, 10);
+			ctx.moveTo(2, 4);  ctx.lineTo(2, 10);
+			ctx.stroke();
+			// spear
+			ctx.strokeStyle = "#8a6840"; ctx.lineWidth = 1.5;
+			ctx.beginPath(); ctx.moveTo(5, -14); ctx.lineTo(5, 10); ctx.stroke();
+			ctx.fillStyle = "#c0c0c0";
+			ctx.beginPath(); ctx.moveTo(5, -14); ctx.lineTo(3, -8); ctx.lineTo(7, -8); ctx.closePath(); ctx.fill();
+			ctx.restore();
+		}
+	}
+
+	function drawGuinevere() {
+		if (!guinevere.visible) return;
+		const g = guinevere;
+		const t = performance.now() * 0.001;
+		ctx.save();
+		ctx.translate(g.x, g.y);
+		// Dress
+		ctx.fillStyle = "#8844aa";
+		ctx.beginPath();
+		ctx.moveTo(-8, 12); ctx.lineTo(-5, -4); ctx.lineTo(5, -4); ctx.lineTo(8, 12);
+		ctx.closePath(); ctx.fill();
+		// Body
+		ctx.fillStyle = "#cc99cc";
+		ctx.fillRect(-4, -10, 8, 8);
+		// Head
+		ctx.fillStyle = "#f0d8b0";
+		ctx.beginPath(); ctx.arc(0, -14, 5, 0, Math.PI * 2); ctx.fill();
+		// Crown
+		ctx.fillStyle = "#f0c820";
+		ctx.fillRect(-5, -20, 10, 3);
+		ctx.fillRect(-5, -23, 2, 4); ctx.fillRect(-1, -24, 2, 5); ctx.fillRect(3, -23, 2, 4);
+		// Hair
+		ctx.fillStyle = "#a06030";
+		ctx.fillRect(-5, -14, 10, 5);
+		// Aura (relief)
+		const a = 0.4 + 0.3 * Math.sin(t * 2);
+		ctx.strokeStyle = `rgba(200,150,255,${a})`; ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.arc(0, -4, 15, 0, Math.PI * 2); ctx.stroke();
+		ctx.restore();
+		ctx.fillStyle = "#e0b8ff";
+		ctx.font = "bold 11px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText("格尼薇儿", g.x, g.y - 28);
+	}
+
+	function drawArthur() {
+		const a = arthur;
+		const t  = performance.now() * 0.001;
+		ctx.save();
+		ctx.translate(a.x, a.y);
+		ctx.scale(1.15, 1.15);
+		// Cape
+		ctx.fillStyle = "#6633aa";
+		ctx.fillRect(-7, -6, 14, 14);
+		// Armor body
+		ctx.fillStyle = "#a0a8b8";
+		ctx.fillRect(-4.5, -8, 9, 12);
+		ctx.fillStyle = "#c8d0e0";
+		ctx.fillRect(-4, -7, 8, 5);
+		// Arms
+		ctx.fillStyle = "#9098a8";
+		ctx.fillRect(-7, -6, 2.5, 8);
+		ctx.fillRect(4.5, -6, 2.5, 8);
+		// Legs
+		ctx.strokeStyle = "#3a3448"; ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-2.5, 4); ctx.lineTo(-3, 12);
+		ctx.moveTo(2.5, 4);  ctx.lineTo(3, 12);
+		ctx.stroke();
+		// Head
+		ctx.fillStyle = "#e8c89a";
+		ctx.beginPath(); ctx.arc(0, -12, 5, 0, Math.PI * 2); ctx.fill();
+		// Helm / crown
+		ctx.fillStyle = "#b0b8c8";
+		ctx.fillRect(-5.5, -16.5, 11, 5);
+		ctx.fillStyle = "#f0c820";
+		ctx.fillRect(-5, -17, 10, 2);
+		// Excalibur
+		ctx.strokeStyle = "#d0d8f0"; ctx.lineWidth = 2;
+		ctx.beginPath(); ctx.moveTo(7, -16); ctx.lineTo(7, 10); ctx.stroke();
+		ctx.strokeStyle = "#b8a040"; ctx.lineWidth = 3;
+		ctx.beginPath(); ctx.moveTo(3, -7); ctx.lineTo(11, -7); ctx.stroke();
+		ctx.fillStyle = "#e0e8ff";
+		ctx.beginPath();
+		ctx.moveTo(7, -18); ctx.lineTo(5, -12); ctx.lineTo(9, -12);
+		ctx.closePath(); ctx.fill();
+		// Kingly aura
+		const glow2 = 0.3 + 0.2 * Math.sin(t * 1.8);
+		ctx.strokeStyle = `rgba(200,160,80,${glow2})`; ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.arc(0, -2, 18, 0, Math.PI * 2); ctx.stroke();
+		ctx.restore();
+		ctx.fillStyle = "#f0e040";
+		ctx.font = "700 12px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText("亚瑟王", a.x, a.y - 32);
+	}
+
+	function drawLancelot() {
+		if (!lancelot) return;
+		const l = lancelot;
+		const t = performance.now() * 0.001;
+		lancelot.glowPhase = t;
+		ctx.save();
+		ctx.translate(l.x, l.y);
+		ctx.scale(1.1, 1.1);
+		// Surcoat (red cross knight)
+		ctx.fillStyle = "#c8c0b0";
+		ctx.fillRect(-4.5, -8, 9, 12);
+		ctx.fillStyle = "#cc2222";
+		ctx.fillRect(-1.5, -8, 3, 12);
+		ctx.fillRect(-4.5, -3, 9, 3);
+		// Arms
+		ctx.fillStyle = "#a0a8b8";
+		ctx.fillRect(-7, -6, 2.5, 8); ctx.fillRect(4.5, -6, 2.5, 8);
+		// Legs
+		ctx.strokeStyle = "#2a2838"; ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(-2.5, 4); ctx.lineTo(-3, 12);
+		ctx.moveTo(2.5, 4);  ctx.lineTo(3, 12);
+		ctx.stroke();
+		// Head
+		ctx.fillStyle = "#e8c89a";
+		ctx.beginPath(); ctx.arc(0, -12, 4.8, 0, Math.PI * 2); ctx.fill();
+		// Visor-helm
+		ctx.fillStyle = "#909aaa";
+		ctx.fillRect(-5, -16, 10, 5);
+		ctx.fillStyle = "#5a646e";
+		ctx.fillRect(-3, -14, 6, 2);
+		// Sword
+		ctx.strokeStyle = "#e0e8ff"; ctx.lineWidth = 1.8;
+		ctx.beginPath(); ctx.moveTo(8, -17); ctx.lineTo(8, 9); ctx.stroke();
+		ctx.strokeStyle = "#c8a040"; ctx.lineWidth = 3;
+		ctx.beginPath(); ctx.moveTo(4, -8); ctx.lineTo(12, -8); ctx.stroke();
+		ctx.fillStyle = "#e8f0ff";
+		ctx.beginPath();
+		ctx.moveTo(8, -19); ctx.lineTo(6, -13); ctx.lineTo(10, -13);
+		ctx.closePath(); ctx.fill();
+		// Knight aura (blue silver)
+		const g = 0.45 + 0.35 * Math.sin(t * 2.5);
+		ctx.strokeStyle = `rgba(140,180,255,${g})`; ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.arc(0, -2, 16 + Math.sin(t * 3) * 2, 0, Math.PI * 2); ctx.stroke();
+		ctx.restore();
+		ctx.fillStyle = "#c8e0ff";
+		ctx.font = "700 12px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText("兰斯洛特", l.x, l.y - 30);
+	}
+
+	function updateLancelot(dt) {
+		if (!lancelot) return;
+		if (heroDetailRuntime && heroDetailRuntime.updateCompanion) {
+			heroDetailRuntime.updateCompanion({
+				hero: lancelot,
+				dt,
+				player,
+				enemyUnits: [],
+				enemyLeaders: [],
+				dist,
+				moveToward: moveTo,
+				nearestEnemy: function () { return { target: null, d: Infinity }; }
+			});
+		} else {
+			const dx = player.x - lancelot.x, dy = player.y - lancelot.y;
+			const d  = Math.hypot(dx, dy);
+			if (d > 55) {
+				const step = lancelot.speed * dt;
+				lancelot.x += (dx / d) * Math.min(step, d - 45);
+				lancelot.y += (dy / d) * Math.min(step, d - 45);
+				lancelot.x = Math.max(20, Math.min(W - 20, lancelot.x));
+				lancelot.y = Math.max(20, Math.min(H - 20, lancelot.y));
+				lancelot.dir = Math.atan2(dy, dx);
+			}
+		}
+	}
+
+	// ── Simple player ─────────────────────────────────────────────────────────
+	const player = (heroStore && heroStore.createMainPlayer)
+		? heroStore.createMainPlayer(W * 0.9, H * 0.5, {
+			target: { x: W * 0.9, y: H * 0.5 },
+			dead: false
+		})
+		: {
+			x: W * 0.9, y: H * 0.5,
+			speed: 260, dir: 0,
+			target: { x: W * 0.9, y: H * 0.5 },
+			radius: 12,
+			dead: false
+		};
+
+	const moveInput = { up: false, down: false, left: false, right: false };
+	const clickMarker = { x: 0, y: 0, life: 0 };
+
+	// 英雄伴随（从 sessionStorage 读取）
+	let companion = null;
+	(function loadCompanion() {
+		try {
+			const saved = loadHeroFlags();
+			if (saved.zhugeliang) {
+				const zDef = heroStore ? heroStore.getHeroDefinition("zhugeliang") : null;
+				companion = {
+					heroId: "zhugeliang",
+					x: player.x + 40, y: player.y + 10,
+					name: "诸葛亮",
+					speed: zDef ? zDef.stats.speed : 240,
+					dir: Math.PI,
+					radius: zDef ? zDef.stats.radius : 11,
+					hp: zDef ? zDef.stats.hp : 300,
+					maxHp: zDef ? zDef.stats.hp : 300
+				};
+			}
+			if (saved.lancelot) {
+				const lDef = heroStore ? heroStore.getHeroDefinition("lancelot") : null;
+				lancelot = {
+					heroId: "lancelot",
+					x: player.x + 50, y: player.y + 20,
+					speed: lDef ? lDef.stats.speed : 250,
+					dir: 0,
+					radius: lDef ? lDef.stats.radius : 13,
+					hp: lDef ? lDef.stats.hp : 360,
+					maxHp: lDef ? lDef.stats.hp : 360,
+					glowPhase: 0
+				};
+				quest.stage = 7; // 任务已完成，跳过重复流程
+				setTracker("✦ 兰斯洛特已加入队伍");
+			}
+			if (saved.elizabeth) {
+				elizabeth = createElizabeth(player.x - 68, player.y + 22);
+			}
+		} catch(e) {}
+	})();
+
+	function updateCompanion(dt) {
+		if (!companion) return;
+		if (heroDetailRuntime && heroDetailRuntime.updateCompanion) {
+			heroDetailRuntime.updateCompanion({
+				hero: companion,
+				dt,
+				player,
+				enemyUnits: [],
+				enemyLeaders: [],
+				dist,
+				moveToward: moveTo,
+				nearestEnemy: function () { return { target: null, d: Infinity }; }
+			});
+		} else {
+			const dx = player.x - companion.x, dy = player.y - companion.y;
+			const d = Math.hypot(dx, dy);
+			if (d > 60) {
+				companion.dir = Math.atan2(dy, dx);
+				const step = companion.speed * dt;
+				companion.x += (dx / d) * Math.min(step, d - 50);
+				companion.y += (dy / d) * Math.min(step, d - 50);
+				companion.x = Math.max(20, Math.min(W - 20, companion.x));
+				companion.y = Math.max(20, Math.min(H - 20, companion.y));
+			}
+		}
+	}
+
+	function drawCompanion() {
+		if (!companion) return;
+		const c = companion;
+		const t = performance.now() * 0.001;
+		ctx.save();
+		ctx.translate(c.x, c.y);
+		ctx.scale(1.1, 1.1);
+		// Robe
+		ctx.fillStyle = "#3a5a8a";
+		ctx.fillRect(-4, -6, 8, 12);
+		ctx.fillStyle = "#2a4a7a";
+		ctx.fillRect(-5.5, -4, 2, 8);
+		ctx.fillRect(3.5, -4, 2, 8);
+		// Fan (feather)
+		ctx.strokeStyle = "rgba(200,230,255,0.9)"; ctx.lineWidth = 1.2;
+		for (let a = -0.5; a <= 0.5; a += 0.2) {
+			ctx.beginPath();
+			ctx.moveTo(6, -2);
+			ctx.lineTo(6 + Math.cos(a) * 9, -2 + Math.sin(a) * 9);
+			ctx.stroke();
+		}
+		// Head
+		ctx.fillStyle = "#e7c59e";
+		ctx.beginPath(); ctx.arc(0, -11, 4.5, 0, Math.PI * 2); ctx.fill();
+		// Hat
+		ctx.fillStyle = "#2a1e0e";
+		ctx.fillRect(-4.5, -14, 9, 3);
+		ctx.fillRect(-2, -18, 4, 4);
+		// Lightning aura
+		const glow = 0.5 + 0.4 * Math.sin(t * 3);
+		ctx.strokeStyle = `rgba(180,220,255,${glow})`; ctx.lineWidth = 1.5;
+		ctx.beginPath(); ctx.arc(0, -3, 13 + Math.sin(t * 4) * 2, 0, Math.PI * 2); ctx.stroke();
+		ctx.restore();
+		// Name tag
+		ctx.fillStyle = "#c8e8ff";
+		ctx.font = "bold 11px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText("诸葛亮", c.x, c.y - 26);
+	}
+
+	function updateElizabeth(dt) {
+		if (!elizabeth || elizabeth.dead) return;
+		if (heroDetailRuntime && heroDetailRuntime.updateCompanion) {
+			heroDetailRuntime.updateCompanion({
+				hero: elizabeth,
+				dt,
+				player,
+				enemyUnits: [],
+				enemyLeaders: [],
+				dist,
+				moveToward: moveTo,
+				nearestEnemy: function () { return { target: null, d: Infinity }; },
+				healTargets: function () {
+					return [player, companion, lancelot, elizabeth].filter(Boolean);
+				},
+				onHealFx: function (healer, target) {
+					healer.healPulse = Math.max(healer.healPulse || 0, 0.24);
+					target.hitFlash = Math.max(target.hitFlash || 0, 0.4);
+				}
+			});
+		} else {
+			elizabeth.attackCd = Math.max(0, (elizabeth.attackCd || 0) - dt);
+			const dx = player.x - elizabeth.x;
+			const dy = player.y - elizabeth.y;
+			const d = Math.hypot(dx, dy);
+			if (d > 78) moveTo(elizabeth, player.x, player.y, elizabeth.speed * 0.94, dt);
+			if (elizabeth.attackCd <= 0) {
+				let healed = false;
+				for (const h of [player, companion, lancelot, elizabeth]) {
+					if (!h || h.dead || !h.maxHp) continue;
+					if ((h.hp || 0) >= h.maxHp) continue;
+					if (dist(elizabeth, h) > 170) continue;
+					h.hp = Math.min(h.maxHp, (h.hp || 0) + 20);
+					healed = true;
+				}
+				elizabeth.attackCd = healed ? 2.4 : 0.8;
+				if (healed) elizabeth.healPulse = Math.max(elizabeth.healPulse || 0, 0.24);
+			}
+		}
+		elizabeth.healPulse = Math.max(0, (elizabeth.healPulse || 0) - dt);
+		elizabeth.hitFlash = Math.max(0, (elizabeth.hitFlash || 0) - dt * 1.6);
+		elizabeth.x = clamp(elizabeth.x, 20, W - 20);
+		elizabeth.y = clamp(elizabeth.y, 20, H - 20);
+	}
+
+	function drawElizabeth() {
+		if (!elizabeth || elizabeth.dead) return;
+		if (heroDetailRuntime && heroDetailRuntime.drawElizabeth) {
+			heroDetailRuntime.drawElizabeth({ hero: elizabeth, ctx, drawHealthBar });
+		} else {
+			ctx.save();
+			ctx.translate(elizabeth.x, elizabeth.y);
+			ctx.scale(1.08, 1.08);
+			ctx.fillStyle = "#4d5f9a";
+			ctx.beginPath();
+			ctx.moveTo(0, -8);
+			ctx.lineTo(-7.5, 7.4);
+			ctx.lineTo(7.5, 7.4);
+			ctx.closePath();
+			ctx.fill();
+			ctx.fillStyle = "#f1deb0";
+			ctx.fillRect(-5.2, -8.8, 10.4, 7.6);
+			ctx.fillStyle = "#4f3a2f";
+			ctx.beginPath();
+			ctx.arc(0, -12.2, 5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#f0d4b2";
+			ctx.beginPath();
+			ctx.arc(0, -11.7, 4.1, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.restore();
+			ctx.fillStyle = "#dce8ff";
+			ctx.font = "700 12px Microsoft YaHei";
+			ctx.textAlign = "center";
+			ctx.fillText("伊丽莎白", elizabeth.x, elizabeth.y - 33);
+			drawHealthBar(elizabeth.x, elizabeth.y - 28, 40, elizabeth.hp || 1, elizabeth.maxHp || 1, "#9dc1ff");
+		}
+
+		if ((elizabeth.healPulse || 0) > 0) {
+			ctx.strokeStyle = `rgba(175,210,255,${0.4 + elizabeth.healPulse})`;
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.arc(elizabeth.x, elizabeth.y - 3, 16 + (1 - elizabeth.healPulse) * 22, 0, Math.PI * 2);
+			ctx.stroke();
+		}
+	}
+
+	function pushOutMountains(entity) {
+		const r = entity.radius || 7;
+		for (const m of alpsMountains) {
+			const dx = entity.x - m.x, dy = entity.y - m.y;
+			const d = Math.hypot(dx, dy);
+			const minD = m.r + r;
+			if (d < minD) {
+				const nx = d > 0.001 ? dx / d : 1;
+				const ny = d > 0.001 ? dy / d : 0;
+				entity.x = m.x + nx * minD;
+				entity.y = m.y + ny * minD;
+			}
+		}
+	}
+
+	function moveTo(entity, tx, ty, speed, dt) {
+		const dx = tx - entity.x, dy = ty - entity.y;
+		const d = Math.hypot(dx, dy);
+		if (d < 0.001) return d;
+		entity.dir = Math.atan2(dy, dx);
+		const step = speed * dt;
+		if (d <= step) { entity.x = tx; entity.y = ty; return d; }
+		entity.x += (dx / d) * step;
+		entity.y += (dy / d) * step;
+		return d;
+	}
+
+	function viewToWorld(cx, cy) {
+		return { x: cx + camera.x, y: cy + camera.y };
+	}
+	function miniToWorld(clientX, clientY) {
+		const rect = mini.getBoundingClientRect();
+		return {
+			x: clamp((clientX - rect.left) / rect.width, 0, 1) * W,
+			y: clamp((clientY - rect.top) / rect.height, 0, 1) * H
+		};
+	}
+
+	// ── Drawing helpers ───────────────────────────────────────────────────────
+	function drawMountain(ctx2, m, named) {
+		// shadow
+		ctx2.fillStyle = "rgba(30,26,20,0.30)";
+		ctx2.beginPath();
+		ctx2.ellipse(m.x + 18, m.y + 16, m.r * 0.9, m.r * 0.52, 0, 0, Math.PI * 2);
+		ctx2.fill();
+		// body
+		const mg = ctx2.createRadialGradient(m.x - m.r * 0.28, m.y - m.r * 0.32, m.r * 0.04, m.x, m.y, m.r * 1.06);
+		mg.addColorStop(0,    "#cec6ac"); mg.addColorStop(0.38, "#a49272");
+		mg.addColorStop(0.75, "#7a6a54"); mg.addColorStop(1, "rgba(58,50,40,0)");
+		ctx2.fillStyle = mg;
+		ctx2.beginPath(); ctx2.arc(m.x, m.y, m.r, 0, Math.PI * 2); ctx2.fill();
+		// snow
+		ctx2.fillStyle = "rgba(242,240,234,0.88)";
+		ctx2.beginPath(); ctx2.arc(m.x - m.r * 0.07, m.y - m.r * 0.36, m.r * 0.30, 0, Math.PI * 2); ctx2.fill();
+		ctx2.fillStyle = "rgba(255,255,255,0.55)";
+		ctx2.beginPath(); ctx2.arc(m.x - m.r * 0.09, m.y - m.r * 0.40, m.r * 0.16, 0, Math.PI * 2); ctx2.fill();
+		if (m.name) {
+			ctx2.fillStyle = "rgba(248,240,220,0.90)";
+			ctx2.font = "bold 14px Microsoft YaHei";
+			ctx2.textAlign = "center";
+			ctx2.fillText(m.name, m.x, m.y - m.r * 0.52);
+		}
+	}
+
+	function drawHealthBar(x, y, w, hp, maxHp, color) {
+		if (renderStd && renderStd.drawHealthBar) {
+			renderStd.drawHealthBar(ctx, x, y, w, hp, maxHp, color, "rgba(0,0,0,0.58)", 4);
+			return;
+		}
+		ctx.fillStyle = "rgba(0,0,0,0.58)";
+		ctx.fillRect(x - w / 2, y, w, 4);
+		ctx.fillStyle = color || "#9dc1ff";
+		const ratio = clamp((hp || 0) / Math.max(1, maxHp || 1), 0, 1);
+		ctx.fillRect(x - w / 2 + 1, y + 1, (w - 2) * ratio, 2);
+	}
+
+	function drawCity(c) {
+		// shadow
+		ctx.fillStyle = "rgba(0,0,0,0.20)";
+		ctx.fillRect(c.x - 40, c.y - 32, 80, 64);
+		// walls
+		ctx.fillStyle = "#b0a07a";
+		ctx.fillRect(c.x - 36, c.y - 28, 72, 56);
+		ctx.fillStyle = "#4e3c2a";
+		ctx.fillRect(c.x - 30, c.y - 22, 60, 44);
+		// gate
+		ctx.fillStyle = "#c8b08a";
+		ctx.fillRect(c.x - 10, c.y + 6, 20, 16);
+		ctx.fillStyle = "#221810";
+		ctx.fillRect(c.x - 7, c.y + 8, 14, 14);
+		// banner
+		ctx.fillStyle = "#8080cc";
+		ctx.fillRect(c.x - 2, c.y - 40, 4, 16);
+		ctx.beginPath();
+		ctx.moveTo(c.x + 2, c.y - 40);
+		ctx.lineTo(c.x + 20, c.y - 33);
+		ctx.lineTo(c.x + 2, c.y - 26);
+		ctx.closePath(); ctx.fill();
+		// name
+		ctx.fillStyle = "#f0e6c8";
+		ctx.font = "700 12px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText(c.name, c.x, c.y - 46);
+		if (c === londonCity) {
+			ctx.fillStyle = elizabeth ? "rgba(160, 220, 255, 0.92)" : "rgba(255, 226, 162, 0.95)";
+			ctx.font = "11px Microsoft YaHei";
+			ctx.fillText(elizabeth ? "（王室医官已随军）" : "（可招募伊丽莎白）", c.x, c.y - 58);
+		}
+	}
+
+	function drawReturnGate() {
+		const g = returnGate;
+		const hw = g.w / 2, hh = g.h / 2;
+		// shadow
+		ctx.fillStyle = "rgba(30,22,10,0.28)";
+		ctx.beginPath();
+		ctx.ellipse(g.x + 8, g.y + hh + 8, hw * 1.1, 12, 0, 0, Math.PI * 2);
+		ctx.fill();
+		// wall
+		ctx.fillStyle = "#b8a07a";
+		ctx.fillRect(g.x - hw, g.y - hh, g.w, g.h);
+		ctx.fillStyle = "#d9c49a";
+		ctx.fillRect(g.x - hw + 2, g.y - hh + 2, g.w - 4, g.h * 0.36);
+		// battlements
+		ctx.fillStyle = "#c8b085";
+		for (let i = -2; i <= 2; i++) {
+			ctx.fillRect(g.x + i * 10 - 3, g.y - hh - 9, 7, 9);
+		}
+		// arch
+		ctx.fillStyle = "#2a1e0e";
+		ctx.beginPath();
+		ctx.arc(g.x, g.y + 3, 11, Math.PI, 0);
+		ctx.rect(g.x - 11, g.y + 3, 22, hh - 1);
+		ctx.fill();
+		// portal glow
+		const t = performance.now() * 0.002;
+		const aura = 0.28 + 0.14 * Math.sin(t);
+		const grad = ctx.createRadialGradient(g.x, g.y + 2, 2, g.x, g.y + 2, 16);
+		grad.addColorStop(0, `rgba(220,210,130,${aura + 0.25})`);
+		grad.addColorStop(1, "rgba(200,180,80,0)");
+		ctx.fillStyle = grad;
+		ctx.beginPath();
+		ctx.arc(g.x, g.y + 2, 16, Math.PI, 0);
+		ctx.rect(g.x - 16, g.y + 2, 32, hh);
+		ctx.fill();
+		// name
+		ctx.fillStyle = "rgba(248,238,210,0.95)";
+		ctx.font = "bold 13px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText(g.name, g.x, g.y - hh - 14);
+		// hint
+		if (dist(player, g) < g.portalR + 80) {
+			ctx.fillStyle = "rgba(255,245,190,0.92)";
+			ctx.font = "12px Microsoft YaHei";
+			ctx.fillText("进入 → 返回东方战场", g.x, g.y - hh - 28);
+		}
+	}
+
+	function drawPlayer() {
+		const p = player;
+		const facing = renderStd && renderStd.getFacing ? renderStd.getFacing(p.dir || 0) : (Math.cos(p.dir || 0) >= 0 ? 1 : -1);
+		const bodyColor = p.body || "#cfad5b";
+		const accentColor = p.accent || "#ffe7a5";
+		const headColor = p.head || "#e7c59e";
+		ctx.save();
+		ctx.translate(p.x, p.y);
+		ctx.scale(1.25 * facing, 1.25);
+		if (p.mounted) {
+			ctx.fillStyle = "#8b5e3c";
+			ctx.beginPath();
+			ctx.ellipse(0, 13, 14, 7.5, 0, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.fillStyle = "#7a4a24";
+			ctx.beginPath();
+			ctx.ellipse(10, 5, 6.5, 5, -0.5, 0, Math.PI * 2);
+			ctx.fill();
+			ctx.strokeStyle = "#5a3010";
+			ctx.lineWidth = 2.2;
+			ctx.beginPath();
+			ctx.moveTo(-9, 18); ctx.lineTo(-10, 26);
+			ctx.moveTo(-3, 20); ctx.lineTo(-3, 28);
+			ctx.moveTo(3, 20);  ctx.lineTo(4, 28);
+			ctx.moveTo(9, 17);  ctx.lineTo(10, 25);
+			ctx.stroke();
+		}
+		// Body
+		ctx.fillStyle = bodyColor;
+		ctx.fillRect(-4.6, -8.2, 9.2, 12.2);
+		ctx.fillStyle = accentColor;
+		ctx.fillRect(-6.2, -6.8, 2.6, 6);
+		ctx.fillRect(3.6, -6.8, 2.6, 6);
+		// Legs
+		ctx.strokeStyle = "#2f2518"; ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.moveTo(-2, 4); ctx.lineTo(-2.5, 11);
+		ctx.moveTo(2, 4);  ctx.lineTo(2.5, 11);
+		ctx.stroke();
+		// Head
+		ctx.fillStyle = headColor;
+		ctx.beginPath(); ctx.arc(0, -11.5, 4.6, 0, Math.PI * 2); ctx.fill();
+		ctx.fillStyle = "#2f1e16";
+		ctx.fillRect(-5, -14.8, 10, 2.8);
+		const goldBlade = !!p.goldBlade;
+		ctx.strokeStyle = goldBlade ? "#8a682a" : "#6b4c2d";
+		ctx.lineWidth = 2.2;
+		ctx.beginPath();
+		ctx.moveTo(-1, 2.5);
+		ctx.lineTo(15, -17.5);
+		ctx.stroke();
+		ctx.fillStyle = goldBlade ? "#f0cd60" : "#d7dfea";
+		ctx.beginPath();
+		ctx.moveTo(14.6, -17.8);
+		ctx.lineTo(21.8, -25.6);
+		ctx.lineTo(20.4, -12.8);
+		ctx.closePath();
+		ctx.fill();
+		// Aura ring
+		ctx.strokeStyle = "rgba(255,248,209,0.85)"; ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.arc(0, -2, 14 + Math.sin(performance.now() * 0.01) * 1, 0, Math.PI * 2);
+		ctx.stroke();
+		ctx.restore();
+		ctx.fillStyle = "#fff4c8";
+		ctx.font = "700 13px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText(p.name || "主公", p.x, p.y - 28);
+	}
+
+	function drawMap() {
+		// Sky bg
+		const bg = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+		bg.addColorStop(0, "#8fadc2"); bg.addColorStop(1, "#7a9fb5");
+		ctx.fillStyle = bg;
+		ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+		ctx.save();
+		ctx.translate(-camera.x, -camera.y);
+
+		// Grass dots
+		for (const g of grassDots) {
+			if (g.x < camera.x - 10 || g.x > camera.x + canvas.width + 10) continue;
+			if (g.y < camera.y - 10 || g.y > camera.y + canvas.height + 10) continue;
+			ctx.fillStyle = g.c;
+			ctx.beginPath(); ctx.arc(g.x, g.y, g.r, 0, Math.PI * 2); ctx.fill();
+		}
+
+		// Hills
+		for (const h of hills) {
+			if (h.x < camera.x - h.r || h.x > camera.x + canvas.width + h.r) continue;
+			if (h.y < camera.y - h.r || h.y > camera.y + canvas.height + h.r) continue;
+			const grad = ctx.createRadialGradient(h.x - h.r * 0.2, h.y - h.r * 0.25, h.r * 0.2, h.x, h.y, h.r);
+			grad.addColorStop(0, `rgba(175,168,128,${h.a + 0.05})`);
+			grad.addColorStop(1, "rgba(120,116,82,0)");
+			ctx.fillStyle = grad;
+			ctx.beginPath(); ctx.arc(h.x, h.y, h.r, 0, Math.PI * 2); ctx.fill();
+		}
+
+		// Rivers
+		ctx.lineCap = "round";
+		for (const rv of rivers) {
+			if (rv.pts.length < 2) continue;
+			ctx.strokeStyle = "rgba(60,110,150,0.48)"; ctx.lineWidth = 28;
+			ctx.beginPath(); ctx.moveTo(rv.pts[0][0], rv.pts[0][1]);
+			for (let i = 1; i < rv.pts.length; i++) ctx.lineTo(rv.pts[i][0], rv.pts[i][1]);
+			ctx.stroke();
+			ctx.strokeStyle = "#5a9ec0"; ctx.lineWidth = 18;
+			ctx.beginPath(); ctx.moveTo(rv.pts[0][0], rv.pts[0][1]);
+			for (let i = 1; i < rv.pts.length; i++) ctx.lineTo(rv.pts[i][0], rv.pts[i][1]);
+			ctx.stroke();
+		}
+
+		// Forests
+		for (const f of forests) {
+			if (f.x < camera.x - 12 || f.x > camera.x + canvas.width + 12) continue;
+			if (f.y < camera.y - 12 || f.y > camera.y + canvas.height + 12) continue;
+			ctx.fillStyle = "rgba(36,58,28,0.22)";
+			ctx.beginPath(); ctx.arc(f.x + 2, f.y + 3, f.r * 1.1, 0, Math.PI * 2); ctx.fill();
+			ctx.fillStyle = f.c;
+			ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2); ctx.fill();
+		}
+
+		// Mountains
+		for (const m of alpsMountains) {
+			if (m.x + m.r < camera.x || m.x - m.r > camera.x + canvas.width) continue;
+			if (m.y + m.r < camera.y || m.y - m.r > camera.y + canvas.height) continue;
+			drawMountain(ctx, m, !!m.name);
+		}
+
+		// Cities
+		for (const c of cities) {
+			if (c.x + 80 < camera.x || c.x - 80 > camera.x + canvas.width) continue;
+			if (c.y + 80 < camera.y || c.y - 80 > camera.y + canvas.height) continue;
+			drawCity(c);
+		}
+
+		// ── Quest objects ──────────────────────────────────────────────────
+		drawCamelot();
+		drawDarkTower();
+		drawMordredGuards();
+		drawGuinevere();
+		drawArthur();
+		drawLancelot();
+
+		// Return gate
+		drawReturnGate();
+
+		// Player
+		drawPlayer();
+
+		// Companion
+		drawCompanion();
+		drawElizabeth();
+
+		// Click marker
+		if (clickMarker.life > 0) {
+			const a = clickMarker.life;
+			ctx.strokeStyle = `rgba(255,243,171,${a})`; ctx.lineWidth = 2;
+			ctx.beginPath();
+			ctx.arc(clickMarker.x, clickMarker.y, 12 + (1 - a) * 40, 0, Math.PI * 2);
+			ctx.stroke();
+		}
+
+		ctx.restore();
+
+		// HUD title
+		ctx.fillStyle = "rgba(0,0,0,0.38)";
+		ctx.fillRect(canvas.width * 0.5 - 180, 10, 360, 26);
+		ctx.fillStyle = "#e8d8b0";
+		ctx.font = "600 14px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.fillText(`⚔ 西方大陆 — 欧洲战场  |  金钱 ${Math.floor(playerGold)}  |  接近嘉峪关可返回`, canvas.width * 0.5, 28);
+	}
+
+	// Europe continent outline (world coords 3600×2400, clockwise from NW)
+	const europeOutline = [
+		[288,0],[330,18],[390,9],[450,0],[510,24],[570,9],[630,0],
+		[750,0],[840,54],[780,108],[690,81],[600,108],
+		[870,135],[1020,54],[1200,27],[1380,81],
+		[1620,108],[1740,270],[1770,600],[1740,900],
+		[1440,990],[1350,900],[1260,960],
+		[1110,1050],[1020,1140],[930,1200],[840,1140],[780,1050],
+		[690,1020],[630,1110],[600,1200],[540,1140],
+		[510,1020],[420,1050],[330,990],[240,900],
+		[180,810],[120,690],[90,570],[120,450],
+		[150,420],[240,360],[210,300],[180,240],
+		[240,210],[300,150],[270,90],[240,45],[288,0]
+	];
+
+	function drawMini() {
+		miniCtx.clearRect(0, 0, mini.width, mini.height);
+		const sx = mini.width / W, sy = mini.height / H;
+
+		// Ocean background
+		miniCtx.fillStyle = "#2e5c80";
+		miniCtx.fillRect(0, 0, mini.width, mini.height);
+
+		// Europe continent silhouette
+		miniCtx.fillStyle = "#4a7a48";
+		miniCtx.beginPath();
+		miniCtx.moveTo(europeOutline[0][0] * sx, europeOutline[0][1] * sy);
+		for (let i = 1; i < europeOutline.length; i++)
+			miniCtx.lineTo(europeOutline[i][0] * sx, europeOutline[i][1] * sy);
+		miniCtx.closePath();
+		miniCtx.fill();
+		// Coastline stroke
+		miniCtx.strokeStyle = "rgba(90,150,200,0.5)";
+		miniCtx.lineWidth = 0.8;
+		miniCtx.stroke();
+
+		// Rivers on minimap
+		miniCtx.strokeStyle = "rgba(74,142,178,0.75)"; miniCtx.lineWidth = 1.2;
+		for (const rv of rivers) {
+			if (rv.pts.length < 2) continue;
+			miniCtx.beginPath(); miniCtx.moveTo(rv.pts[0][0] * sx, rv.pts[0][1] * sy);
+			for (let i = 1; i < rv.pts.length; i++) miniCtx.lineTo(rv.pts[i][0] * sx, rv.pts[i][1] * sy);
+			miniCtx.stroke();
+		}
+
+		// Mountains
+		miniCtx.fillStyle = "rgba(168,152,122,0.82)";
+		for (const m of alpsMountains) {
+			miniCtx.beginPath(); miniCtx.arc(m.x * sx, m.y * sy, Math.max(1.5, m.r * sx * 0.9), 0, Math.PI * 2); miniCtx.fill();
+		}
+
+		// Cities
+		for (const c of cities) {
+			miniCtx.fillStyle = "#e8d080";
+			miniCtx.beginPath(); miniCtx.arc(c.x * sx, c.y * sy, 2, 0, Math.PI * 2); miniCtx.fill();
+		}
+
+		// Return gate (right edge)
+		miniCtx.fillStyle = "#d4c07a";
+		miniCtx.fillRect(returnGate.x * sx - 3, returnGate.y * sy - 2, 6, 4);
+
+		// Quest: camelot marker
+		miniCtx.fillStyle = quest.stage <= 1 ? "#f0d060" : "#8050c0";
+		miniCtx.beginPath(); miniCtx.arc(camelot.x * sx, camelot.y * sy, 3, 0, Math.PI * 2); miniCtx.fill();
+		// Quest: dark tower marker
+		if (!quest.guardsDead) {
+			miniCtx.fillStyle = "#e03030";
+			miniCtx.beginPath(); miniCtx.arc(darkTower.x * sx, darkTower.y * sy, 3, 0, Math.PI * 2); miniCtx.fill();
+		}
+		// Lancelot on minimap
+		if (lancelot) {
+			miniCtx.fillStyle = "#a0c8ff";
+			miniCtx.beginPath(); miniCtx.arc(lancelot.x * sx, lancelot.y * sy, 2.5, 0, Math.PI * 2); miniCtx.fill();
+		}
+		if (elizabeth && !elizabeth.dead) {
+			miniCtx.fillStyle = "#9dc1ff";
+			miniCtx.beginPath(); miniCtx.arc(elizabeth.x * sx, elizabeth.y * sy, 2.4, 0, Math.PI * 2); miniCtx.fill();
+		}
+
+		// Player dot
+		miniCtx.fillStyle = "#f3d26b";
+		miniCtx.beginPath(); miniCtx.arc(player.x * sx, player.y * sy, 3, 0, Math.PI * 2); miniCtx.fill();
+
+		// Viewport rect
+		miniCtx.strokeStyle = "rgba(255,244,200,0.85)"; miniCtx.lineWidth = 1;
+		miniCtx.strokeRect(camera.x * sx, camera.y * sy, canvas.width * sx, canvas.height * sy);
+	}
+
+	function resize() {
+		canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+		const compact = window.matchMedia("(max-width: 900px),(pointer: coarse)").matches;
+		mini.width = compact ? 176 : 240; mini.height = compact ? 118 : 160;
+		camera.x = clamp(camera.x, 0, W - canvas.width);
+		camera.y = clamp(camera.y, 0, H - canvas.height);
+		applyTopPanelLayout();
+	}
+	window.addEventListener("resize", resize);
+	resize();
+	window.addEventListener("beforeunload", () => {
+		const flags = loadHeroFlags();
+		saveHeroFlags({
+			lancelot: flags.lancelot || !!lancelot,
+			elizabeth: flags.elizabeth || !!elizabeth
+		});
+		saveSharedGold(playerGold);
+		syncPlayerState();
+	});
+
+	// ── Input ─────────────────────────────────────────────────────────────────
+	window.addEventListener("keydown", e => {
+		const k = e.key.toLowerCase();
+		if (k === "w" || e.key === "ArrowUp")    { moveInput.up    = true; e.preventDefault(); }
+		if (k === "s" || e.key === "ArrowDown")  { moveInput.down  = true; e.preventDefault(); }
+		if (k === "a" || e.key === "ArrowLeft")  { moveInput.left  = true; e.preventDefault(); }
+		if (k === "d" || e.key === "ArrowRight") { moveInput.right = true; e.preventDefault(); }
+	});
+	window.addEventListener("keyup", e => {
+		const k = e.key.toLowerCase();
+		if (k === "w" || e.key === "ArrowUp")    moveInput.up    = false;
+		if (k === "s" || e.key === "ArrowDown")  moveInput.down  = false;
+		if (k === "a" || e.key === "ArrowLeft")  moveInput.left  = false;
+		if (k === "d" || e.key === "ArrowRight") moveInput.right = false;
+	});
+
+	function issueMove(wx, wy) {
+		player.target = { x: clamp(wx, 0, W), y: clamp(wy, 0, H) };
+		clickMarker.x = player.target.x; clickMarker.y = player.target.y;
+		clickMarker.life = 1;
+	}
+
+	canvas.addEventListener("pointerdown", e => {
+		if (e.pointerType === "mouse" && e.button !== 0) return;
+		const p = viewToWorld(e.clientX, e.clientY);
+		issueMove(p.x, p.y);
+	});
+
+	let miniDrag = false;
+	mini.addEventListener("pointerdown", e => {
+		miniDrag = true;
+		if (mini.setPointerCapture) mini.setPointerCapture(e.pointerId);
+		e.preventDefault();
+		const p = miniToWorld(e.clientX, e.clientY);
+		issueMove(p.x, p.y);
+	}, { passive: false });
+	mini.addEventListener("pointermove", e => {
+		if (!miniDrag) return;
+		e.preventDefault();
+		const p = miniToWorld(e.clientX, e.clientY);
+		issueMove(p.x, p.y);
+	}, { passive: false });
+	mini.addEventListener("pointerup", () => miniDrag = false);
+
+	// ── Game loop ─────────────────────────────────────────────────────────────
+	let last = performance.now();
+	function loop(now) {
+		const dt = Math.min(0.033, (now - last) / 1000);
+		last = now;
+
+		if (sharedUI.isPaused()) {
+			drawMap();
+			drawMini();
+			sharedUI.drawPauseOverlay(ctx, canvas.width, canvas.height);
+			requestAnimationFrame(loop);
+			return;
+		}
+
+		// Player movement
+		const mx = (moveInput.right ? 1 : 0) - (moveInput.left ? 1 : 0);
+		const my = (moveInput.down  ? 1 : 0) - (moveInput.up   ? 1 : 0);
+		if (mx !== 0 || my !== 0) {
+			const nd = Math.hypot(mx, my) || 1;
+			player.x += (mx / nd) * player.speed * dt;
+			player.y += (my / nd) * player.speed * dt;
+			player.dir = Math.atan2(my, mx);
+			player.target.x = player.x; player.target.y = player.y;
+		} else {
+			moveTo(player, player.target.x, player.target.y, player.speed, dt);
+		}
+		player.x = clamp(player.x, 30, W - 30);
+		player.y = clamp(player.y, 30, H - 30);
+		pushOutMountains(player);
+		updateLondonTavern(now);
+
+		// Portal: return gate
+		if (!returnGate._triggered && dist(player, returnGate) < returnGate.portalR - 10) {
+			returnGate._triggered = true;
+			const flags = loadHeroFlags();
+			saveHeroFlags({
+				lancelot: flags.lancelot || !!lancelot,
+				elizabeth: flags.elizabeth || !!elizabeth
+			});
+			saveSharedGold(playerGold);
+			syncPlayerState();
+			window.location.href = "index.html";
+		}
+
+		// Companion
+		updateCompanion(dt);
+		updateElizabeth(dt);
+
+		// Quest
+		updateQuest(dt);
+
+		// Lancelot follow
+		updateLancelot(dt);
+
+		// Camera
+		const tx = player.x - canvas.width / 2;
+		const ty = player.y - canvas.height / 2;
+		const smooth = 1 - Math.pow(0.001, dt);
+		camera.x += (tx - camera.x) * smooth;
+		camera.y += (ty - camera.y) * smooth;
+		camera.x = clamp(camera.x, 0, W - canvas.width);
+		camera.y = clamp(camera.y, 0, H - canvas.height);
+
+		clickMarker.life = Math.max(0, clickMarker.life - dt * 1.7);
+
+		drawMap();
+		drawMini();
+
+		requestAnimationFrame(loop);
+	}
+	requestAnimationFrame(loop);
+	</script>
+</body>
+</html>
