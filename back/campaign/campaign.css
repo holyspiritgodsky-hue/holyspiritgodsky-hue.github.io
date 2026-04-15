@@ -1467,22 +1467,24 @@ body.tavernPage::before {
 	.hud {
 		left: var(--safe-left);
 		top: var(--safe-top);
-		width: min(244px, calc(100vw - var(--safe-left) - var(--safe-right) - 108px));
-		padding: 10px 11px 9px;
-		border-radius: 14px;
+		width: min(212px, calc(100vw - var(--safe-left) - var(--safe-right) - 124px));
+		padding: 8px 9px 8px;
+		border-radius: 13px;
 	}
 
 	.hudMeta {
-		margin-top: 6px;
+		margin-top: 4px;
 	}
 
 	.hudMeta #objectiveText {
-		font-size: 12px;
-		line-height: 1.35;
+		padding: 7px 9px;
+		font-size: 11px;
+		line-height: 1.28;
+		border-radius: 10px;
 	}
 
 	.hud h1 {
-		font-size: 17px;
+		font-size: 15px;
 	}
 
 	.actions {
@@ -1605,7 +1607,19 @@ body.mobile-ui .upgradeToggle {
 
 @media (max-width: 640px) {
 	.hud {
-		width: min(220px, calc(100vw - var(--safe-left) - var(--safe-right) - 96px));
+		width: min(188px, calc(100vw - var(--safe-left) - var(--safe-right) - 102px));
+		padding: 7px 8px 7px;
+		border-radius: 12px;
+	}
+
+	.hud h1 {
+		font-size: 14px;
+	}
+
+	.hudMeta #objectiveText {
+		padding: 6px 8px;
+		font-size: 10px;
+		line-height: 1.22;
 	}
 
 	.actions {
