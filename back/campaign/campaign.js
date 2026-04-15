@@ -268,6 +268,8 @@
 	const chapterNavToggleEl = document.createElement("button");
 	const upgradeToggleEl = document.createElement("button");
 	const upgradePanelEl = document.createElement("div");
+	const mobileMenuToggleEl = document.createElement("button");
+	const mobileMenuPanelEl = document.createElement("div");
 	chapterNavToggleEl.type = "button";
 	chapterNavToggleEl.className = "chapterNavToggle";
 	chapterNavToggleEl.setAttribute("aria-expanded", "false");
@@ -278,6 +280,18 @@
 	upgradeToggleEl.setAttribute("aria-expanded", "false");
 	upgradeToggleEl.setAttribute("aria-label", "展开技能升级");
 	upgradeToggleEl.textContent = "技能";
+	mobileMenuToggleEl.type = "button";
+	mobileMenuToggleEl.className = "mobileMenuToggle";
+	mobileMenuToggleEl.setAttribute("aria-expanded", "false");
+	mobileMenuToggleEl.setAttribute("aria-label", "展开战场菜单");
+	mobileMenuToggleEl.textContent = "菜单";
+	mobileMenuPanelEl.className = "mobileMenuPanel";
+	mobileMenuPanelEl.innerHTML = [
+		'<button type="button" class="ghostBtn" data-mobile-action="story">剧情</button>',
+		'<button type="button" class="ghostBtn" data-mobile-action="pause">暂停</button>',
+		'<button type="button" class="ghostBtn" data-mobile-action="chapters">关卡</button>',
+		'<button type="button" class="ghostBtn" data-mobile-action="upgrade">技能</button>'
+	].join("");
 	upgradePanelEl.className = "upgradePanel";
 	upgradePanelEl.innerHTML = [
 		'<div class="upgradePanelTitle">技能升级</div>',
@@ -298,9 +312,14 @@
 		chapterNavEl.parentNode.insertBefore(upgradeToggleEl, chapterNavEl);
 		document.body.appendChild(upgradePanelEl);
 	}
+	document.body.appendChild(mobileMenuToggleEl);
+	document.body.appendChild(mobileMenuPanelEl);
 	const upgradePointsEl = upgradePanelEl.querySelector("#upgradePointsText");
 	const farmUpgradeTextEl = upgradePanelEl.querySelector("#farmUpgradeText");
 	const hpUpgradeTextEl = upgradePanelEl.querySelector("#hpUpgradeText");
+	const mobilePauseActionEl = mobileMenuPanelEl.querySelector('[data-mobile-action="pause"]');
+	const mobileChapterActionEl = mobileMenuPanelEl.querySelector('[data-mobile-action="chapters"]');
+	const mobileUpgradeActionEl = mobileMenuPanelEl.querySelector('[data-mobile-action="upgrade"]');
 	const mobileStickEl = document.createElement("div");
 	mobileStickEl.className = "mobileStick";
 	mobileStickEl.setAttribute("aria-hidden", "true");
@@ -605,6 +624,21 @@
 		upgradeToggleEl.classList.toggle("open", open);
 		upgradeToggleEl.setAttribute("aria-expanded", open ? "true" : "false");
 		upgradeToggleEl.setAttribute("aria-label", open ? "收起技能升级" : "展开技能升级");
+		renderMobileMenu();
+	}
+
+	function setMobileMenuOpen(open) {
+		mobileMenuPanelEl.classList.toggle("open", open);
+		mobileMenuToggleEl.classList.toggle("open", open);
+		mobileMenuToggleEl.setAttribute("aria-expanded", open ? "true" : "false");
+		mobileMenuToggleEl.setAttribute("aria-label", open ? "收起战场菜单" : "展开战场菜单");
+		renderMobileMenu();
+	}
+
+	function renderMobileMenu() {
+		if (mobilePauseActionEl) mobilePauseActionEl.textContent = state.paused ? "继续" : "暂停";
+		if (mobileChapterActionEl) mobileChapterActionEl.textContent = chapterNavEl && chapterNavEl.classList.contains("open") ? "收起关卡" : "关卡";
+		if (mobileUpgradeActionEl) mobileUpgradeActionEl.textContent = upgradePanelEl.classList.contains("open") ? "收起技能" : "技能";
 	}
 
 	function upgradeJeanneSkill(kind) {
@@ -633,10 +667,14 @@
 		isMobileUI = window.matchMedia("(max-width: 920px),(pointer: coarse)").matches;
 		camera.scale = isMobileUI ? (window.innerWidth <= 640 ? 0.72 : 0.8) : 1;
 		document.body.classList.toggle("mobile-ui", isMobileUI);
-		if (!isMobileUI) resetMobileStick();
+		if (!isMobileUI) {
+			resetMobileStick();
+			setMobileMenuOpen(false);
+		}
 		if (chapterNavToggleEl) chapterNavToggleEl.textContent = isMobileUI ? chapterNavToggleMobileText : chapterNavToggleDesktopText;
 		if (upgradeToggleEl) upgradeToggleEl.textContent = upgradeToggleText;
 		if (storyBtn) storyBtn.textContent = isMobileUI ? "剧情" : storyBtnDefaultText;
+		renderMobileMenu();
 	}
 
 	function setChapterNavOpen(open) {
@@ -645,6 +683,7 @@
 		chapterNavToggleEl.classList.toggle("open", open);
 		chapterNavToggleEl.setAttribute("aria-expanded", open ? "true" : "false");
 		chapterNavToggleEl.setAttribute("aria-label", open ? "收起章节导航" : "展开章节导航");
+		renderMobileMenu();
 	}
 
 	function updateMobileStickKnob() {
@@ -3179,6 +3218,37 @@
 	if (skillBtn) skillBtn.addEventListener("click", castFreedomCry);
 	pauseBtn.addEventListener("click", togglePause);
 	storyBtn.addEventListener("click", () => showDialog(stage.briefingTitle, stage.briefing, "继续战斗"));
+	mobileMenuToggleEl.addEventListener("click", () => {
+		setChapterNavOpen(false);
+		setUpgradePanelOpen(false);
+		setMobileMenuOpen(!mobileMenuPanelEl.classList.contains("open"));
+	});
+	mobileMenuPanelEl.addEventListener("click", (event) => {
+		const button = event.target.closest("[data-mobile-action]");
+		if (!button) return;
+		const action = button.getAttribute("data-mobile-action");
+		if (action === "story") {
+			showDialog(stage.briefingTitle, stage.briefing, "继续战斗");
+			setMobileMenuOpen(false);
+			return;
+		}
+		if (action === "pause") {
+			togglePause();
+			setMobileMenuOpen(false);
+			return;
+		}
+		if (action === "chapters") {
+			setUpgradePanelOpen(false);
+			setChapterNavOpen(!chapterNavEl.classList.contains("open"));
+			setMobileMenuOpen(false);
+			return;
+		}
+		if (action === "upgrade") {
+			setChapterNavOpen(false);
+			setUpgradePanelOpen(!upgradePanelEl.classList.contains("open"));
+			setMobileMenuOpen(false);
+		}
+	});
 	dialogBtn.addEventListener("click", closeDialog);
 	if (chapterNavEl) {
 		chapterNavToggleEl.addEventListener("click", () => {
@@ -3205,11 +3275,14 @@
 		window.addEventListener("pointerdown", (event) => {
 			const navOpen = chapterNavEl.classList.contains("open");
 			const upgradeOpen = upgradePanelEl.classList.contains("open");
-			if (!navOpen && !upgradeOpen) return;
+			const mobileMenuOpen = mobileMenuPanelEl.classList.contains("open");
+			if (!navOpen && !upgradeOpen && !mobileMenuOpen) return;
+			if (mobileMenuPanelEl.contains(event.target) || mobileMenuToggleEl.contains(event.target)) return;
 			if (chapterNavEl.contains(event.target) || chapterNavToggleEl.contains(event.target)) return;
 			if (upgradePanelEl.contains(event.target) || upgradeToggleEl.contains(event.target)) return;
 			setChapterNavOpen(false);
 			setUpgradePanelOpen(false);
+			setMobileMenuOpen(false);
 		});
 	}
 

@@ -171,6 +171,75 @@ body::before {
 	max-width: min(420px, calc(100vw - 36px));
 }
 
+.mobileMenuToggle,
+.mobileMenuPanel {
+	display: none;
+}
+
+.mobileMenuToggle {
+	position: fixed;
+	left: calc(var(--safe-left) + 6px);
+	bottom: calc(var(--safe-bottom) + 6px);
+	z-index: 8;
+	align-items: center;
+	justify-content: center;
+	min-width: 78px;
+	height: 42px;
+	padding: 0 16px;
+	border-radius: 999px;
+	background: var(--nav-bg);
+	border: 1px solid rgba(255, 224, 176, 0.16);
+	backdrop-filter: blur(8px);
+	box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+.mobileMenuToggle.open {
+	background: linear-gradient(180deg, rgba(84, 58, 27, 0.96), rgba(45, 31, 19, 0.94));
+	border-color: rgba(255, 228, 159, 0.46);
+}
+
+.mobileMenuPanel {
+	position: fixed;
+	left: calc(var(--safe-left) + 6px);
+	bottom: calc(var(--safe-bottom) + 58px);
+	z-index: 7;
+	flex-direction: column;
+	width: min(178px, calc(100vw - var(--safe-left) - var(--safe-right) - 16px));
+	padding: 10px;
+	border-radius: 20px;
+	background: var(--nav-bg);
+	border: 1px solid rgba(255, 225, 170, 0.14);
+	backdrop-filter: blur(8px);
+	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+	box-sizing: border-box;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(8px) scale(0.98);
+	transform-origin: left bottom;
+	transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.mobileMenuPanel.open {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0) scale(1);
+}
+
+.mobileMenuPanel button {
+	width: 100%;
+	justify-content: center;
+	box-sizing: border-box;
+	margin-bottom: 8px;
+	box-shadow: none;
+	background: rgba(255, 244, 220, 0.05);
+	border-color: rgba(255, 225, 170, 0.12);
+	color: rgba(255,248,232,0.92);
+}
+
+.mobileMenuPanel button:last-child {
+	margin-bottom: 0;
+}
+
 #skillBtn {
 	display: none;
 }
@@ -1486,26 +1555,30 @@ body.tavernPage::before {
 
 body.mobile-ui .chapterNav {
 	left: var(--safe-left);
-	bottom: calc(var(--safe-bottom) + 160px);
+	bottom: calc(var(--safe-bottom) + 58px);
 }
 
 body.mobile-ui .chapterNavToggle {
-	left: var(--safe-left);
-	bottom: calc(var(--safe-bottom) + 130px);
+	display: none;
 }
 
 body.mobile-ui .upgradeToggle {
-	left: calc(var(--safe-left) + 86px);
-	bottom: calc(var(--safe-bottom) + 130px);
+	display: none;
 }
 
 body.mobile-ui .upgradePanel {
-	left: calc(var(--safe-left) + 86px);
-	bottom: calc(var(--safe-bottom) + 182px);
+	left: var(--safe-left);
+	bottom: calc(var(--safe-bottom) + 58px);
+	width: min(240px, calc(100vw - var(--safe-left) - var(--safe-right) - 16px));
 }
 
 body.mobile-ui .mobileStick {
 	display: block;
+}
+
+body.mobile-ui .mobileMenuToggle,
+body.mobile-ui .mobileMenuPanel {
+	display: flex;
 }
 
 body.mobile-ui .mobileStick {
@@ -1517,7 +1590,7 @@ body.mobile-ui .mobileStick {
 }
 
 body.mobile-ui .actions {
-	z-index: 6;
+	display: none;
 }
 
 body.mobile-ui .chapterNav,
@@ -1544,7 +1617,7 @@ body.mobile-ui .upgradeToggle {
 	body.mobile-ui .chapterNav {
 		left: var(--safe-left);
 		right: var(--safe-right);
-		bottom: calc(var(--safe-bottom) + 154px);
+		bottom: calc(var(--safe-bottom) + 58px);
 		max-width: none;
 	}
 
@@ -1552,20 +1625,25 @@ body.mobile-ui .upgradeToggle {
 	body.mobile-ui .upgradePanel {
 		left: var(--safe-left);
 		right: var(--safe-right);
-		bottom: calc(var(--safe-bottom) + 206px);
+		bottom: calc(var(--safe-bottom) + 58px);
 		width: auto;
 		max-height: min(40vh, 260px);
 	}
 
 	.chapterNavToggle,
 	body.mobile-ui .chapterNavToggle {
-		bottom: calc(var(--safe-bottom) + 124px);
+		display: none;
 	}
 
 	.upgradeToggle,
 	body.mobile-ui .upgradeToggle {
-		left: calc(var(--safe-left) + 86px);
-		bottom: calc(var(--safe-bottom) + 124px);
+		display: none;
+	}
+
+	body.mobile-ui .mobileMenuPanel {
+		left: var(--safe-left);
+		right: auto;
+		width: min(164px, calc(100vw - var(--safe-left) - var(--safe-right) - 16px));
 	}
 
 	body.mobile-ui .mobileStick {
