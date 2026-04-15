@@ -259,6 +259,11 @@
 	const skillBtn = document.getElementById("skillBtn");
 	const pauseBtn = document.getElementById("pauseBtn");
 	const storyBtn = document.getElementById("storyBtn");
+	const storyBtnDefaultText = storyBtn ? storyBtn.textContent : "查看剧情";
+	const chapterNavToggleDesktopText = "章节";
+	const chapterNavToggleMobileText = "关卡";
+	const upgradeToggleText = "技能";
+	const skillBadgeHitboxes = [];
 	const chapterNavEl = document.querySelector(".chapterNav");
 	const chapterNavToggleEl = document.createElement("button");
 	const upgradeToggleEl = document.createElement("button");
@@ -319,31 +324,44 @@
 	const playerSpriteMove = new Image();
 	const terrainAtlas = new Image();
 	const terrainTileAtlas = new Image();
+	const lpcHouseAtlas = new Image();
+	const lpcTreeAtlas = new Image();
+	const lpcCastleWallsAtlas = new Image();
+	const lpcCastleOutsideAtlas = new Image();
+	const lpcGrassTileAtlas = new Image();
+	const lpcDirtTileAtlas = new Image();
+	const lpcRockTileAtlas = new Image();
 	const playerAttackFrames = [];
 	const PLAYER_ATTACK_FRAME_COUNT = 17;
 	const TERRAIN_TILE_W = 37;
 	const TERRAIN_TILE_H = 37;
 	const TERRAIN_TILE_COLS = 5;
 	const TERRAIN_TILE_INSET = 1;
+	const MAGECITY_PATTERN_SLICES = Object.freeze({
+		wall: { x: 0, y: 112, w: 64, h: 64 },
+		stone: { x: 0, y: 222, w: 64, h: 64 },
+		road: { x: 0, y: 1048, w: 72, h: 72 }
+	});
 	const TERRAIN_SPRITES = Object.freeze({
-		blueRoofHouse: { x: 4, y: 460, w: 38, h: 145 },
-		stoneChapel: { x: 42, y: 460, w: 34, h: 145 },
-		redRoofHouse: { x: 6, y: 698, w: 40, h: 99 },
-		redChapel: { x: 46, y: 698, w: 29, h: 99 },
-		roundBarn: { x: 0, y: 798, w: 46, h: 191 },
-		timberHall: { x: 46, y: 798, w: 35, h: 191 },
-		longHut: { x: 1, y: 993, w: 39, h: 124 },
-		woodHouse: { x: 40, y: 993, w: 41, h: 124 },
-		goldHall: { x: 0, y: 1116, w: 81, h: 103 },
-		pineGreen: { x: 0, y: 225, w: 40, h: 152 },
-		pineGold: { x: 40, y: 225, w: 41, h: 152 },
-		smallPine: { x: 0, y: 378, w: 24, h: 78 },
-		tallPine: { x: 24, y: 378, w: 42, h: 78 }
+		blueRoofHouse: { x: 0, y: 596, w: 124, h: 222 },
+		stoneChapel: { x: 56, y: 788, w: 144, h: 142 },
+		redRoofHouse: { x: 124, y: 596, w: 132, h: 222 },
+		redChapel: { x: 0, y: 112, w: 118, h: 112 },
+		roundBarn: { x: 44, y: 366, w: 112, h: 194 },
+		timberHall: { x: 0, y: 1204, w: 108, h: 168 },
+		longHut: { x: 12, y: 1310, w: 176, h: 104 },
+		woodHouse: { x: 74, y: 790, w: 128, h: 156 },
+		goldHall: { x: 0, y: 1288, w: 202, h: 158 },
+		pineGreen: { x: 0, y: 934, w: 104, h: 116 },
+		pineGold: { x: 104, y: 934, w: 104, h: 116 },
+		smallPine: { x: 214, y: 370, w: 30, h: 86 },
+		tallPine: { x: 94, y: 336, w: 126, h: 220 }
 	});
 	const TERRAIN_TILE_GROUPS = Object.freeze({
 		wallVertical: [createTile(0, 0)],
 		wallHorizontal: [createTile(4, 0)],
 		tree: createTileGroup(4, 5),
+		goldRoad: createTileGroup(7, 7),
 		rock: createTileGroup(6, 7)
 	});
 
@@ -391,8 +409,15 @@
 	};
 	playerSpriteIdle.src = jeanneSprite.idleSrc;
 	playerSpriteMove.src = jeanneSprite.moveSrc;
-	terrainAtlas.src = resolveCampaignAssetPath("img/tp.png");
+	terrainAtlas.src = resolveCampaignAssetPath("img/medieval/magecity-transparent.png");
 	terrainTileAtlas.src = resolveCampaignAssetPath("img/2.png");
+	lpcHouseAtlas.src = resolveCampaignAssetPath("img/lpc/house_transparent.png");
+	lpcTreeAtlas.src = resolveCampaignAssetPath("img/lpc/treetop.png");
+	lpcCastleWallsAtlas.src = resolveCampaignAssetPath("img/lpc/castlewalls.png");
+	lpcCastleOutsideAtlas.src = resolveCampaignAssetPath("img/lpc/castle_outside.png");
+	lpcGrassTileAtlas.src = resolveCampaignAssetPath("img/lpc-temp/lpc_base_assets/LPC Base Assets/tiles/grass.png");
+	lpcDirtTileAtlas.src = resolveCampaignAssetPath("img/lpc-temp/lpc_base_assets/LPC Base Assets/tiles/dirt2.png");
+	lpcRockTileAtlas.src = resolveCampaignAssetPath("img/lpc-temp/lpc_base_assets/LPC Base Assets/tiles/rock.png");
 	for (let i = 0; i < (jeanneSprite.attackFrames || PLAYER_ATTACK_FRAME_COUNT); i += 1) {
 		const img = new Image();
 		img.src = (jeanneSprite.attackPattern || "../img/hero3/attack/attack-{index}.png").replace("{index}", String(i).padStart(2, "0"));
@@ -400,7 +425,7 @@
 	}
 
 	const keys = { up: false, down: false, left: false, right: false };
-	const camera = { x: 0, y: 0 };
+	const camera = { x: 0, y: 0, scale: 1 };
 	const mobileStick = {
 		active: false,
 		pointerId: null,
@@ -606,12 +631,12 @@
 
 	function applyResponsiveUi() {
 		isMobileUI = window.matchMedia("(max-width: 920px),(pointer: coarse)").matches;
+		camera.scale = isMobileUI ? (window.innerWidth <= 640 ? 0.72 : 0.8) : 1;
 		document.body.classList.toggle("mobile-ui", isMobileUI);
 		if (!isMobileUI) resetMobileStick();
-		if (chapterNavToggleEl) chapterNavToggleEl.textContent = isMobileUI ? "关卡" : "章节";
-		if (upgradeToggleEl) upgradeToggleEl.textContent = "技能";
-		storyBtn.textContent = isMobileUI ? "剧情" : "查看剧情";
-		if (dialogBtn && isMobileUI) dialogBtn.textContent = "开始";
+		if (chapterNavToggleEl) chapterNavToggleEl.textContent = isMobileUI ? chapterNavToggleMobileText : chapterNavToggleDesktopText;
+		if (upgradeToggleEl) upgradeToggleEl.textContent = upgradeToggleText;
+		if (storyBtn) storyBtn.textContent = isMobileUI ? "剧情" : storyBtnDefaultText;
 	}
 
 	function setChapterNavOpen(open) {
@@ -653,15 +678,15 @@
 	function worldFromClient(clientX, clientY) {
 		const rect = canvas.getBoundingClientRect();
 		return {
-			x: camera.x + (clientX - rect.left),
-			y: camera.y + (clientY - rect.top)
+			x: camera.x + (clientX - rect.left) / camera.scale,
+			y: camera.y + (clientY - rect.top) / camera.scale
 		};
 	}
 
 	function screenFromWorld(x, y) {
 		return {
-			x: x - camera.x,
-			y: y - camera.y
+			x: (x - camera.x) * camera.scale,
+			y: (y - camera.y) * camera.scale
 		};
 	}
 
@@ -1389,6 +1414,19 @@
 		return true;
 	}
 
+	function getUnitSkillBadge(unit) {
+		if (!unit || unit.dead) return null;
+		if (unit.isPlayer) {
+			if (stageId === "england") return null;
+			return {
+				label: unit.skillCd > 0 ? `${Math.ceil(unit.skillCd)}s` : "为了自由",
+				ready: unit.skillCd <= 0,
+				action: castFreedomCry
+			};
+		}
+		return null;
+	}
+
 	function updatePlayer(dt) {
 		const player = state.player;
 		player.attackCd = Math.max(0, player.attackCd - dt);
@@ -1937,8 +1975,10 @@
 	}
 
 	function updateCamera() {
-		camera.x = clamp(state.player.x - canvas.width * 0.5, 0, Math.max(0, state.worldW - canvas.width));
-		camera.y = clamp(state.player.y - canvas.height * 0.5, 0, Math.max(0, state.worldH - canvas.height));
+		const viewportW = canvas.width / camera.scale;
+		const viewportH = canvas.height / camera.scale;
+		camera.x = clamp(state.player.x - viewportW * 0.5, 0, Math.max(0, state.worldW - viewportW));
+		camera.y = clamp(state.player.y - viewportH * 0.5, 0, Math.max(0, state.worldH - viewportH));
 	}
 
 	function drawGroundPattern(colorA) {
@@ -1955,16 +1995,104 @@
 	}
 
 	function drawTerrainSprite(spriteId, x, y, scale, opacity) {
-		if (!terrainAtlas.complete) return;
 		const sprite = TERRAIN_SPRITES[spriteId];
 		if (!sprite) return;
+		const atlas = sprite.atlas || terrainAtlas;
+		if (!atlas.complete) return;
 		const spriteScale = scale || 1;
 		const drawW = sprite.w * spriteScale;
 		const drawH = sprite.h * spriteScale;
 		ctx.save();
 		if (typeof opacity === "number") ctx.globalAlpha = opacity;
 		ctx.imageSmoothingEnabled = false;
-		ctx.drawImage(terrainAtlas, sprite.x, sprite.y, sprite.w, sprite.h, x - drawW * 0.5, y - drawH, drawW, drawH);
+		ctx.drawImage(atlas, sprite.x, sprite.y, sprite.w, sprite.h, x - drawW * 0.5, y - drawH, drawW, drawH);
+		ctx.restore();
+	}
+
+	function fillRegionWithPattern(image, x, y, width, height, options) {
+		if (!image || !image.complete || width <= 0 || height <= 0) return false;
+		const opacity = options && typeof options.opacity === "number" ? options.opacity : 1;
+		const patternScale = options && options.patternScale ? options.patternScale : 1;
+		ctx.save();
+		ctx.globalAlpha = opacity;
+		ctx.imageSmoothingEnabled = false;
+		ctx.beginPath();
+		ctx.rect(x, y, width, height);
+		ctx.clip();
+		ctx.translate(x, y);
+		ctx.scale(patternScale, patternScale);
+		const pattern = ctx.createPattern(image, "repeat");
+		if (!pattern) {
+			ctx.restore();
+			return false;
+		}
+		ctx.fillStyle = pattern;
+		ctx.fillRect(0, 0, width / patternScale, height / patternScale);
+		ctx.restore();
+		return true;
+	}
+
+	function fillRegionWithAtlasSlice(image, source, x, y, width, height, options) {
+		if (!image || !image.complete || !source || width <= 0 || height <= 0) return false;
+		const opacity = options && typeof options.opacity === "number" ? options.opacity : 1;
+		const tileScale = options && options.tileScale ? options.tileScale : 1;
+		const tileW = source.w * tileScale;
+		const tileH = source.h * tileScale;
+		ctx.save();
+		ctx.globalAlpha = opacity;
+		ctx.imageSmoothingEnabled = false;
+		ctx.beginPath();
+		ctx.rect(x, y, width, height);
+		ctx.clip();
+		for (let drawY = y; drawY < y + height; drawY += tileH) {
+			for (let drawX = x; drawX < x + width; drawX += tileW) {
+				ctx.drawImage(image, source.x, source.y, source.w, source.h, drawX, drawY, tileW, tileH);
+			}
+		}
+		ctx.restore();
+		return true;
+	}
+
+	function fillTreeRegion(x, y, width, height, options) {
+		const opacity = options && typeof options.opacity === "number" ? options.opacity : 1;
+		const baseFilled = fillRegionWithPattern(lpcGrassTileAtlas, x, y, width, height, {
+			opacity,
+			patternScale: 2
+		});
+		if (!baseFilled) return false;
+		fillRegionWithPattern(lpcTreeAtlas, x, y, width, height, {
+			opacity: Math.min(1, opacity * 0.72),
+			patternScale: 1.35
+		});
+		return true;
+	}
+
+	function getTerrainPatternFill(groupName, width, height) {
+		if (groupName === "tree") return () => fillTreeRegion;
+		if (groupName === "goldRoad") return { image: terrainAtlas, source: MAGECITY_PATTERN_SLICES.road, tileScale: 1.6 };
+		if (groupName === "rock") return { image: terrainAtlas, source: MAGECITY_PATTERN_SLICES.stone, tileScale: 1.3 };
+		if ((groupName === "wallVertical" || groupName === "wallHorizontal") && (width > 0 || height > 0)) {
+			return { image: terrainAtlas, source: MAGECITY_PATTERN_SLICES.wall, tileScale: 1.55 };
+		}
+		return null;
+	}
+
+	function drawAtlasSlice(image, source, destination, opacity) {
+		if (!image || !image.complete || !source || !destination) return;
+		ctx.save();
+		if (typeof opacity === "number") ctx.globalAlpha = opacity;
+		ctx.imageSmoothingEnabled = false;
+		ctx.drawImage(
+			image,
+			source.x,
+			source.y,
+			source.w,
+			source.h,
+			destination.x,
+			destination.y,
+			destination.w,
+			destination.h
+		);
 		ctx.restore();
 	}
 
@@ -2000,6 +2128,20 @@
 	}
 
 	function fillTerrainRegion(groupName, x, y, width, height, options) {
+		if (groupName === "tree" && fillTreeRegion(x, y, width, height, options)) return true;
+		const patternFill = getTerrainPatternFill(groupName, width, height);
+		if (patternFill && patternFill.image && patternFill.source) {
+			return fillRegionWithAtlasSlice(patternFill.image, patternFill.source, x, y, width, height, {
+				opacity: options && typeof options.opacity === "number" ? options.opacity : 1,
+				tileScale: patternFill.tileScale
+			});
+		}
+		if (patternFill && patternFill.image) {
+			return fillRegionWithPattern(patternFill.image, x, y, width, height, {
+				opacity: options && typeof options.opacity === "number" ? options.opacity : 1,
+				patternScale: patternFill.patternScale
+			});
+		}
 		if (!terrainTileAtlas.complete) return false;
 		const variants = TERRAIN_TILE_GROUPS[groupName];
 		if (!variants || !variants.length || width <= 0 || height <= 0) return false;
@@ -2034,6 +2176,10 @@
 	}
 
 	function fillWallRegion(x, y, width, height, options) {
+		if (fillRegionWithAtlasSlice(terrainAtlas, MAGECITY_PATTERN_SLICES.wall, x, y, width, height, {
+			opacity: options && typeof options.opacity === "number" ? options.opacity : 1,
+			tileScale: 1.55
+		})) return true;
 		if (!terrainTileAtlas.complete || width <= 0 || height <= 0) return false;
 		const scale = options && options.scale ? options.scale : 1;
 		const opacity = options && typeof options.opacity === "number" ? options.opacity : 1;
@@ -2063,35 +2209,192 @@
 		}
 	}
 
+	function drawOrleansTownBackdrop() {
+		ctx.fillStyle = "#6f8650";
+		ctx.fillRect(0, 0, state.worldW, state.worldH);
+
+		ctx.fillStyle = "#789260";
+		ctx.fillRect(0, 0, 380, state.worldH);
+		ctx.fillStyle = "rgba(255, 244, 216, 0.08)";
+		ctx.fillRect(12, 360, 314, 760);
+		ctx.fillRect(28, 1124, 286, 170);
+		ctx.fillStyle = "rgba(0, 0, 0, 0.08)";
+		ctx.fillRect(336, 0, 24, state.worldH);
+
+		const leftBuildings = [
+			{ sprite: "timberHall", x: 176, y: 650, scale: 2.18 },
+			{ sprite: "roundBarn", x: 84, y: 742, scale: 1.42 },
+			{ sprite: "stoneChapel", x: 300, y: 728, scale: 1.24 },
+			{ sprite: "redRoofHouse", x: 92, y: 960, scale: 1.46 },
+			{ sprite: "blueRoofHouse", x: 278, y: 954, scale: 1.54 },
+			{ sprite: "woodHouse", x: 176, y: 1116, scale: 2.02 },
+			{ sprite: "redChapel", x: 318, y: 1104, scale: 1.3 },
+			{ sprite: "longHut", x: 92, y: 1230, scale: 1.3 }
+		];
+		for (const building of leftBuildings) {
+			ctx.fillStyle = "rgba(0, 0, 0, 0.16)";
+			ctx.beginPath();
+			ctx.ellipse(building.x, building.y + 12, 108, 18, 0, 0, Math.PI * 2);
+			ctx.fill();
+			drawTerrainSprite(building.sprite, building.x, building.y, building.scale, 0.96);
+		}
+
+		ctx.fillStyle = "#68814b";
+		ctx.fillRect(470, 0, state.worldW - 470, state.worldH);
+		fillTerrainRegion("tree", 1740, 0, state.worldW - 1740, 340, {
+			scale: 2,
+			seed: 45,
+			opacity: 0.58,
+			coarseX: 2,
+			coarseY: 2,
+			tileInset: 0
+		});
+		fillTerrainRegion("tree", 1710, 930, state.worldW - 1710, state.worldH - 930, {
+			scale: 2,
+			seed: 57,
+			opacity: 0.62,
+			coarseX: 2,
+			coarseY: 2,
+			tileInset: 0
+		});
+		ctx.fillStyle = "rgba(255,255,255,0.04)";
+		ctx.beginPath();
+		ctx.moveTo(620, 0);
+		ctx.lineTo(1650, 0);
+		ctx.lineTo(1840, 230);
+		ctx.lineTo(820, 360);
+		ctx.closePath();
+		ctx.fill();
+	}
+
+	function drawOrleansRoadDetails() {
+		ctx.fillStyle = "rgba(86, 112, 61, 0.2)";
+		ctx.fillRect(1680, 0, state.worldW - 1680, state.worldH);
+
+		ctx.fillStyle = "#90724a";
+		ctx.beginPath();
+		ctx.moveTo(520, 1400);
+		ctx.lineTo(900, 1270);
+		ctx.bezierCurveTo(1260, 1130, 1540, 970, 1840, 690);
+		ctx.bezierCurveTo(2020, 520, 2160, 398, 2400, 226);
+		ctx.lineTo(2400, 452);
+		ctx.bezierCurveTo(2160, 616, 2020, 730, 1830, 886);
+		ctx.bezierCurveTo(1540, 1120, 1240, 1260, 930, 1370);
+		ctx.lineTo(520, 1400);
+		ctx.closePath();
+		ctx.fill();
+
+		fillTerrainRegion("goldRoad", 930, 1228, 500, 36, {
+			scale: 2,
+			seed: 63,
+			opacity: 0.96,
+			coarseX: 2,
+			coarseY: 1,
+			tileInset: 0
+		});
+		fillTerrainRegion("goldRoad", 1290, 1064, 430, 36, {
+			scale: 2,
+			seed: 71,
+			opacity: 0.96,
+			coarseX: 2,
+			coarseY: 1,
+			tileInset: 0
+		});
+		fillTerrainRegion("goldRoad", 1560, 856, 360, 36, {
+			scale: 2,
+			seed: 79,
+			opacity: 0.96,
+			coarseX: 2,
+			coarseY: 1,
+			tileInset: 0
+		});
+		fillTerrainRegion("goldRoad", 1810, 632, 290, 36, {
+			scale: 2,
+			seed: 87,
+			opacity: 0.96,
+			coarseX: 2,
+			coarseY: 1,
+			tileInset: 0
+		});
+
+		drawTreeCluster([
+			{ sprite: "pineGreen", x: 820, y: 356, scale: 0.98, opacity: 0.96 },
+			{ sprite: "smallPine", x: 980, y: 318, scale: 0.96, opacity: 0.92 },
+			{ sprite: "pineGold", x: 1135, y: 392, scale: 1.02, opacity: 0.95 },
+			{ sprite: "smallPine", x: 1288, y: 334, scale: 0.92, opacity: 0.9 },
+			{ sprite: "pineGreen", x: 1460, y: 380, scale: 1.0, opacity: 0.94 },
+			{ sprite: "tallPine", x: 1648, y: 438, scale: 1.18, opacity: 0.96 },
+			{ sprite: "pineGold", x: 1860, y: 468, scale: 1.08, opacity: 0.94 },
+			{ sprite: "smallPine", x: 2050, y: 396, scale: 0.94, opacity: 0.9 },
+			{ sprite: "pineGreen", x: 1788, y: 1004, scale: 1.06, opacity: 0.94 },
+			{ sprite: "smallPine", x: 1955, y: 1112, scale: 0.98, opacity: 0.9 },
+			{ sprite: "pineGold", x: 2120, y: 1212, scale: 1.0, opacity: 0.92 },
+			{ sprite: "tallPine", x: 2290, y: 1096, scale: 1.12, opacity: 0.94 },
+			{ sprite: "smallPine", x: 2390, y: 1254, scale: 0.96, opacity: 0.88 }
+		]);
+	}
+
+	function drawOrleansGate() {
+		const gateLeft = state.gate.x - state.gate.w * 0.5;
+		const gateTop = state.gate.y - state.gate.h * 0.5;
+		if (!fillWallRegion(300, 0, 170, state.worldH, { scale: 2, opacity: 0.98 })) {
+			ctx.fillStyle = "#634f36";
+			ctx.fillRect(300, 0, 170, state.worldH);
+		}
+		ctx.fillStyle = "rgba(255, 232, 187, 0.06)";
+		ctx.fillRect(458, 0, 8, state.worldH);
+		ctx.fillStyle = "rgba(92, 71, 46, 0.94)";
+		for (let y = 20; y < state.worldH; y += 74) {
+			if (y > gateTop - 18 && y < gateTop + state.gate.h - 20) continue;
+			ctx.fillRect(312, y, 24, 28);
+			ctx.fillRect(420, y + 10, 22, 22);
+		}
+
+		ctx.fillStyle = "#8b6e49";
+		ctx.fillRect(gateLeft, gateTop, state.gate.w, state.gate.h);
+		ctx.fillStyle = "rgba(255, 230, 186, 0.12)";
+		ctx.fillRect(gateLeft + 8, gateTop, 8, state.gate.h);
+		ctx.fillStyle = "rgba(63, 42, 24, 0.84)";
+		ctx.fillRect(gateLeft + 12, gateTop + 30, state.gate.w - 24, state.gate.h - 52);
+		ctx.fillStyle = "rgba(0, 0, 0, 0.22)";
+		ctx.fillRect(gateLeft + 18, gateTop + 30, 6, state.gate.h - 52);
+		ctx.fillRect(gateLeft + state.gate.w - 24, gateTop + 30, 6, state.gate.h - 52);
+		ctx.fillStyle = "rgba(191, 160, 116, 0.64)";
+		for (let y = gateTop + 46; y < gateTop + state.gate.h - 24; y += 28) {
+			ctx.fillRect(gateLeft + 22, y, state.gate.w - 44, 4);
+		}
+	}
+
+	function drawGateHealthBar() {
+		if (!state.gate) return;
+		const pos = screenFromWorld(state.gate.x, state.gate.y - state.gate.h * 0.5 - 38);
+		const width = 112;
+		const height = 10;
+		const ratio = clamp(state.gate.hp / state.gate.maxHp, 0, 1);
+		ctx.save();
+		ctx.fillStyle = "rgba(0, 0, 0, 0.54)";
+		ctx.fillRect(pos.x - width * 0.5, pos.y, width, height);
+		ctx.fillStyle = "rgba(109, 40, 30, 0.95)";
+		ctx.fillRect(pos.x - width * 0.5 + 1, pos.y + 1, width - 2, height - 2);
+		ctx.fillStyle = "#e5c36f";
+		ctx.fillRect(pos.x - width * 0.5 + 1, pos.y + 1, (width - 2) * ratio, height - 2);
+		ctx.font = "700 12px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.textBaseline = "bottom";
+		ctx.fillStyle = "#fff2d1";
+		ctx.fillText(`城门 ${Math.max(0, Math.ceil(state.gate.hp))} / ${state.gate.maxHp}`, pos.x, pos.y - 4);
+		ctx.restore();
+	}
+
 	function drawStage() {
 		ctx.save();
+		ctx.scale(camera.scale, camera.scale);
 		ctx.translate(-camera.x, -camera.y);
 		if (stageId === "orleans") {
-			drawGroundPattern("#6d9258");
-			if (!fillTerrainRegion("tree", 0, 0, 420, state.worldH, { scale: 2, seed: 31, opacity: 0.92 })) {
-				ctx.fillStyle = "#4f6d3f";
-				ctx.fillRect(0, 0, 420, state.worldH);
-			}
-			drawTreeCluster([
-				{ sprite: "pineGreen", x: 140, y: 340, scale: 0.82 },
-				{ sprite: "pineGold", x: 250, y: 390, scale: 0.8 },
-				{ sprite: "smallPine", x: 120, y: 1080, scale: 1.1 },
-				{ sprite: "tallPine", x: 240, y: 1160, scale: 1.1 }
-			]);
-			if (!fillWallRegion(340, 0, 100, state.worldH, { scale: 2, seed: 33, opacity: 0.98 })) {
-				ctx.fillStyle = "#75624a";
-				ctx.fillRect(340, 0, 100, state.worldH);
-			}
-			ctx.fillStyle = "#987c58";
-			ctx.fillRect(state.gate.x - state.gate.w * 0.5, state.gate.y - state.gate.h * 0.5, state.gate.w, state.gate.h);
-			ctx.fillStyle = "#3f5267";
-			ctx.fillRect(0, 1180, state.worldW, 220);
-			ctx.strokeStyle = "#8d7452";
-			ctx.lineWidth = 130;
-			ctx.beginPath();
-			ctx.moveTo(380, 690);
-			ctx.lineTo(1600, 690);
-			ctx.stroke();
+			drawGroundPattern("#78945a");
+			drawOrleansTownBackdrop();
+			drawOrleansGate();
+			drawOrleansRoadDetails();
 		}
 		if (stageId === "reims") {
 			drawGroundPattern("#818556");
@@ -2331,20 +2634,56 @@
 		ctx.fillRect(pos.x - w * 0.5, pos.y, w, 5);
 		ctx.fillStyle = unit.team === "enemy" ? "#ff7f69" : "#8de0ac";
 		ctx.fillRect(pos.x - w * 0.5 + 1, pos.y + 1, (w - 2) * clamp(unit.hp / unit.maxHp, 0, 1), 3);
+		if (unit.isPlayer && unit.level) {
+			ctx.save();
+			ctx.font = "800 11px Microsoft YaHei";
+			ctx.textAlign = "right";
+			ctx.textBaseline = "middle";
+			ctx.fillStyle = "#ffe08a";
+			ctx.fillText(`Lv.${unit.level}`, pos.x - w * 0.5 - 6, pos.y + 2.5);
+			ctx.restore();
+		}
 	}
 
 	function drawLabel(unit) {
 		const pos = screenFromWorld(unit.x, unit.y - unit.radius - 28);
-		if (unit.isPlayer && unit.level) {
-			ctx.font = "700 12px Microsoft YaHei";
-			ctx.textAlign = "center";
-			ctx.fillStyle = "#ffe08a";
-			ctx.fillText(`Level ${unit.level}`, pos.x, pos.y - 14);
-		}
+		if (unit.isPlayer) return;
 		ctx.font = unit.isCommander ? "700 13px Microsoft YaHei" : "600 12px Microsoft YaHei";
 		ctx.textAlign = "center";
 		ctx.fillStyle = "#fff3d6";
 		ctx.fillText(unit.label, pos.x, pos.y);
+	}
+
+	function drawSkillBadge(unit) {
+		const badge = getUnitSkillBadge(unit);
+		if (!badge) return;
+		const yOffset = 42;
+		const pos = screenFromWorld(unit.x, unit.y - unit.radius - yOffset);
+		const width = badge.ready ? 92 : 48;
+		const height = 28;
+		const left = pos.x - width * 0.5;
+		const top = pos.y - height * 0.5;
+		skillBadgeHitboxes.push({ x: left, y: top, w: width, h: height, action: badge.action });
+
+		ctx.save();
+		ctx.fillStyle = badge.ready ? "rgba(121, 72, 21, 0.96)" : "rgba(58, 56, 52, 0.94)";
+		ctx.strokeStyle = badge.ready ? "rgba(255, 226, 152, 0.98)" : "rgba(189, 192, 196, 0.7)";
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		ctx.roundRect(left, top, width, height, 12);
+		ctx.fill();
+		ctx.stroke();
+		ctx.beginPath();
+		ctx.roundRect(left + 3, top + 3, width - 6, height - 6, 10);
+		ctx.strokeStyle = badge.ready ? "rgba(255, 239, 196, 0.45)" : "rgba(230, 232, 235, 0.18)";
+		ctx.lineWidth = 1.2;
+		ctx.stroke();
+		ctx.font = badge.ready ? "900 12px Microsoft YaHei" : "800 12px Microsoft YaHei";
+		ctx.textAlign = "center";
+		ctx.textBaseline = "middle";
+		ctx.fillStyle = badge.ready ? "#ffefbf" : "rgba(236, 238, 242, 0.94)";
+		ctx.fillText(badge.label, pos.x, pos.y + 0.5);
+		ctx.restore();
 	}
 
 	function drawHuman(unit) {
@@ -2643,24 +2982,26 @@
 
 	function drawStageUi() {
 		objectiveEl.textContent = state.objectiveText || stage.goalText;
-		playerHpEl.textContent = `贞德 ${Math.max(0, Math.ceil(state.player.hp))} / ${state.player.maxHp}`;
-		stageInfoEl.textContent = stage.infoText(state);
+		if (playerHpEl) playerHpEl.textContent = `贞德 ${Math.max(0, Math.ceil(state.player.hp))} / ${state.player.maxHp}`;
+		if (stageInfoEl) stageInfoEl.textContent = stage.infoText(state);
 		if (isMobileUI) {
-			skillBtn.textContent = state.player.skillCd > 0 ? `战吼 ${state.player.skillCd.toFixed(1)}s` : "战吼";
+			if (skillBtn) skillBtn.textContent = state.player.skillCd > 0 ? `战吼 ${state.player.skillCd.toFixed(1)}s` : "战吼";
 			pauseBtn.textContent = state.paused ? "继续" : "暂停";
 		} else {
-			skillBtn.textContent = state.player.skillCd > 0 ? `Q 为了自由！ ${state.player.skillCd.toFixed(1)}s` : "Q 为了自由！";
+			if (skillBtn) skillBtn.textContent = state.player.skillCd > 0 ? `Q 为了自由！ ${state.player.skillCd.toFixed(1)}s` : "Q 为了自由！";
 			pauseBtn.textContent = state.paused ? "空格继续" : "空格暂停";
 		}
 	}
 
 	function render() {
+		skillBadgeHitboxes.length = 0;
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 		drawStage();
 		drawVisionCones();
 		for (const unit of state.enemies) if (!unit.dead) drawHuman(unit);
 		for (const unit of state.allies) if (!unit.dead) drawHuman(unit);
 		drawHuman(state.player);
+		drawSkillBadge(state.player);
 		drawEffects();
 		if (state.whiteFlash > 0) {
 			ctx.save();
@@ -2682,6 +3023,7 @@
 			ctx.restore();
 		}
 		if (state.gate) {
+			drawGateHealthBar();
 			const pos = screenFromWorld(state.gate.x, state.gate.y - state.gate.h * 0.5 - 18);
 			ctx.textAlign = "center";
 			ctx.font = "700 13px Microsoft YaHei";
@@ -2788,7 +3130,18 @@
 
 	canvas.addEventListener("pointerdown", (event) => {
 		if (state.paused || state.dialogOpen || state.resultOpen) return;
-		if (isMobileUI) return;
+		const rect = canvas.getBoundingClientRect();
+		const pointerX = event.clientX - rect.left;
+		const pointerY = event.clientY - rect.top;
+		for (let index = skillBadgeHitboxes.length - 1; index >= 0; index -= 1) {
+			const hitbox = skillBadgeHitboxes[index];
+			if (pointerX >= hitbox.x && pointerX <= hitbox.x + hitbox.w && pointerY >= hitbox.y && pointerY <= hitbox.y + hitbox.h) {
+				event.preventDefault();
+				hitbox.action();
+				return;
+			}
+		}
+		if (isMobileUI) event.preventDefault();
 		const point = worldFromClient(event.clientX, event.clientY);
 		state.moveTarget = {
 			x: clamp(point.x, 0, state.worldW),
@@ -2823,7 +3176,7 @@
 	window.addEventListener("pointerup", releaseMobileStick);
 	window.addEventListener("pointercancel", releaseMobileStick);
 
-	skillBtn.addEventListener("click", castFreedomCry);
+	if (skillBtn) skillBtn.addEventListener("click", castFreedomCry);
 	pauseBtn.addEventListener("click", togglePause);
 	storyBtn.addEventListener("click", () => showDialog(stage.briefingTitle, stage.briefing, "继续战斗"));
 	dialogBtn.addEventListener("click", closeDialog);

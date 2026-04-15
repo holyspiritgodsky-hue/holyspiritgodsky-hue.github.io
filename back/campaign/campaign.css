@@ -1,22 +1,26 @@
 :root {
 	--sky: #8eb2c8;
 	--mist: rgba(255, 242, 212, 0.18);
-	--hud-bg: rgba(12, 18, 24, 0.78);
-	--hud-border: rgba(255, 244, 202, 0.28);
+	--safe-top: max(12px, env(safe-area-inset-top));
+	--safe-right: max(12px, env(safe-area-inset-right));
+	--safe-bottom: max(12px, env(safe-area-inset-bottom));
+	--safe-left: max(12px, env(safe-area-inset-left));
+	--hud-bg: linear-gradient(180deg, rgba(43, 28, 19, 0.92), rgba(16, 12, 10, 0.9));
+	--hud-border: rgba(243, 216, 156, 0.34);
 	--text: #f7f2e6;
-	--accent: #f0cb75;
-	--accent-strong: #ffd979;
+	--accent: #e7c074;
+	--accent-strong: #ffdf9a;
 	--danger: #ff8b6e;
 	--ground: #5f8e56;
 	--ground-deep: #405d36;
 	--panel: rgba(13, 10, 8, 0.94);
 	--panel-border: rgba(255, 228, 159, 0.34);
 	--shadow: rgba(0, 0, 0, 0.45);
-	--button-bg: rgba(88, 62, 22, 0.92);
-	--button-border: rgba(255, 225, 149, 0.52);
+	--button-bg: linear-gradient(180deg, rgba(123, 88, 42, 0.96), rgba(74, 49, 23, 0.96));
+	--button-border: rgba(245, 215, 154, 0.5);
 	--button-text: #ffefc6;
-	--ghost-bg: rgba(28, 31, 36, 0.84);
-	--nav-bg: rgba(12, 18, 24, 0.76);
+	--ghost-bg: linear-gradient(180deg, rgba(46, 34, 27, 0.88), rgba(26, 21, 18, 0.88));
+	--nav-bg: linear-gradient(180deg, rgba(34, 24, 18, 0.92), rgba(18, 14, 12, 0.9));
 	--nav-active: rgba(240, 203, 117, 0.22);
 }
 
@@ -60,13 +64,13 @@ body::before {
 	left: 18px;
 	top: 18px;
 	z-index: 4;
-	width: min(360px, calc(100vw - 36px));
-	padding: 12px 14px 11px;
-	border-radius: 16px;
+	width: min(280px, calc(100vw - 36px));
+	padding: 12px 13px 11px;
+	border-radius: 18px;
 	background: var(--hud-bg);
 	border: 1px solid var(--hud-border);
 	backdrop-filter: blur(8px);
-	box-shadow: 0 18px 42px var(--shadow);
+	box-shadow: 0 18px 42px var(--shadow), inset 0 1px 0 rgba(255,255,255,0.08);
 	box-sizing: border-box;
 }
 
@@ -76,15 +80,17 @@ body::before {
 
 .hud h1 {
 	margin: 0;
+	font-family: "STZhongsong", "Songti SC", "Noto Serif SC", "Times New Roman", serif;
 	font-size: 24px;
-	line-height: 1.1;
-	letter-spacing: 0.5px;
+	line-height: 1.05;
+	letter-spacing: 0.04em;
+	text-shadow: 0 2px 10px rgba(0, 0, 0, 0.28);
 }
 
 .hud p {
 	margin: 0;
-	font-size: 15px;
-	color: rgba(255, 246, 225, 0.82);
+	font-size: 14px;
+	color: rgba(255, 236, 198, 0.76);
 	line-height: 1.5;
 }
 
@@ -94,7 +100,7 @@ body::before {
 
 .hudMeta {
 	display: block;
-	margin-top: 7px;
+	margin-top: 8px;
 }
 
 .hudMeta span {
@@ -103,9 +109,10 @@ body::before {
 
 .hudMeta #objectiveText {
 	display: block;
-	padding: 0;
-	border: 0;
-	background: none;
+	padding: 9px 11px;
+	border-radius: 12px;
+	background: rgba(255, 248, 228, 0.06);
+	border: 1px solid rgba(255, 228, 175, 0.12);
 	font-size: 13px;
 	line-height: 1.45;
 	color: rgba(255, 246, 225, 0.88);
@@ -113,8 +120,8 @@ body::before {
 
 .mobileStick {
 	position: fixed;
-	left: 14px;
-	bottom: 18px;
+	right: calc(var(--safe-right) + 2px);
+	bottom: calc(var(--safe-bottom) + 6px);
 	z-index: 4;
 	display: none;
 	width: 110px;
@@ -154,14 +161,18 @@ body::before {
 
 .actions {
 	position: fixed;
-	right: 18px;
-	top: 18px;
+	right: calc(var(--safe-right) + 6px);
+	top: calc(var(--safe-top) + 6px);
 	z-index: 4;
 	display: flex;
 	flex-wrap: wrap;
 	justify-content: flex-end;
 	gap: 10px;
-	max-width: min(380px, calc(100vw - 36px));
+	max-width: min(420px, calc(100vw - 36px));
+}
+
+#skillBtn {
+	display: none;
 }
 
 button,
@@ -173,14 +184,16 @@ button,
 	border-radius: 999px;
 	background: var(--button-bg);
 	color: var(--button-text);
-	padding: 10px 16px;
+	padding: 11px 17px;
 	font-size: 13px;
 	font-weight: 700;
+	font-family: "STZhongsong", "Songti SC", "Noto Serif SC", "Times New Roman", serif;
+	letter-spacing: 0.04em;
 	line-height: 1;
 	text-decoration: none;
 	cursor: pointer;
 	transition: transform 0.16s ease, filter 0.16s ease, background 0.16s ease;
-	box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+	box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 button:hover,
@@ -193,13 +206,18 @@ button:hover,
 
 .ghostBtn {
 	background: var(--ghost-bg);
-	border-color: rgba(255,255,255,0.22);
+	border-color: rgba(255,224,179,0.18);
 	color: rgba(255,255,255,0.92);
 }
 
 .primaryBtn {
 	background: linear-gradient(180deg, rgba(140, 104, 36, 0.96), rgba(90, 64, 20, 0.98));
 	border-color: rgba(255, 228, 159, 0.58);
+}
+
+#skillBtn {
+	background: linear-gradient(180deg, rgba(156, 104, 32, 0.98), rgba(97, 52, 18, 0.98));
+	box-shadow: 0 14px 32px rgba(70, 32, 12, 0.3), inset 0 1px 0 rgba(255,255,255,0.12);
 }
 
 .overlay {
@@ -1210,19 +1228,19 @@ body.tavernPage::before {
 
 .chapterNav {
 	position: fixed;
-	left: 18px;
-	bottom: 72px;
+	left: calc(var(--safe-left) + 6px);
+	bottom: calc(var(--safe-bottom) + 60px);
 	z-index: 4;
 	display: flex;
 	flex-wrap: wrap;
 	gap: 8px;
 	max-width: min(720px, calc(100vw - 36px));
-	padding: 10px;
-	border-radius: 18px;
+	padding: 12px;
+	border-radius: 22px;
 	background: var(--nav-bg);
-	border: 1px solid rgba(255,255,255,0.14);
+	border: 1px solid rgba(255, 225, 170, 0.14);
 	backdrop-filter: blur(8px);
-	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.05);
 	opacity: 0;
 	pointer-events: none;
 	transform: translateY(8px) scale(0.98);
@@ -1238,8 +1256,8 @@ body.tavernPage::before {
 
 .chapterNavToggle {
 	position: fixed;
-	left: 18px;
-	bottom: 18px;
+	left: calc(var(--safe-left) + 6px);
+	bottom: calc(var(--safe-bottom) + 6px);
 	z-index: 5;
 	display: inline-flex;
 	align-items: center;
@@ -1248,21 +1266,21 @@ body.tavernPage::before {
 	height: 42px;
 	padding: 0 16px;
 	border-radius: 999px;
-	background: rgba(12, 18, 24, 0.82);
-	border: 1px solid rgba(255,255,255,0.16);
+	background: var(--nav-bg);
+	border: 1px solid rgba(255, 224, 176, 0.16);
 	backdrop-filter: blur(8px);
-	box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26);
+	box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .chapterNavToggle.open {
-	background: rgba(64, 52, 24, 0.92);
+	background: linear-gradient(180deg, rgba(84, 58, 27, 0.96), rgba(45, 31, 19, 0.94));
 	border-color: rgba(255, 228, 159, 0.46);
 }
 
 .upgradeToggle {
 	position: fixed;
-	left: 98px;
-	bottom: 18px;
+	left: calc(var(--safe-left) + 86px);
+	bottom: calc(var(--safe-bottom) + 6px);
 	z-index: 5;
 	display: inline-flex;
 	align-items: center;
@@ -1271,29 +1289,29 @@ body.tavernPage::before {
 	height: 42px;
 	padding: 0 16px;
 	border-radius: 999px;
-	background: rgba(12, 18, 24, 0.82);
-	border: 1px solid rgba(255,255,255,0.16);
+	background: var(--nav-bg);
+	border: 1px solid rgba(255, 224, 176, 0.16);
 	backdrop-filter: blur(8px);
-	box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26);
+	box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255,255,255,0.05);
 }
 
 .upgradeToggle.open {
-	background: rgba(64, 52, 24, 0.92);
+	background: linear-gradient(180deg, rgba(84, 58, 27, 0.96), rgba(45, 31, 19, 0.94));
 	border-color: rgba(255, 228, 159, 0.46);
 }
 
 .upgradePanel {
 	position: fixed;
-	left: 98px;
-	bottom: 72px;
+	left: calc(var(--safe-left) + 86px);
+	bottom: calc(var(--safe-bottom) + 60px);
 	z-index: 4;
 	width: min(240px, calc(100vw - 36px));
-	padding: 10px;
-	border-radius: 18px;
+	padding: 12px;
+	border-radius: 22px;
 	background: var(--nav-bg);
-	border: 1px solid rgba(255,255,255,0.14);
+	border: 1px solid rgba(255, 225, 170, 0.14);
 	backdrop-filter: blur(8px);
-	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
+	box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255,255,255,0.05);
 	opacity: 0;
 	pointer-events: none;
 	transform: translateY(8px) scale(0.98);
@@ -1364,9 +1382,9 @@ body.tavernPage::before {
 
 .chapterNav a {
 	padding: 9px 14px;
-	background: rgba(255,255,255,0.04);
-	border-color: rgba(255,255,255,0.12);
-	color: rgba(255,255,255,0.88);
+	background: rgba(255, 244, 220, 0.05);
+	border-color: rgba(255, 225, 170, 0.12);
+	color: rgba(255,248,232,0.9);
 	box-shadow: none;
 }
 
@@ -1378,15 +1396,15 @@ body.tavernPage::before {
 
 @media (max-width: 920px) {
 	.hud {
-		left: 10px;
-		top: 10px;
-		width: min(248px, calc(100vw - 20px));
-		padding: 9px 11px 8px;
+		left: var(--safe-left);
+		top: var(--safe-top);
+		width: min(244px, calc(100vw - var(--safe-left) - var(--safe-right) - 108px));
+		padding: 10px 11px 9px;
 		border-radius: 14px;
 	}
 
 	.hudMeta {
-		margin-top: 5px;
+		margin-top: 6px;
 	}
 
 	.hudMeta #objectiveText {
@@ -1399,49 +1417,62 @@ body.tavernPage::before {
 	}
 
 	.actions {
-		left: auto;
-		right: 12px;
+		left: var(--safe-left);
+		right: auto;
 		top: auto;
-		bottom: 12px;
-		justify-content: flex-end;
-		max-width: calc(100vw - 148px);
-		gap: 8px;
+		bottom: calc(var(--safe-bottom) + 72px);
+		flex-direction: column;
+		align-items: stretch;
+		justify-content: flex-start;
+		width: min(116px, calc(42vw - var(--safe-left)));
+		max-width: none;
+		gap: 6px;
+	}
+
+	.actions > * {
+		width: 100%;
+		justify-content: center;
+		box-sizing: border-box;
 	}
 
 	button,
 	.ghostBtn,
 	.primaryBtn,
 	.chapterNav a {
-		padding: 11px 13px;
+		padding: 11px 12px;
 		font-size: 12px;
 	}
 
 	.chapterNav {
-		left: 12px;
-		bottom: 134px;
-		max-width: min(300px, calc(100vw - 24px));
+		left: var(--safe-left);
+		bottom: calc(var(--safe-bottom) + 160px);
+		max-width: min(320px, calc(100vw - var(--safe-left) - var(--safe-right) - 16px));
+		max-height: min(46vh, 320px);
+		overflow: auto;
 	}
 
 	.chapterNavToggle {
-		left: 12px;
-		bottom: 78px;
+		left: var(--safe-left);
+		bottom: calc(var(--safe-bottom) + 130px);
 		min-width: 78px;
 		height: 40px;
 		padding: 0 14px;
 	}
 
 	.upgradeToggle {
-		left: 98px;
-		bottom: 78px;
+		left: calc(var(--safe-left) + 86px);
+		bottom: calc(var(--safe-bottom) + 130px);
 		min-width: 78px;
 		height: 40px;
 		padding: 0 14px;
 	}
 
 	.upgradePanel {
-		left: 98px;
-		bottom: 134px;
-		width: min(220px, calc(100vw - 110px));
+		left: calc(var(--safe-left) + 86px);
+		bottom: calc(var(--safe-bottom) + 182px);
+		width: min(232px, calc(100vw - var(--safe-left) - var(--safe-right) - 102px));
+		max-height: min(42vh, 280px);
+		overflow: auto;
 	}
 
 	.panel {
@@ -1454,25 +1485,108 @@ body.tavernPage::before {
 }
 
 body.mobile-ui .chapterNav {
-	left: 12px;
-	bottom: 134px;
+	left: var(--safe-left);
+	bottom: calc(var(--safe-bottom) + 160px);
 }
 
 body.mobile-ui .chapterNavToggle {
-	left: 12px;
-	bottom: 78px;
+	left: var(--safe-left);
+	bottom: calc(var(--safe-bottom) + 130px);
 }
 
 body.mobile-ui .upgradeToggle {
-	left: 98px;
-	bottom: 78px;
+	left: calc(var(--safe-left) + 86px);
+	bottom: calc(var(--safe-bottom) + 130px);
 }
 
 body.mobile-ui .upgradePanel {
-	left: 98px;
-	bottom: 134px;
+	left: calc(var(--safe-left) + 86px);
+	bottom: calc(var(--safe-bottom) + 182px);
 }
 
 body.mobile-ui .mobileStick {
 	display: block;
+}
+
+body.mobile-ui .mobileStick {
+	right: var(--safe-right);
+	bottom: var(--safe-bottom);
+	width: 118px;
+	height: 118px;
+	z-index: 6;
+}
+
+body.mobile-ui .actions {
+	z-index: 6;
+}
+
+body.mobile-ui .chapterNav,
+body.mobile-ui .upgradePanel {
+	z-index: 7;
+}
+
+body.mobile-ui .chapterNavToggle,
+body.mobile-ui .upgradeToggle {
+	z-index: 8;
+}
+
+@media (max-width: 640px) {
+	.hud {
+		width: min(220px, calc(100vw - var(--safe-left) - var(--safe-right) - 96px));
+	}
+
+	.actions {
+		width: min(104px, calc(44vw - var(--safe-left)));
+		bottom: calc(var(--safe-bottom) + 66px);
+	}
+
+	.chapterNav,
+	body.mobile-ui .chapterNav {
+		left: var(--safe-left);
+		right: var(--safe-right);
+		bottom: calc(var(--safe-bottom) + 154px);
+		max-width: none;
+	}
+
+	.upgradePanel,
+	body.mobile-ui .upgradePanel {
+		left: var(--safe-left);
+		right: var(--safe-right);
+		bottom: calc(var(--safe-bottom) + 206px);
+		width: auto;
+		max-height: min(40vh, 260px);
+	}
+
+	.chapterNavToggle,
+	body.mobile-ui .chapterNavToggle {
+		bottom: calc(var(--safe-bottom) + 124px);
+	}
+
+	.upgradeToggle,
+	body.mobile-ui .upgradeToggle {
+		left: calc(var(--safe-left) + 86px);
+		bottom: calc(var(--safe-bottom) + 124px);
+	}
+
+	body.mobile-ui .mobileStick {
+		width: 112px;
+		height: 112px;
+	}
+
+	.mobileStickKnob {
+		width: 40px;
+		height: 40px;
+		margin-left: -20px;
+		margin-top: -20px;
+	}
+
+	.panelActions {
+		flex-direction: column;
+	}
+
+	.panelActions > * {
+		width: 100%;
+		justify-content: center;
+		box-sizing: border-box;
+	}
 }
