@@ -121,7 +121,7 @@ body::before {
 .mobileStick {
 	position: fixed;
 	right: calc(var(--safe-right) + 2px);
-	bottom: calc(var(--safe-bottom) + 6px);
+	bottom: calc(var(--safe-bottom) + 60px);
 	z-index: 4;
 	display: none;
 	width: 110px;
@@ -1585,7 +1585,7 @@ body.mobile-ui .mobileMenuPanel {
 
 body.mobile-ui .mobileStick {
 	right: var(--safe-right);
-	bottom: var(--safe-bottom);
+	bottom: calc(var(--safe-bottom) + 54px);
 	width: 118px;
 	height: 118px;
 	z-index: 6;

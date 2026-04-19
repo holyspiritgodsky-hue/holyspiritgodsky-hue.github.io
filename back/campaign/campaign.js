@@ -19,7 +19,7 @@
 			victoryText: "奥尔良守住了。\n\n下一站，兰斯加冕。",
 			world: { width: 2400, height: 1400 },
 			playerSpawn: { x: 560, y: 760 },
-			gate: { x: 390, y: 700, w: 92, h: 240, hp: 320 },
+			gate: { x: 390, y: 700, w: 92, h: 240, hp: 420 },
 			goalText: "守住奥尔良城门，击败塔尔博特",
 			infoText: (state) => `城门耐久 ${Math.max(0, Math.ceil(state.gate.hp))} / ${state.gate.maxHp}`
 		},
@@ -39,8 +39,8 @@
 			victoryTitle: "兰斯加冕",
 			victoryText: "查理国王完成加冕。\n\n今夜先去兰斯酒馆缓口气，明天再进皮卡第。",
 			world: { width: 2400, height: 1400 },
-			playerSpawn: { x: 540, y: 1080 },
-			goalZone: { x: 1880, y: 300, r: 120 },
+			playerSpawn: { x: 540, y: 960 },
+			goalZone: { x: 1400, y: 360, r: 130 },
 			goalText: "护送查理国王抵达兰斯主教座堂",
 			infoText: (state) => {
 				const vip = state.vip;
@@ -911,15 +911,15 @@
 				hp: stage.gate.hp,
 				maxHp: stage.gate.hp
 			};
-			state.spawnsLeft = 3;
-			state.spawnTimer = 8;
+			state.spawnsLeft = 2;
+			state.spawnTimer = 10;
 			for (let i = 0; i < 5; i += 1) {
 				state.allies.push(createStageUnit("orleansDefender", 520 + (i % 2) * 68, 580 + i * 80, {
 					mounted: i < 2,
 					anchor: { x: 520 + (i % 2) * 68, y: 580 + i * 80 }
 				}));
 			}
-			for (let i = 0; i < 9; i += 1) {
+			for (let i = 0; i < 6; i += 1) {
 				state.enemies.push(createStageUnit("englishFootman", 1550 + (i % 3) * 130 + rand(-26, 26), 470 + Math.floor(i / 3) * 170 + rand(-24, 24)));
 			}
 			state.enemies.push(createStageUnit("englishCommander", 1960, 700));
@@ -931,8 +931,8 @@
 			for (let i = 0; i < 4; i += 1) {
 				state.allies.push(createStageUnit("royalEscort", 430 + i * 44, 1040 + (i % 2) * 90));
 			}
-			for (let i = 0; i < 6; i += 1) {
-				state.enemies.push(createStageUnit("ambusher", 980 + (i % 3) * 90, 820 + Math.floor(i / 3) * 120));
+			for (let i = 0; i < 4; i += 1) {
+				state.enemies.push(createStageUnit("ambusher", 880 + (i % 2) * 100, 780 + Math.floor(i / 2) * 120));
 			}
 			state.wavesTriggered = [false, false];
 		}
@@ -1704,9 +1704,9 @@
 			if (state.spawnsLeft > 0) {
 				state.spawnTimer -= dt;
 				if (state.spawnTimer <= 0) {
-					state.spawnTimer = 10.5;
+					state.spawnTimer = 12;
 					state.spawnsLeft -= 1;
-					spawnEnemyWave(4, { x1: 1800, x2: 2200, y1: 380, y2: 1040 });
+					spawnEnemyWave(3, { x1: 1800, x2: 2200, y1: 380, y2: 1040 });
 				}
 			}
 			if (state.gate.hp <= 0) {
@@ -1720,13 +1720,13 @@
 		}
 
 		if (stageId === "reims") {
-			if (!state.wavesTriggered[0] && player.x > 980) {
+			if (!state.wavesTriggered[0] && player.x > 860) {
 				state.wavesTriggered[0] = true;
-				spawnEnemyWave(4, { x1: 1180, x2: 1400, y1: 620, y2: 980 });
+				spawnEnemyWave(3, { x1: 980, x2: 1160, y1: 620, y2: 880 });
 			}
-			if (!state.wavesTriggered[1] && player.x > 1480) {
+			if (!state.wavesTriggered[1] && player.x > 1160) {
 				state.wavesTriggered[1] = true;
-				spawnEnemyWave(5, { x1: 1580, x2: 1760, y1: 380, y2: 740 });
+				spawnEnemyWave(3, { x1: 1220, x2: 1380, y1: 380, y2: 680 });
 			}
 			if (state.vip && state.vip.hp <= 0 && !state.vip.dead) state.vip.dead = true;
 			if (state.vip && state.vip.dead) {
@@ -1776,13 +1776,13 @@
 		}
 
 		if (stageId === "england") {
-			state.fireProgress = clamp((state.stageTimer - 1.2) * 22, 0, 100);
-			if (state.stageTimer > 1.1) state.objectiveText = "火焰开始升起";
-			if (!state.wavesTriggered[0] && state.stageTimer > 1.6) {
+			state.fireProgress = clamp((state.stageTimer - 2) * 8, 0, 100);
+			if (state.stageTimer > 1.8) state.objectiveText = "火焰开始升起";
+			if (!state.wavesTriggered[0] && state.stageTimer > 2.5) {
 				state.wavesTriggered[0] = true;
-				state.screenShout = { text: "英王：点火。", life: 1.1 };
+				state.screenShout = { text: "英王：点火。", life: 1.6 };
 			}
-			if (state.stageTimer > 2 && Math.random() < 0.58) {
+			if (state.stageTimer > 3.5 && Math.random() < 0.58) {
 				state.particles.push({
 					x: player.x + rand(-48, 48),
 					y: player.y + rand(24, 68),
@@ -1792,19 +1792,23 @@
 					color: Math.random() < 0.5 ? "rgba(255,188,92,0.85)" : "rgba(255,120,72,0.78)"
 				});
 			}
-			if (!state.wavesTriggered[1] && state.stageTimer > 3.5) {
+			if (!state.wavesTriggered[1] && state.stageTimer > 6) {
 				state.wavesTriggered[1] = true;
-				state.screenShout = { text: "主教：异端当焚。", life: 1.1 };
+				state.screenShout = { text: "主教：异端当焚。", life: 1.4 };
 			}
-			if (!state.wavesTriggered[2] && state.stageTimer > 4.9) {
+			if (!state.wavesTriggered[2] && state.stageTimer > 9) {
 				state.wavesTriggered[2] = true;
-				state.screenShout = { text: "郑和：别死。", life: 1.1 };
+				state.screenShout = { text: "贞德：我无罪……", life: 1.8 };
 			}
-			if (!state.cinematicTriggered && state.stageTimer > 5.3) {
+			if (!state.wavesTriggered[3] && state.stageTimer > 11.5) {
+				state.wavesTriggered[3] = true;
+				state.screenShout = { text: "郑和：别死。", life: 1.4 };
+			}
+			if (!state.cinematicTriggered && state.stageTimer > 13) {
 				state.cinematicTriggered = true;
 			}
-			if (state.stageTimer > 5.5) state.whiteFlash = Math.min(1, state.whiteFlash + dt * 3.8);
-			if (state.stageTimer > 6.2) {
+			if (state.stageTimer > 13.5) state.whiteFlash = Math.min(1, state.whiteFlash + dt * 1.6);
+			if (state.stageTimer > 15) {
 				showResult(true, stage.victoryTitle, stage.victoryText, stage.nextPage, stage.nextLabel);
 			}
 		}
@@ -2049,7 +2053,7 @@
 	}
 
 	function fillRegionWithPattern(image, x, y, width, height, options) {
-		if (!image || !image.complete || width <= 0 || height <= 0) return false;
+		if (!image || !image.complete || !image.naturalWidth || width <= 0 || height <= 0) return false;
 		const opacity = options && typeof options.opacity === "number" ? options.opacity : 1;
 		const patternScale = options && options.patternScale ? options.patternScale : 1;
 		ctx.save();
@@ -2696,12 +2700,12 @@
 	function drawSkillBadge(unit) {
 		const badge = getUnitSkillBadge(unit);
 		if (!badge) return;
-		const yOffset = 42;
-		const pos = screenFromWorld(unit.x, unit.y - unit.radius - yOffset);
 		const width = badge.ready ? 92 : 48;
 		const height = 28;
-		const left = pos.x - width * 0.5;
-		const top = pos.y - height * 0.5;
+		const cx = canvas.width * 0.5;
+		const cy = canvas.height - 52;
+		const left = cx - width * 0.5;
+		const top = cy - height * 0.5;
 		skillBadgeHitboxes.push({ x: left, y: top, w: width, h: height, action: badge.action });
 
 		ctx.save();
@@ -2721,7 +2725,7 @@
 		ctx.textAlign = "center";
 		ctx.textBaseline = "middle";
 		ctx.fillStyle = badge.ready ? "#ffefbf" : "rgba(236, 238, 242, 0.94)";
-		ctx.fillText(badge.label, pos.x, pos.y + 0.5);
+		ctx.fillText(badge.label, cx, cy + 0.5);
 		ctx.restore();
 	}
 
